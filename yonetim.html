@@ -93,6 +93,7 @@
       <button class="yan-ogesi" role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="false"><span data-ikon="raf"></span>Raflar</button>
       <button class="yan-ogesi" role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false"><span data-ikon="kitap18"></span>Kitaplar</button>
       <button class="yan-ogesi" role="tab" id="sek-okul" aria-controls="okul" aria-selected="false"><span data-ikon="okul"></span>Okul listeleri</button>
+      <button class="yan-ogesi" role="tab" id="sek-talepler" aria-controls="talepler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="zil"></span>Talepler<span class="sayac" id="talep-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-etiketler" aria-controls="etiketler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="etiket"></span>Raf etiketleri</button>
       <button class="yan-ogesi" role="tab" id="sek-revizeler" aria-controls="revizeler" aria-selected="false" data-yetki="duzenleyici revizeci"><span data-ikon="revize"></span>Revizeler<span class="sayac" id="revize-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-kullanicilar" aria-controls="kullanicilar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kullanici"></span>Kullanıcılar</button>
@@ -206,6 +207,21 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- TALEPLER -->
+      <section id="talepler" role="tabpanel" aria-labelledby="sek-talepler" class="bolum" hidden>
+        <div class="arac-cubugu">
+          <p class="soluk" style="font-size:15px;flex:1 1 300px">Müşterilerin “gelince haber ver” talepleri. Kitap gelince arayın, durumu güncelleyin.</p>
+          <label class="gizli-etiket" for="talep-filtre">Duruma göre</label>
+          <select id="talep-filtre"><option value="acik">Açık talepler</option><option value="">Tümü</option><option value="yeni">Yeni</option><option value="arandi">Arandı</option><option value="geldi">Geldi / teslim</option><option value="iptal">İptal</option></select>
+          <button class="dugme" type="button" id="talep-indir"><span data-ikon="indir"></span>Excel'e aktar</button>
+          <button class="dugme tehlike" type="button" id="talep-temizle">Kapananları sil</button>
+        </div>
+        <div class="tablo-kutu">
+          <table class="tablo"><thead><tr><th>Kitap</th><th>Müşteri</th><th>Tarih</th><th>Durum</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead><tbody id="talep-satirlar"></tbody></table>
+        </div>
+        <p class="soluk">Kişisel veri: telefonlar yalnız düzenleyici ve çalışanlara görünür. Kapanan talepleri düzenli olarak silin (önerilen en geç 90 gün).</p>
       </section>
 
       <!-- ETİKETLER -->
@@ -345,5 +361,6 @@
 <script src="js/tarayici.js"></script>
 <script src="js/yonetim.js"></script>
 <script src="js/panel-okul.js"></script>
+<script src="js/panel-talep.js"></script>
 </body>
 </html>

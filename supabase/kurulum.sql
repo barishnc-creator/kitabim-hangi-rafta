@@ -78,6 +78,20 @@ create table if not exists public.kirtasiye_okul_listeleri (
   unique (okul, sinif)
 );
 
+-- "Gelince haber ver" talepleri. Kişisel veri (ad, telefon): yalnız düzenleyici ve çalışan görür.
+create table if not exists public.kirtasiye_talepler (
+  id uuid primary key default gen_random_uuid(),
+  kitap text not null check (length(trim(kitap)) between 1 and 300),
+  kitap_id uuid references public.kirtasiye_kitaplar (id) on delete set null,
+  ad text not null check (length(trim(ad)) between 1 and 60),
+  telefon text not null check (telefon ~ '^0[2-5][0-9]{9}$'),
+  notu text not null default '' check (length(notu) <= 120),
+  onay boolean not null check (onay),
+  durum text not null default 'yeni' check (durum in ('yeni', 'arandi', 'geldi', 'iptal')),
+  olusturuldu timestamptz not null default now()
+);
+create index if not exists kirtasiye_talepler_zaman on public.kirtasiye_talepler (olusturuldu);
+
 -- Giriş yapan kişinin rolü (yoksa null).
 create or replace function public.kirtasiye_rol()
 returns text language sql stable security definer set search_path = public as $$
@@ -94,6 +108,7 @@ alter table public.kirtasiye_ayarlar enable row level security;
 alter table public.kirtasiye_revizeler enable row level security;
 alter table public.kirtasiye_aramalar enable row level security;
 alter table public.kirtasiye_okul_listeleri enable row level security;
+alter table public.kirtasiye_talepler enable row level security;
 
 -- Müşteri ekranı girişsiz çalışır: raflar, bölmeler, kitaplar ve ayarlar herkese okunur.
 drop policy if exists okuma on public.kirtasiye_raflar;
@@ -132,6 +147,15 @@ drop policy if exists okuma on public.kirtasiye_okul_listeleri;
 create policy okuma on public.kirtasiye_okul_listeleri for select to anon, authenticated using (true);
 drop policy if exists yazma on public.kirtasiye_okul_listeleri;
 create policy yazma on public.kirtasiye_okul_listeleri for all to authenticated
+  using (public.kirtasiye_rol() in ('duzenleyici', 'calisan'))
+  with check (public.kirtasiye_rol() in ('duzenleyici', 'calisan'));
+
+-- Talepler: müşteri ekranı (girişsiz) yalnız yeni talep ekler, okuyamaz.
+drop policy if exists ekleme on public.kirtasiye_talepler;
+create policy ekleme on public.kirtasiye_talepler for insert to anon, authenticated with check (onay and durum = 'yeni');
+grant insert on public.kirtasiye_talepler to anon;
+drop policy if exists yonetim on public.kirtasiye_talepler;
+create policy yonetim on public.kirtasiye_talepler for all to authenticated
   using (public.kirtasiye_rol() in ('duzenleyici', 'calisan'))
   with check (public.kirtasiye_rol() in ('duzenleyici', 'calisan'));
 

@@ -133,3 +133,6 @@ button.liste-satir:hover { background: #F8FAFC; }
 .ilerleme { height: 12px; border-radius: 999px; background: #EEF2F7; overflow: hidden; }
 .ilerleme i { display: block; height: 100%; background: #16A34A; border-radius: 999px; }
 @media (max-width: 560px) { .liste-satir { grid-template-columns: 32px minmax(0, 1fr) auto; } .liste-satir .k-rozet { grid-column: 2; justify-self: start; } }
+
+/* Ekran klavyesi açıkken pencereler üste yaslanır, klavyenin altında kalmaz. */
+body.klavye-acik .kamera-perde { align-items: flex-start; overflow-y: auto; padding-bottom: 380px; }

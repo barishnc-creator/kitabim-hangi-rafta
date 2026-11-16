@@ -41,7 +41,7 @@
       '<button type="button" class="orta" data-islem="kapat">Klavyeyi gizle</button>' +
       '<button type="button" class="genis" data-tus=" ">Boşluk</button>' +
       '<button type="button" class="orta" data-islem="sil" aria-label="Son harfi sil">⌫ Sil</button>' +
-      '<button type="button" class="orta ana" data-islem="ara">Ara</button></div>';
+      '<button type="button" class="orta ana" data-islem="ara" id="klavye-onay">Ara</button></div>';
     kutu.innerHTML = html;
     // Odak input'ta kalsın diye mousedown'da varsayılanı engelle.
     kutu.addEventListener('pointerdown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
@@ -61,6 +61,7 @@
     hedef = input;
     ayar = secenek || {};
     if (!kutu) kur();
+    kutu.querySelector('#klavye-onay').textContent = ayar.onayYazi || 'Ara';
     kutu.hidden = false;
     document.body.classList.add('klavye-acik');
   }

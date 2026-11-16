@@ -189,6 +189,24 @@
     return { kalemler: kalemler, toplam: kalemler.length, hazir: kalemler.filter(function (k) { return k.hazir; }).length, raflar: raflar };
   }
 
+  // ---- Gelince haber ver talepleri ----
+  // Telefonu 05XXXXXXXXX biçimine getirir; geçersizse ''.
+  function telefonDuzelt(t) {
+    var r = String(t || '').replace(/\D+/g, '');
+    if (/^90\d{10}$/.test(r)) r = r.slice(2);
+    if (/^5\d{9}$/.test(r)) r = '0' + r;
+    return /^0[2-5]\d{9}$/.test(r) ? r : '';
+  }
+  function talepDogrula(g) {
+    var kitap = String(g.kitap || '').trim(), ad = String(g.ad || '').trim();
+    var telefon = telefonDuzelt(g.telefon);
+    if (!kitap) throw hata('EKSIK', 'Aradığınız kitabı yazın.');
+    if (!ad) throw hata('EKSIK', 'Adınızı yazın.');
+    if (!telefon) throw hata('GECERSIZ', 'Telefon numarasını 05XX XXX XX XX biçiminde yazın.');
+    if (g.onay !== true) throw hata('ONAY', 'Devam etmek için bilgilendirme metnini onaylayın.');
+    return { kitap: kitap.slice(0, 300), kitapId: g.kitapId || null, ad: ad.slice(0, 60), telefon: telefon, not: String(g.not || '').slice(0, 120), onay: true };
+  }
+
   // Yedekten gelen veriyi doğrulayıp eksik alanları tamamlar.
   function duzelt(ham) {
     var d = bos();
@@ -212,6 +230,7 @@
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
     kitapKaydet: kitapKaydet, kitapSil: kitapSil,
+    telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

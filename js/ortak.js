@@ -47,6 +47,8 @@
   ikon.klavye = s('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M8 16h8"/>', 24);
   ikon.ok = s('<path d="M5 12h14M12 5l7 7-7 7"/>');
   ikon.okul = s('<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>');
+  ikon.zil = s('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>');
+  ikon.tel = s('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>', 16);
   ikon.geri = s('<path d="M19 12H5M12 19l-7-7 7-7"/>');
 
   // <span data-ikon="ad"> öğelerini simgeyle doldurur.
@@ -64,6 +66,15 @@
     var onlar = { 1: 'u', 2: 'si', 3: 'u', 4: 'ı', 5: 'si', 6: 'ı', 7: 'i', 8: 'i', 9: 'ı' };
     var ek = n === 0 ? 'ı' : n % 10 ? birler[n % 10] : n % 100 ? onlar[(n % 100) / 10] : n % 1000 ? 'ü' : 'i';
     return n + "'" + ek;
+  }
+
+  // "Gelince haber ver" formu için örnek KVKK aydınlatma metni. Mağaza kendi metniyle değiştirmeli (hukukçu kontrolü önerilir).
+  function kvkkMetni(magaza) {
+    var m = magaza || 'Mağazamız';
+    return m + ' olarak, “gelince haber ver” talebi için verdiğiniz adınızı ve telefon numaranızı yalnız aradığınız kitap mağazaya ulaştığında sizinle iletişime geçmek amacıyla işliyoruz.\n\n' +
+      'Bilgileriniz üçüncü kişilerle paylaşılmaz, reklam amacıyla kullanılmaz ve talebiniz sonuçlandıktan sonra en geç 90 gün içinde silinir.\n\n' +
+      'KVKK 11. maddesindeki haklarınız (bilgilerinize erişme, düzeltme, silinmesini isteme) için mağaza görevlisine başvurabilirsiniz.\n\n' +
+      '(Bu bir örnek metindir; mağaza kendi bilgileriyle güncellemelidir.)';
   }
 
   function tarihKisa(t) {
@@ -108,5 +119,5 @@
     });
   }
 
-  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon, pencere: pencere, ikonlariDoldur: ikonlariDoldur, tarihKisa: tarihKisa, sayiEki: sayiEki };
+  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon, pencere: pencere, ikonlariDoldur: ikonlariDoldur, tarihKisa: tarihKisa, sayiEki: sayiEki, kvkkMetni: kvkkMetni };
 })(window);

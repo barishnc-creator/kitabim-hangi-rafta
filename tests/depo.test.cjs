@@ -109,3 +109,18 @@ test('okul listesi: zorunlu alanlar, aynı okul+sınıf engeli, durum hesabı', 
   Depo.okulListesiSil(d, l.id);
   assert.equal(d.okulListeleri.length, 0);
 });
+
+test('talep: telefon biçimi, zorunlu alanlar ve onay', () => {
+  assert.equal(Depo.telefonDuzelt('0532 123 45 67'), '05321234567');
+  assert.equal(Depo.telefonDuzelt('+90 (532) 123-45-67'), '05321234567');
+  assert.equal(Depo.telefonDuzelt('532 123 45 67'), '05321234567');
+  assert.equal(Depo.telefonDuzelt('0212 123 45 67'), '02121234567');
+  assert.equal(Depo.telefonDuzelt('123'), '');
+  assert.equal(Depo.telefonDuzelt('0832 123 45 67'), '');
+  const iyi = { kitap: 'Suç ve Ceza', ad: 'Ayşe', telefon: '0532 123 45 67', onay: true };
+  assert.equal(Depo.talepDogrula(iyi).telefon, '05321234567');
+  assert.throws(() => Depo.talepDogrula({ ...iyi, kitap: ' ' }), { kod: 'EKSIK' });
+  assert.throws(() => Depo.talepDogrula({ ...iyi, ad: '' }), { kod: 'EKSIK' });
+  assert.throws(() => Depo.talepDogrula({ ...iyi, telefon: '12' }), { kod: 'GECERSIZ' });
+  assert.throws(() => Depo.talepDogrula({ ...iyi, onay: 'evet' }), { kod: 'ONAY' });
+});

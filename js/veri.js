@@ -18,6 +18,9 @@
     var ANAHTAR = 'kitabim-hangi-rafta:v1';
     var REVIZE = 'kitabim-hangi-rafta:revizeler';
     var ARAMA = 'kitabim-hangi-rafta:aramalar';
+    var TALEP = 'kitabim-hangi-rafta:talepler';
+    function talepOku() { try { return JSON.parse(kok.localStorage.getItem(TALEP)) || []; } catch (e) { return []; } }
+    function talepYaz(l) { kok.localStorage.setItem(TALEP, JSON.stringify(l)); return Promise.resolve(); }
     function oku() {
       try { return Depo.duzelt(JSON.parse(kok.localStorage.getItem(ANAHTAR))); } catch (e) { return Depo.bos(); }
     }
@@ -81,6 +84,18 @@
       uyeRol: function () { return Promise.reject(new Error('Bulut modu gerekli.')); },
       uyeSifre: function () { return Promise.reject(new Error('Bulut modu gerekli.')); },
       uyeKaldir: function () { return Promise.reject(new Error('Bulut modu gerekli.')); },
+
+      talepEkle: function (g) {
+        var t = Depo.talepDogrula(g);
+        t.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        t.durum = 'yeni';
+        t.olusturuldu = new Date().toISOString();
+        var l = talepOku(); l.unshift(t);
+        return talepYaz(l).then(function () { return t; });
+      },
+      talepler: function () { return Promise.resolve(talepOku()); },
+      talepDurum: function (id, durum) { return talepYaz(talepOku().map(function (t) { return t.id === id ? Object.assign({}, t, { durum: durum }) : t; })); },
+      talepSil: function (ids) { ids = [].concat(ids); return talepYaz(talepOku().filter(function (t) { return ids.indexOf(t.id) < 0; })); },
 
       revizeler: function () { return Promise.resolve(revizeOku()); },
       revizeEkle: function (metin) {
@@ -274,6 +289,18 @@
       uyeRol: function (id, rol) { return fonksiyon({ islem: 'rol', user_id: id, rol: rol }); },
       uyeSifre: function (id, sifre) { return fonksiyon({ islem: 'sifre', user_id: id, sifre: sifre }); },
       uyeKaldir: function (id) { return fonksiyon({ islem: 'kaldir', user_id: id }); },
+
+      talepEkle: function (g) {
+        var t = Depo.talepDogrula(g);
+        return sb.from('kirtasiye_talepler').insert({ kitap: t.kitap, kitap_id: t.kitapId, ad: t.ad, telefon: t.telefon, notu: t.not, onay: true })
+          .then(kontrol).then(function () { return t; });
+      },
+      talepler: function () {
+        return sb.from('kirtasiye_talepler').select('id,kitap,kitap_id,ad,telefon,notu,durum,olusturuldu').order('olusturuldu', { ascending: false }).limit(1000).then(kontrol)
+          .then(function (l) { return l.map(function (t) { return { id: t.id, kitap: t.kitap, kitapId: t.kitap_id, ad: t.ad, telefon: t.telefon, not: t.notu, durum: t.durum, olusturuldu: t.olusturuldu }; }); });
+      },
+      talepDurum: function (id, durum) { return sb.from('kirtasiye_talepler').update({ durum: durum }).eq('id', id).then(kontrol); },
+      talepSil: function (ids) { return sb.from('kirtasiye_talepler').delete().in('id', [].concat(ids)).then(kontrol); },
 
       revizeler: function () {
         return sb.from('kirtasiye_revizeler').select('id,yazan_ad,metin,durum,olusturuldu').order('olusturuldu', { ascending: false }).then(kontrol);
