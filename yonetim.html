@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Çalışan paneli · Kitabım Hangi Rafta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/stil.css">
+<style>
+  .menu { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: #fff; border: 1px solid var(--cizgi); border-radius: 16px; padding: 8px; }
+  .menu strong { font-family: var(--baslik); font-size: 18px; padding: 0 10px; flex-grow: 1; }
+  .menu [role="tab"] { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: #374151; font: inherit; font-weight: 500; cursor: pointer; }
+  .menu [role="tab"][aria-selected="true"] { background: var(--mavi); color: #fff; font-weight: 600; }
+  .menu a { color: #374151; padding: 12px 14px; font-size: 15px; text-decoration: none; }
+  .baslik-satir { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .baslik-satir h1 { font-size: 30px; }
+  .iki-sutun { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .iki-sutun > .genis { flex: 999 1 560px; min-width: 0; }
+  .iki-sutun > .dar { flex: 1 1 320px; min-width: 0; }
+  .raf-ekle-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .raf-ekle-form .alan { flex: 1 1 200px; }
+  .raf-ekle-form .alan.kisa { flex: 0 1 130px; }
+  .kitap-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .kitap-liste li { border: 1px solid var(--cizgi); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+  .kitap-liste .metin { flex-grow: 1; min-width: 0; }
+  .kitap-liste .metin b { display: block; font-size: 15px; }
+  .kitap-liste .kod { font-family: var(--baslik); font-weight: 700; color: var(--turuncu-koyu); white-space: nowrap; }
+  .anahtar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--cizgi); }
+  .anahtar input { width: 26px; height: 26px; accent-color: var(--mavi); flex-shrink: 0; }
+  .bolum { display: flex; flex-direction: column; gap: 16px; }
+</style>
+</head>
+<body>
+<main class="sayfa">
+  <nav class="menu" aria-label="Çalışan menüsü">
+    <strong>Kitabım Hangi Rafta · Çalışan</strong>
+    <div role="tablist" aria-label="Bölümler" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="true">Raflar</button>
+      <button role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false">Kitap ekle</button>
+      <button role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false">Ayarlar</button>
+    </div>
+    <a href="index.html">Müşteri ekranı</a>
+  </nav>
+
+  <div id="genel-mesaj" role="status"></div>
+
+  <!-- RAFLAR -->
+  <section id="raflar" role="tabpanel" aria-labelledby="sek-raflar" class="bolum">
+    <div class="baslik-satir">
+      <div>
+        <h1>Raf şeması</h1>
+        <p class="soluk" style="font-size:15px;margin-top:4px">Rafları ve bölmeleri dükkândaki düzene göre kurun. Bir bölmeye dokununca içindeki kitaplar açılır.</p>
+      </div>
+    </div>
+    <form class="kart raf-ekle-form" id="raf-ekle-form">
+      <div class="alan">
+        <label for="raf-etiket">Raf etiketi <span class="soluk">(isteğe bağlı)</span></label>
+        <input id="raf-etiket" placeholder="Örn. Test kitapları">
+      </div>
+      <div class="alan kisa">
+        <label for="raf-bolme">Bölme sayısı</label>
+        <input id="raf-bolme" type="number" min="1" max="30" value="4">
+      </div>
+      <button class="dugme ana" type="submit" id="raf-ekle-dugme"></button>
+    </form>
+    <div class="iki-sutun">
+      <div class="genis"><div class="sema" id="yonetim-sema"></div></div>
+      <aside class="dar kart" id="bolme-panel" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- KİTAPLAR -->
+  <section id="kitaplar" role="tabpanel" aria-labelledby="sek-kitaplar" class="bolum" hidden>
+    <div class="iki-sutun">
+      <form class="genis kart bolum" id="kitap-form" novalidate>
+        <div class="baslik-satir">
+          <h1 id="form-baslik">Kitap ekle</h1>
+        </div>
+        <div class="alan">
+          <label for="f-barkod">Barkod</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <input id="f-barkod" inputmode="numeric" autocomplete="off" style="flex:999 1 220px;min-width:0" placeholder="Okutun ya da yazın">
+            <button class="dugme cerceve" type="button" id="f-tara" style="flex:1 1 170px">Kamerayla okut</button>
+          </div>
+          <span class="soluk">Barkod yoksa boş bırakın; kitap adıyla da bulunur.</span>
+          <div id="barkod-uyari"></div>
+        </div>
+        <div class="alan">
+          <label for="f-ad">Kitap adı <span class="zorunlu">*</span></label>
+          <input id="f-ad" autocomplete="off">
+        </div>
+        <div class="izgara-2">
+          <div class="alan"><label for="f-yazar">Yazar</label><input id="f-yazar" autocomplete="off"></div>
+          <div class="alan"><label for="f-yayinevi">Yayınevi</label><input id="f-yayinevi" autocomplete="off"></div>
+          <div class="alan"><label for="f-raf">Raf <span class="zorunlu">*</span></label><select id="f-raf"></select></div>
+          <div class="alan"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
+          <div class="alan" id="alan-fiyat"><label for="f-fiyat">Fiyat (₺)</label><input id="f-fiyat" inputmode="decimal" placeholder="Örn. 250,00"></div>
+          <div class="alan" id="alan-stok"><label for="f-stok">Stok adedi</label><input id="f-stok" inputmode="numeric" placeholder="Örn. 12"></div>
+        </div>
+        <div id="form-mesaj" role="status"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="dugme" type="button" id="f-vazgec">Vazgeç</button>
+          <button class="dugme ana" type="submit">Kaydet</button>
+        </div>
+      </form>
+      <div class="dar kart bolum">
+        <h2 style="font-size:20px">Tüm kitaplar <span class="soluk" id="kitap-sayi"></span></h2>
+        <div class="alan">
+          <label class="gizli-etiket" for="liste-ara">Listede ara</label>
+          <input id="liste-ara" type="search" placeholder="Listede ara">
+        </div>
+        <ul class="kitap-liste" id="tum-kitaplar"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- AYARLAR -->
+  <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
+    <h1 style="font-size:30px">Ayarlar</h1>
+    <div class="iki-sutun">
+      <div class="genis kart">
+        <h2 style="font-size:20px;margin-bottom:6px">Alanlar</h2>
+        <label class="anahtar"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
+        <label class="anahtar" style="border-bottom:0"><span>Stok kullanılsın<br><span class="soluk">Müşteri “Rafta var / Tükendi” görür</span></span><input type="checkbox" id="ayar-stok"></label>
+      </div>
+      <div class="dar kart bolum">
+        <h2 style="font-size:20px">Yedek</h2>
+        <p class="soluk" id="mod-bilgi"></p>
+        <button class="dugme" type="button" id="yedek-indir">Yedeği indir</button>
+        <label class="dugme" for="yedek-yukle" style="cursor:pointer">Yedekten geri yükle</label>
+        <input type="file" id="yedek-yukle" accept="application/json,.json" class="gizli-etiket">
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="vendor/html5-qrcode.min.js"></script>
+<script src="js/arama.js"></script>
+<script src="js/depo.js"></script>
+<script src="js/veri.js"></script>
+<script src="js/ortak.js"></script>
+<script src="js/tarayici.js"></script>
+<script src="js/yonetim.js"></script>
+</body>
+</html>

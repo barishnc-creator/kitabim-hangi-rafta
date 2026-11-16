@@ -1,0 +1,8 @@
+{
+  "name": "kitabim-hangi-rafta",
+  "private": true,
+  "description": "Kırtasiye raf takip programı",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs"
+  }
+}
