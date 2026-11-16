@@ -20,7 +20,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 - D&R görünümü beğenilmedi; kendi tasarımımız kalıyor, renk ayarlanabilir.
 - Şimdilik ücretsiz altyapı; müdür onaylarsa ücretli yeni Supabase projesine sıfır veriyle taşınır.
-- Fiyat paketleri (iç not): Başlangıç 20–30 bin TL + 750–1.250 TL/ay; Standart 40–60 bin TL + 1.250–2.000 TL/ay; Kiosk Standart + 10–15 bin TL.
+- Fiyat paketleri iç fiyat notundadır (kullanıcıda); herkese açık depoya yazılmaz.
 
 ## Sıradaki işler
 
