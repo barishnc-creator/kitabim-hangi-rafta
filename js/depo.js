@@ -189,6 +189,36 @@
     return { kalemler: kalemler, toplam: kalemler.length, hazir: kalemler.filter(function (k) { return k.hazir; }).length, raflar: raflar };
   }
 
+  // ---- Mağaza haritası ----
+  // plan: { raflar: { rafId: {x,y,w,h,tarif} }, nesneler: [{id,tur:'kasa'|'giris',x,y,w,h}], kiosk: {x,y}|null }
+  // Tüm ölçüler kat planının yüzdesi (0–100); harita her ekran boyutunda aynı görünür.
+  function sinirla(v, alt, ust) { v = Number(v); return isFinite(v) ? Math.max(alt, Math.min(ust, Math.round(v * 10) / 10)) : alt; }
+  function kutuDuzelt(k) {
+    var w = sinirla(k.w, 2, 100), h = sinirla(k.h, 2, 100);
+    return { x: sinirla(k.x, 0, 100 - w), y: sinirla(k.y, 0, 100 - h), w: w, h: h };
+  }
+  function planDuzelt(ham, raflar) {
+    var p = { raflar: {}, nesneler: [], kiosk: null };
+    if (!ham || typeof ham !== 'object') return p;
+    var gecerli = raflar ? raflar.map(function (r) { return r.id; }) : null;
+    Object.keys(ham.raflar || {}).forEach(function (id) {
+      var k = ham.raflar[id];
+      if (!k || (gecerli && gecerli.indexOf(id) < 0)) return;
+      var kutu = kutuDuzelt(k);
+      kutu.tarif = String(k.tarif || '').slice(0, 80);
+      p.raflar[id] = kutu;
+    });
+    (Array.isArray(ham.nesneler) ? ham.nesneler : []).slice(0, 20).forEach(function (n) {
+      if (!n || (n.tur !== 'kasa' && n.tur !== 'giris')) return;
+      var kutu = kutuDuzelt(n);
+      kutu.id = String(n.id || yeniId()).slice(0, 20);
+      kutu.tur = n.tur;
+      p.nesneler.push(kutu);
+    });
+    if (ham.kiosk && isFinite(Number(ham.kiosk.x)) && isFinite(Number(ham.kiosk.y))) p.kiosk = { x: sinirla(ham.kiosk.x, 0, 100), y: sinirla(ham.kiosk.y, 0, 100) };
+    return p;
+  }
+
   // ---- Gelince haber ver talepleri ----
   // Telefonu 05XXXXXXXXX biçimine getirir; geçersizse ''.
   function telefonDuzelt(t) {
@@ -225,6 +255,7 @@
       d.ayarlar.renk = /^#[0-9a-f]{6}$/i.test(ham.ayarlar.renk || '') ? ham.ayarlar.renk : '';
       d.ayarlar.logo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(ham.ayarlar.logo || '') && ham.ayarlar.logo.length <= 300000 ? ham.ayarlar.logo : '';
       d.ayarlar.karsilama = String(ham.ayarlar.karsilama || '').slice(0, 80);
+      d.ayarlar.plan = planDuzelt(ham.ayarlar.plan, d.raflar.length ? d.raflar : null);
     }
     return d;
   }
@@ -233,7 +264,7 @@
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
     kitapKaydet: kitapKaydet, kitapSil: kitapSil,
-    telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
+    planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

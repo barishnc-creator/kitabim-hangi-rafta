@@ -95,3 +95,28 @@ button.bolme { cursor: pointer; }
 .kamera-kutu { background: #111827; color: #fff; border-radius: 18px; padding: 18px; width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; }
 .kamera-kutu #kamera-alani { width: 100%; min-height: 260px; border-radius: 12px; overflow: hidden; background: #1F2937; }
 .kamera-kutu p { margin: 0; color: #D1D5DB; font-size: 14px; }
+
+/* Mağaza haritası (müşteri ekranı ve panel ortak) */
+.plan { position: relative; width: 100%; aspect-ratio: 16 / 10; background-color: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 14px; overflow: hidden;
+  background-image: linear-gradient(#E2E8F0 1px, transparent 1px), linear-gradient(90deg, #E2E8F0 1px, transparent 1px); background-size: 5% 8%; touch-action: none; user-select: none; }
+.plan .raf-blok { position: absolute; background: #fff; border: 2px solid #94A3B8; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-weight: 700; font-size: clamp(11px, 1.2vw, 15px); color: #334155; line-height: 1.15; padding: 2px; overflow: hidden; }
+.plan .raf-blok small { font-weight: 500; font-size: 0.75em; color: var(--ikincil); }
+.plan .raf-blok.hedef { background: var(--turuncu); border-color: #C2410C; color: #fff; box-shadow: 0 0 0 6px rgba(234, 88, 12, .25); animation: plan-nabiz 1.6s ease-in-out infinite; z-index: 2; }
+.plan .raf-blok.hedef small { color: #FFEDD5; }
+.plan .ozel { position: absolute; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: clamp(11px, 1.1vw, 14px); font-weight: 600; }
+.plan .kasa { background: #EDE9FE; color: #5B21B6; border: 2px dashed #A78BFA; }
+.plan .giris { background: #DCFCE7; color: #166534; border: 2px solid #86EFAC; }
+.plan .siz { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; color: var(--mavi); z-index: 3; white-space: nowrap; }
+.plan .siz i { width: 22px; height: 22px; border-radius: 50%; background: var(--mavi); border: 4px solid #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--mavi) 30%, transparent); display: block; transform: translateY(11px); }
+.plan svg.yol { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; color: var(--mavi); z-index: 2; }
+.plan svg.yol polyline { animation: plan-yol 1s linear infinite; }
+.plan .yol-uc { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--mavi); transform: translate(-50%, -50%); z-index: 2; }
+@keyframes plan-nabiz { 50% { box-shadow: 0 0 0 12px rgba(234, 88, 12, .12); } }
+@keyframes plan-yol { to { stroke-dashoffset: -18; } }
+@media (prefers-reduced-motion: reduce) { .plan .raf-blok.hedef, .plan svg.yol polyline { animation: none; } }
+/* Düzenleyici */
+.plan.duzenle .raf-blok, .plan.duzenle .ozel, .plan.duzenle .siz { cursor: grab; }
+.plan.duzenle .secili { outline: 3px solid var(--mavi); outline-offset: 2px; z-index: 4; }
+.plan .tutamac { position: absolute; right: -2px; bottom: -2px; width: 16px; height: 16px; background: var(--mavi); border: 2px solid #fff; border-radius: 4px; cursor: nwse-resize; }
+.plan-lejant { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ikincil); }
+.plan-lejant span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }

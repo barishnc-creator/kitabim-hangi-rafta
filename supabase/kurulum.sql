@@ -50,6 +50,7 @@ alter table public.kirtasiye_ayarlar add column if not exists magaza_adi text no
 alter table public.kirtasiye_ayarlar add column if not exists renk text not null default '' check (renk = '' or renk ~ '^#[0-9A-Fa-f]{6}$');
 alter table public.kirtasiye_ayarlar add column if not exists logo text not null default '' check (logo = '' or (logo ~ '^data:image/(png|jpeg|webp);base64,' and length(logo) <= 300000));
 alter table public.kirtasiye_ayarlar add column if not exists karsilama text not null default '' check (length(karsilama) <= 80);
+alter table public.kirtasiye_ayarlar add column if not exists plan jsonb not null default '{}'::jsonb check (pg_column_size(plan) < 100000);
 insert into public.kirtasiye_ayarlar (id) values (1) on conflict do nothing;
 
 -- Müşteri ekranındaki aramalar (en çok arananlar / bulunamayanlar raporu için). Kişisel bilgi tutulmaz.

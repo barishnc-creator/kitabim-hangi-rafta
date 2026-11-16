@@ -91,6 +91,7 @@
     <nav role="tablist" aria-label="Bölümler" aria-orientation="vertical">
       <button class="yan-ogesi" role="tab" id="sek-genel" aria-controls="genel" aria-selected="true"><span data-ikon="pano"></span>Genel bakış</button>
       <button class="yan-ogesi" role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="false"><span data-ikon="raf"></span>Raflar</button>
+      <button class="yan-ogesi" role="tab" id="sek-harita" aria-controls="harita" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="konum20"></span>Mağaza haritası</button>
       <button class="yan-ogesi" role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false"><span data-ikon="kitap18"></span>Kitaplar</button>
       <button class="yan-ogesi" role="tab" id="sek-okul" aria-controls="okul" aria-selected="false"><span data-ikon="okul"></span>Okul listeleri</button>
       <button class="yan-ogesi" role="tab" id="sek-talepler" aria-controls="talepler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="zil"></span>Talepler<span class="sayac" id="talep-sayac" hidden></span></button>
@@ -146,6 +147,25 @@
         <div class="iki-sutun">
           <div class="genis"><div class="sema" id="yonetim-sema"></div></div>
           <aside class="dar kart" id="bolme-panel" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <!-- MAĞAZA HARİTASI -->
+      <section id="harita" role="tabpanel" aria-labelledby="sek-harita" class="bolum" hidden>
+        <div class="arac-cubugu">
+          <p class="soluk" style="font-size:15px;flex:1 1 320px">Rafları sürükleyerek mağazadaki yerlerine koyun, köşedeki tutamaçla boyutlandırın. Müşteri ekranı, kiosk noktasından rafa yolu gösterir.</p>
+          <button class="dugme" type="button" data-harita-ekle="kasa">+ Kasa</button>
+          <button class="dugme" type="button" data-harita-ekle="giris">+ Giriş</button>
+          <button class="dugme" type="button" data-harita-ekle="kiosk">Kiosk yerini koy</button>
+          <button class="dugme ana" type="button" id="harita-kaydet">Haritayı kaydet</button>
+        </div>
+        <div id="harita-durum" role="status"></div>
+        <div class="iki-sutun">
+          <div class="genis kart"><div class="plan duzenle" id="harita-plan" tabindex="0" aria-label="Mağaza haritası düzenleyici. Seçili öğeyi ok tuşlarıyla taşıyın."></div></div>
+          <aside class="dar bolum">
+            <div class="kart bolum" id="harita-ozellik"></div>
+            <div class="kart bolum"><h2 style="font-size:17px">Yerleştirilmemiş raflar</h2><div id="harita-bekleyen" style="display:flex;gap:8px;flex-wrap:wrap"></div></div>
+          </aside>
         </div>
       </section>
 
@@ -383,6 +403,8 @@
 <script src="js/yonetim.js"></script>
 <script src="js/panel-okul.js"></script>
 <script src="js/panel-talep.js"></script>
+<script src="js/harita.js"></script>
 <script src="js/panel-gorunum.js"></script>
+<script src="js/panel-harita.js"></script>
 </body>
 </html>

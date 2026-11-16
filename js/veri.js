@@ -152,7 +152,7 @@
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
         hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok,kapak,eklendi', 'ad'),
-        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi,renk,logo,karsilama').eq('id', 1).maybeSingle().then(kontrol),
+        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi,renk,logo,karsilama,plan').eq('id', 1).maybeSingle().then(kontrol),
         hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul')
       ]).then(function (s) {
         var d = Depo.bos();
@@ -163,7 +163,7 @@
           return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
             fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok, kapak: k.kapak || '', eklendi: k.eklendi };
         });
-        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama } }).ayarlar;
+        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan } }).ayarlar;
         d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
         return d;
@@ -259,7 +259,7 @@
         return sb.from('kirtasiye_aramalar').select('sorgu,sonuc,zaman').gte('zaman', sinir).order('zaman', { ascending: false }).limit(5000).then(kontrol);
       },
       ayarKaydet: function (alan, deger) {
-        var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama' };
+        var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama', plan: 'plan' };
         if (sutun[alan]) {
           var o = {}; o[alan] = deger;
           g[sutun[alan]] = Depo.duzelt({ ayarlar: o }).ayarlar[alan];

@@ -49,9 +49,17 @@
     if (k.stok <= 2) return '<span class="k-rozet az">Son ' + k.stok + ' adet</span>';
     return '<span class="k-rozet var">Rafta var</span>';
   }
+  // Mağaza haritası varsa haritayı ve yolu, yoksa raf şemasını gösterir.
   function sema(hedefBolmeId, hedefRafId) {
     var raflar = O.sirali(d.raflar);
     if (!raflar.length) return '';
+    var plan = d.ayarlar.plan;
+    var hedefRaf = hedefRafId || (hedefBolmeId && (Depo.konum(d, hedefBolmeId) || {}).raf || {}).id;
+    if (Harita.haritaVar(plan) && (!hedefRaf || plan.raflar[hedefRaf])) {
+      return '<div class="kart"><div class="k-bolum-baslik"><h2 style="font-size:20px">' + (hedefRaf ? 'Rafa nasıl gidilir?' : 'Mağaza haritası') + '</h2>' +
+        (hedefRaf ? '<div class="plan-lejant">' + (plan.kiosk ? '<span style="--c:var(--mavi)">Buradasınız</span>' : '') + '<span style="--c:var(--turuncu)">Aradığınız raf</span></div>' : '') + '</div>' +
+        Harita.ciz(plan, raflar, hedefRaf) + '</div>';
+    }
     return '<div class="kart"><div class="k-bolum-baslik"><h2 style="font-size:20px">Raf şeması</h2>' +
       (hedefBolmeId || hedefRafId ? '<span class="soluk">Turuncu: aradığınız yer</span>' : '') + '</div><div class="sema">' +
       raflar.map(function (r) {
@@ -63,6 +71,10 @@
             return '<div class="bolme' + (bu ? ' hedef' : '') + '"' + (bu ? ' aria-label="Aradığınız kitap burada"' : '') + '>' + r.no + '.' + b.no + '</div>';
           }).join('') + '</div></div>';
       }).join('') + '</div></div>';
+  }
+  function tarif(raf) {
+    var k = d.ayarlar.plan && d.ayarlar.plan.raflar && d.ayarlar.plan.raflar[raf.id];
+    return k && k.tarif ? k.tarif : '';
   }
   function telefonQr(k, tur, baslik, aciklama) {
     if (typeof window.qrcode !== 'function' || telefondan) return '';
@@ -122,7 +134,7 @@
       (k.barkod ? '<p class="soluk" style="margin-top:6px">Barkod: ' + O.kacis(k.barkod) + '</p>' : '') + '</div></div>' +
       (yer
         ? '<div class="k-yer">' + O.ikon.konum + '<div><p>Bu kitap burada</p><strong>' + yer.raf.no + '. Raf · Bölme ' + yer.kod + '</strong>' +
-          (yer.raf.etiket ? '<p style="font-weight:500;margin-top:4px">' + O.kacis(yer.raf.etiket) + ' rafı</p>' : '') + '</div></div>'
+          (tarif(yer.raf) || yer.raf.etiket ? '<p style="font-weight:500;margin-top:4px">' + O.kacis(tarif(yer.raf) || yer.raf.etiket + ' rafı') + '</p>' : '') + '</div></div>'
         : '<div class="mesaj hata">Bu kitabın rafı kayıtlı değil. Lütfen görevliye sorun.</div>') +
       (rozetler ? '<div class="k-rozetler">' + rozetler + '</div>' : '') +
       (k.stok === 0 && d.ayarlar.stok ? '<button type="button" class="dugme ana" data-talep-kitap="' + O.kacis(k.ad) + '" data-talep-id="' + O.kacis(k.id) + '" style="min-height:56px;font-size:17px">Gelince haber verilsin</button>' : '') +
