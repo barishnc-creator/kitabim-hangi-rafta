@@ -18,9 +18,9 @@ body.kiosk-govde { background: #F3F5F9; min-height: 100vh; }
 
 /* Arama çubuğu */
 .k-arama { display: flex; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--cizgi); border-radius: 22px; padding: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
-.k-arama-kutu { flex: 999 1 380px; display: flex; align-items: center; gap: 12px; background: var(--zemin); border-radius: 16px; padding: 0 12px 0 20px; min-height: 72px; color: var(--ikincil); }
+.k-arama-kutu { min-width: 0; flex: 999 1 380px; display: flex; align-items: center; gap: 12px; background: var(--zemin); border-radius: 16px; padding: 0 12px 0 20px; min-height: 72px; color: var(--ikincil); }
 .k-arama-kutu input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
-.k-arama-kutu input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: clamp(20px, 2.4vw, 26px); color: var(--yazi); outline: none; }
+.k-arama-kutu input { flex: 1; width: 0; min-width: 0; border: 0; background: transparent; font: inherit; font-size: clamp(20px, 2.4vw, 26px); color: var(--yazi); outline: none; }
 .k-arama .dugme { min-height: 72px; font-size: 19px; border-radius: 16px; white-space: nowrap; flex: 1 1 150px; }
 .k-temizle { width: 48px; height: 48px; border-radius: 50%; border: 0; background: #E2E8F0; color: #334155; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
