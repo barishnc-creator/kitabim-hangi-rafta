@@ -118,3 +118,18 @@ body.klavye-acik .k-sayfa { padding-bottom: 360px; }
 
 .k-alt { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--ikincil); font-size: 14px; }
 .k-alt a, .k-alt button { color: var(--ikincil); background: none; border: 0; font: inherit; padding: 10px 4px; cursor: pointer; text-decoration: underline; }
+
+/* Okul listeleri */
+.k-cipler { display: flex; gap: 10px; flex-wrap: wrap; }
+.secim-cip { display: inline-flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 22px; border-radius: 14px; border: 1px solid var(--cizgi); background: #fff; font: inherit; font-size: 18px; font-weight: 600; color: var(--yazi); cursor: pointer; }
+.secim-cip[aria-pressed="true"] { background: var(--mavi); border-color: var(--mavi); color: #fff; }
+.liste-satir { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 12px 4px; border-bottom: 1px solid #EEF1F5; width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; font: inherit; color: inherit; text-align: left; }
+button.liste-satir { cursor: pointer; }
+button.liste-satir:hover { background: #F8FAFC; }
+.liste-satir:last-child { border-bottom: 0; }
+.liste-satir .no { width: 32px; height: 32px; border-radius: 50%; background: #EEF2F7; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #334155; }
+.liste-satir b { display: block; font-size: 17px; }
+.liste-satir .alt { font-size: 14px; color: var(--ikincil); }
+.ilerleme { height: 12px; border-radius: 999px; background: #EEF2F7; overflow: hidden; }
+.ilerleme i { display: block; height: 100%; background: #16A34A; border-radius: 999px; }
+@media (max-width: 560px) { .liste-satir { grid-template-columns: 32px minmax(0, 1fr) auto; } .liste-satir .k-rozet { grid-column: 2; justify-self: start; } }

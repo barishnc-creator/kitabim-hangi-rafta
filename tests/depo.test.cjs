@@ -87,3 +87,25 @@ test('bozuk yedek dosyası güvenli şekilde düzeltilir', () => {
   assert.equal(d.ayarlar.fiyat, false);
   assert.equal(d.ayarlar.stok, true);
 });
+
+test('okul listesi: zorunlu alanlar, aynı okul+sınıf engeli, durum hesabı', () => {
+  const { d, r1, r2 } = ornek();
+  const a = Depo.kitapKaydet(d, { ad: 'A', bolmeId: r1.bolmeler[0].id, stok: 3 });
+  const b = Depo.kitapKaydet(d, { ad: 'B', bolmeId: r2.bolmeler[1].id, stok: 0 });
+  assert.throws(() => Depo.okulListesiKaydet(d, { okul: '', sinif: '7-A' }), { kod: 'EKSIK' });
+  assert.throws(() => Depo.okulListesiKaydet(d, { okul: 'X', sinif: ' ' }), { kod: 'EKSIK' });
+  const l = Depo.okulListesiKaydet(d, { okul: 'Örnek Ortaokulu', sinif: '7-A', kalemler: [{ metin: 'A', kitapId: a.id }, { metin: 'B', kitapId: b.id }, { metin: 'Yok', kitapId: null }, { metin: '  ' }] });
+  assert.equal(l.kalemler.length, 3);
+  assert.throws(() => Depo.okulListesiKaydet(d, { okul: 'örnek ortaokulu', sinif: '7-a' }), { kod: 'AYNI_LISTE' });
+  Depo.okulListesiKaydet(d, Object.assign({}, l, { sinif: '7-A' })); // kendi kaydını güncellemek serbest
+  assert.equal(Depo.okulListesiKaydet(d, { okul: 'ÖRNEK ORTAOKULU', sinif: '8-A' }).okul, 'Örnek Ortaokulu');
+  Depo.okulListesiSil(d, d.okulListeleri[1].id);
+  const durum = Depo.listeDurumu(d, d.okulListeleri[0]);
+  assert.equal(durum.toplam, 3);
+  assert.equal(durum.hazir, 1); // B tükendi, üçüncü mağazada yok
+  assert.deepEqual(durum.raflar, { 1: 1 });
+  Depo.kitapSil(d, a.id);
+  assert.equal(Depo.listeDurumu(d, d.okulListeleri[0]).hazir, 0, 'silinen kitap eksik sayılır');
+  Depo.okulListesiSil(d, l.id);
+  assert.equal(d.okulListeleri.length, 0);
+});

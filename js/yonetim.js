@@ -44,7 +44,10 @@
     magazaAdiYaz();
     if (!$('genel').hidden) panoCiz();
     if (!$('etiketler').hidden) etiketCiz();
+    Object.keys(ekSekmeler).forEach(function (ad) { if ($(ad) && !$(ad).hidden) ekSekmeler[ad](); });
+    herCizim.forEach(function (fn) { fn(); });
   }
+  var ekSekmeler = {}, herCizim = [];
 
   function magazaAdiYaz() {
     var ad = d.ayarlar.magazaAdi || 'Kitabım Hangi Rafta';
@@ -72,6 +75,7 @@
     if (ad === 'etiketler') etiketCiz();
     if (ad === 'revizeler') revizeleriCiz();
     if (ad === 'kullanicilar') uyeleriCiz();
+    if (ekSekmeler[ad]) ekSekmeler[ad]();
   }
   document.addEventListener('click', function (e) {
     var g = e.target.closest('[data-git]');
@@ -703,6 +707,25 @@
   }
 
   var dinleniyor = false;
+  // Ayrı dosyalardaki bölümler (okul listeleri, talepler, harita, geçmiş) buradan bağlanır.
+  window.Panel = {
+    d: function () { return d; },
+    ben: function () { return ben; },
+    yap: yap, sus: sus, bildir: bildir, genel: genel, yetkili: yetkili, kapakHucre: kapakHucre,
+    sekmeEkle: function (ad, baslik, ciz) {
+      sekmeler.push(ad); BASLIK[ad] = baslik; ekSekmeler[ad] = ciz;
+      $('sek-' + ad).addEventListener('click', function () { sekmeAc(ad); });
+    },
+    herCizimde: function (fn) { herCizim.push(fn); },
+    sekmeAc: function (ad) { sekmeAc(ad); },
+    kitapFormuAc: function (giris) {
+      formuTemizle(giris && giris.bolmeId);
+      bildir($('form-mesaj'), '', '');
+      if (giris && giris.ad) $('f-ad').value = giris.ad;
+      cekmeceAc(giris && giris.ad ? 'f-yazar' : 'f-barkod');
+    }
+  };
+
   O.ikonlariDoldur();
   function baslat() {
     return Veri.oturum().then(function (o) {
@@ -721,5 +744,11 @@
       }).catch(function (e) { genel('hata', e.message); });
     });
   }
-  baslat();
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.slice(1);
+    if (ben && sekmeler.indexOf(h) >= 0) sekmeAc(h);
+  });
+
+  // Ek bölüm dosyaları yüklensin diye sayfa tamamen hazır olunca başla.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', baslat); else setTimeout(baslat, 0);
 })();

@@ -68,6 +68,16 @@ create table if not exists public.kirtasiye_revizeler (
   olusturuldu timestamptz not null default now()
 );
 
+-- Okul kitap listeleri (müşteri ekranında okul → sınıf seçilerek görülür).
+create table if not exists public.kirtasiye_okul_listeleri (
+  id uuid primary key default gen_random_uuid(),
+  okul text not null check (length(trim(okul)) between 1 and 80),
+  sinif text not null check (length(trim(sinif)) between 1 and 20),
+  kalemler jsonb not null default '[]'::jsonb check (jsonb_typeof(kalemler) = 'array'),
+  guncellendi timestamptz not null default now(),
+  unique (okul, sinif)
+);
+
 -- Giriş yapan kişinin rolü (yoksa null).
 create or replace function public.kirtasiye_rol()
 returns text language sql stable security definer set search_path = public as $$
@@ -83,6 +93,7 @@ alter table public.kirtasiye_kitaplar enable row level security;
 alter table public.kirtasiye_ayarlar enable row level security;
 alter table public.kirtasiye_revizeler enable row level security;
 alter table public.kirtasiye_aramalar enable row level security;
+alter table public.kirtasiye_okul_listeleri enable row level security;
 
 -- Müşteri ekranı girişsiz çalışır: raflar, bölmeler, kitaplar ve ayarlar herkese okunur.
 drop policy if exists okuma on public.kirtasiye_raflar;
@@ -116,6 +127,14 @@ drop policy if exists okuma on public.kirtasiye_uyeler;
 create policy okuma on public.kirtasiye_uyeler for select to authenticated
   using (user_id = auth.uid() or public.kirtasiye_rol() = 'duzenleyici');
 
+-- Okul listeleri: herkes okur (müşteri ekranı), düzenleyici ve çalışan yönetir.
+drop policy if exists okuma on public.kirtasiye_okul_listeleri;
+create policy okuma on public.kirtasiye_okul_listeleri for select to anon, authenticated using (true);
+drop policy if exists yazma on public.kirtasiye_okul_listeleri;
+create policy yazma on public.kirtasiye_okul_listeleri for all to authenticated
+  using (public.kirtasiye_rol() in ('duzenleyici', 'calisan'))
+  with check (public.kirtasiye_rol() in ('duzenleyici', 'calisan'));
+
 -- Aramalar: müşteri ekranı (girişsiz) yalnız ekler; düzenleyici ve revize veren raporda görür.
 drop policy if exists ekleme on public.kirtasiye_aramalar;
 create policy ekleme on public.kirtasiye_aramalar for insert to anon, authenticated with check (true);
@@ -142,7 +161,7 @@ create policy silme on public.kirtasiye_revizeler for delete to authenticated
 do $$
 declare t text;
 begin
-  foreach t in array array['kirtasiye_raflar', 'kirtasiye_bolmeler', 'kirtasiye_kitaplar', 'kirtasiye_ayarlar', 'kirtasiye_revizeler'] loop
+  foreach t in array array['kirtasiye_raflar', 'kirtasiye_bolmeler', 'kirtasiye_kitaplar', 'kirtasiye_ayarlar', 'kirtasiye_revizeler', 'kirtasiye_okul_listeleri'] loop
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t) then
       execute format('alter publication supabase_realtime add table public.%I', t);
     end if;

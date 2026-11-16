@@ -11,7 +11,7 @@
   var adres = new URLSearchParams(location.search);
   var kioskModu = adres.get('kiosk') === '1' ||
     (window.matchMedia && matchMedia('(pointer: coarse)').matches && window.innerWidth >= 1000);
-  var telefondan = adres.get('kitap'); // "Telefonuna al" QR'ından gelindiyse
+  var telefondan = adres.get('kitap') || adres.get('liste'); // "Telefonuna al" QR'ından gelindiyse
 
   O.ikonlariDoldur();
   if (kioskModu) sorgu.setAttribute('inputmode', 'none');
@@ -64,18 +64,29 @@
           }).join('') + '</div></div>';
       }).join('') + '</div></div>';
   }
-  function telefonQr(k) {
+  function telefonQr(k, tur, baslik, aciklama) {
     if (typeof window.qrcode !== 'function' || telefondan) return '';
-    var url = location.origin + location.pathname + '?kitap=' + encodeURIComponent(k.id);
+    var url = location.origin + location.pathname + '?' + (tur || 'kitap') + '=' + encodeURIComponent(k.id);
     var qr = window.qrcode(0, 'M');
     qr.addData(url);
     qr.make();
     return '<div class="k-telefon">' + qr.createSvgTag({ cellSize: 3, margin: 2, scalable: true }) +
-      '<div><b>Telefonunuza alın</b><span>Kameranızla okutun; kitabın yeri telefonunuzda açılsın.</span></div></div>';
+      '<div><b>' + (baslik || 'Telefonunuza alın') + '</b><span>' + (aciklama || 'Kameranızla okutun; kitabın yeri telefonunuzda açılsın.') + '</span></div></div>';
   }
 
   // ---------- Ekranlar ----------
+  function okullar() {
+    var g = {};
+    d.okulListeleri.forEach(function (l) { (g[l.okul] = g[l.okul] || []).push(l); });
+    Object.keys(g).forEach(function (o) { g[o].sort(function (a, b) { return a.sinif.localeCompare(b.sinif, 'tr', { numeric: true }); }); });
+    return g;
+  }
   function karsilamaCiz() {
+    var g = okullar(), adlar = Object.keys(g).sort(function (a, b) { return a.localeCompare(b, 'tr'); });
+    $('okul-kutu').hidden = !adlar.length;
+    $('okul-gezin').innerHTML = adlar.map(function (o) {
+      return '<button type="button" class="k-raf-dugme" data-okul-ad="' + O.kacis(o) + '"><b style="font-size:18px">' + O.kacis(o) + '</b><span>' + g[o].length + ' sınıf listesi</span></button>';
+    }).join('');
     var raflar = O.sirali(d.raflar);
     $('raf-gezin-kutu').hidden = !raflar.length;
     $('raf-gezin').innerHTML = raflar.map(function (r) {
@@ -161,6 +172,47 @@
     O.ikonlariDoldur(sonuc);
   }
 
+  // ---------- Okul listeleri ----------
+  function okulGoster(okul, listeId) {
+    var g = okullar(), adlar = Object.keys(g).sort(function (a, b) { return a.localeCompare(b, 'tr'); });
+    var liste = listeId && d.okulListeleri.find(function (l) { return l.id === listeId; });
+    if (liste) okul = liste.okul;
+    if (!okul || !g[okul]) okul = adlar[0];
+    if (!okul) return karsilamaGoster();
+    var html = '<div style="display:flex;flex-direction:column;gap:18px">' +
+      (telefondan ? '' : '<button type="button" class="dugme k-geri" data-is="ana"><span data-ikon="geri"></span>Başa dön</button>') +
+      '<div class="kart" style="display:flex;flex-direction:column;gap:14px"><h2 style="font-size:28px">' + (liste ? 'Okul kitap listesi' : 'Okulunuzu ve sınıfınızı seçin') + '</h2>' +
+      (telefondan ? '' : '<div class="k-cipler">' + adlar.map(function (o) {
+        return '<button type="button" class="secim-cip" data-okul-ad="' + O.kacis(o) + '" aria-pressed="' + (o === okul) + '">' + O.kacis(o) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="k-cipler">' + g[okul].map(function (l) {
+        return '<button type="button" class="secim-cip" data-liste="' + l.id + '" aria-pressed="' + (liste && l.id === liste.id) + '">' + O.kacis(l.sinif) + '</button>';
+      }).join('') + '</div>') + '</div>';
+    if (liste) {
+      var du = Depo.listeDurumu(d, liste);
+      var raflar = Object.keys(du.raflar).sort(function (a, b) { return a - b; }).map(function (n) { return n + '. Raf (' + du.raflar[n] + ')'; }).join(' · ');
+      var eksik = du.toplam - du.hazir;
+      html += '<div class="k-sonuc"><div class="kart"><div class="k-bolum-baslik"><h2 style="font-size:22px">' + O.kacis(liste.okul + ' · ' + liste.sinif) + '</h2><span class="soluk">' + du.toplam + ' kitap</span></div>' +
+        du.kalemler.map(function (k, i) {
+          var rozet = !k.kitap || !k.yer ? '<span class="k-rozet yok">Mağazada yok</span>'
+            : k.kitap.stok === 0 ? '<span class="k-rozet yok">Tükendi</span>'
+            : d.ayarlar.stok && k.kitap.stok != null && k.kitap.stok <= 2 ? '<span class="k-rozet az">Son ' + k.kitap.stok + ' adet</span>'
+            : '<span class="k-rozet var">Rafta var</span>';
+          var ic = '<span class="no">' + (i + 1) + '</span><span style="min-width:0"><b>' + O.kacis(k.kitap ? k.kitap.ad : Arama.satirCoz(k.metin).ad) + '</b><span class="alt">' +
+            O.kacis(k.kitap ? (k.kitap.yazar || k.kitap.yayinevi || '') : 'Görevliye sorabilirsiniz') + '</span></span>' + rozet + (k.yer ? '<span class="k-kod">' + k.yer.kod + '</span>' : '<span></span>');
+          return k.kitap ? '<button type="button" class="liste-satir" data-kitap="' + k.kitap.id + '">' + ic + '</button>' : '<div class="liste-satir">' + ic + '</div>';
+        }).join('') + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:16px"><div class="kart" style="display:flex;flex-direction:column;gap:12px"><h3 style="font-size:20px">Listenin durumu</h3>' +
+        '<div class="ilerleme" role="img" aria-label="' + du.hazir + ' / ' + du.toplam + ' hazır"><i style="width:' + (du.toplam ? Math.round(du.hazir / du.toplam * 100) : 0) + '%"></i></div>' +
+        '<p style="margin:0;font-size:18px"><b>' + du.toplam + ' kitaptan ' + O.sayiEki(du.hazir) + '</b> mağazada hazır.</p>' +
+        (raflar ? '<p class="soluk" style="font-size:15px">Raflar: ' + raflar + '</p>' : '') +
+        (eksik && !telefondan ? '<button type="button" class="dugme ana" data-talep-liste="' + liste.id + '" style="min-height:56px;font-size:17px">Eksik ' + eksik + ' kitap için haber verilsin</button>' : '') +
+        '</div>' + telefonQr(liste, 'liste', 'Listeyi telefonunuza alın', 'Rafları gezerken listeyi telefonunuzdan takip edin.') + '</div></div>';
+    }
+    sonucGoster(html + '</div>');
+    O.ikonlariDoldur(sonuc);
+  }
+
   function bulunamadi(s) {
     sonucGoster('<div class="kart" style="text-align:center;padding:48px 20px;display:flex;flex-direction:column;gap:12px;align-items:center">' +
       '<h2 style="font-size:28px">“' + O.kacis(String(s).trim()) + '” bulunamadı</h2>' +
@@ -242,6 +294,10 @@
       }
       return;
     }
+    var okulB = e.target.closest('[data-okul-ad]');
+    if (okulB) { okulGoster(okulB.getAttribute('data-okul-ad'), null); return; }
+    var listeB = e.target.closest('[data-liste]');
+    if (listeB) { okulGoster(null, listeB.getAttribute('data-liste')); return; }
     var r = e.target.closest('[data-raf]');
     if (r) { rafGoster(r.getAttribute('data-raf')); return; }
     if (e.target.closest('[data-is=ana]')) { sorgu.value = ''; $('temizle').hidden = true; karsilamaGoster(); }
@@ -279,8 +335,9 @@
   Veri.yukle().then(function (yeni) {
     d = yeni;
     magazaAdi();
-    var k = telefondan && d.kitaplar.find(function (x) { return x.id === telefondan; });
-    if (k) kitapGoster(k, null); else karsilamaGoster();
+    var k = adres.get('kitap') && d.kitaplar.find(function (x) { return x.id === adres.get('kitap'); });
+    var l = adres.get('liste') && d.okulListeleri.find(function (x) { return x.id === adres.get('liste'); });
+    if (k) kitapGoster(k, null); else if (l) okulGoster(null, l.id); else karsilamaGoster();
     hareket();
   }).catch(function (e) {
     sonucGoster('<div class="mesaj hata">Kitap listesi yüklenemedi: ' + O.kacis(e.message) + '</div>');

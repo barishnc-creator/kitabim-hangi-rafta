@@ -74,7 +74,80 @@
     };
   }
 
-  var api = { ara: ara, sadelestir: sadelestir, rakamlar: rakamlar, ozet: ozet };
+  // ---- Bulanık eşleştirme (yazım hatası toleransı) ----
+  function ikililer(s) {
+    var t = sadelestir(s).replace(/ /g, '');
+    var l = [];
+    for (var i = 0; i < t.length - 1; i++) l.push(t.slice(i, i + 2));
+    return l;
+  }
+  // Dice benzerliği (0–1). Sayılar farklıysa (7. sınıf / 8. sınıf) ciddi ceza: yanlış sınıf eşleşmesin.
+  function benzerlik(a, b) {
+    var x = ikililer(a), y = ikililer(b);
+    if (!x.length || !y.length) return 0;
+    var sayac = {}, ortak = 0;
+    y.forEach(function (g) { sayac[g] = (sayac[g] || 0) + 1; });
+    x.forEach(function (g) { if (sayac[g]) { ortak++; sayac[g]--; } });
+    var skor = 2 * ortak / (x.length + y.length);
+    var sa = (sadelestir(a).match(/\d+/g) || []).sort().join(','), sb = (sadelestir(b).match(/\d+/g) || []).sort().join(',');
+    if (sa && sb && sa !== sb) skor *= 0.5;
+    return skor;
+  }
+
+  // Okul listesi satırını temizler: "3- ", "3) ", "• ", "a. " gibi başları ve "- Yazar" kısmını ayırır.
+  function satirCoz(satir) {
+    var ham = String(satir || '').trim();
+    var bas = /^(?:[•*·\-–]+|\d{1,3}\s*[.)\-–:]|[a-zçğıöşü]\s*[.)])\s*/i.exec(ham);
+    // "7. Sınıf …" bir numara değil, kitabın adı: sınıf kelimesiyle devam ediyorsa silme.
+    var t = bas && !/^s[ıi]n[ıi]f/i.test(ham.slice(bas[0].length)) ? ham.slice(bas[0].length).trim() : ham;
+    var parca = t.split(/\s+[-–—]\s+/);
+    return { metin: t, ad: parca[0].trim(), yazar: (parca[1] || '').trim() };
+  }
+
+  // Tek bir metni en uygun kitapla eşleştirir: { kitap, skor, tam } ya da null.
+  function eslestir(kitaplar, metin, esik) {
+    var c = typeof metin === 'string' ? satirCoz(metin) : metin;
+    if (sadelestir(c.ad).length < 2) return null;
+    var en = null;
+    kitaplar.forEach(function (k) {
+      var s = benzerlik(c.ad, k.ad);
+      if (c.yazar && k.yazar) s = Math.max(s, (s * 3 + benzerlik(c.yazar, k.yazar)) / 4);
+      if (!en || s > en.skor) en = { kitap: k, skor: s };
+    });
+    if (!en || en.skor < (esik || 0.6)) return null;
+    var kucuk = function (x) { return String(x).toLocaleLowerCase('tr-TR').replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); };
+    en.tam = kucuk(en.kitap.ad) === kucuk(c.ad);
+    return en;
+  }
+
+  // Yapıştırılan listeyi satır satır eşleştirir.
+  function listeyiCoz(kitaplar, metin) {
+    return String(metin || '').split(/\r?\n/).map(satirCoz).filter(function (c) { return sadelestir(c.ad).length >= 2; })
+      .map(function (c) {
+        var e = eslestir(kitaplar, c);
+        return { metin: c.metin, kitapId: e ? e.kitap.id : null, skor: e ? Math.round(e.skor * 100) / 100 : 0, duzeltildi: !!(e && !e.tam) };
+      });
+  }
+
+  // Arama sonuç vermezse "Bunu mu demek istediniz?" önerileri.
+  function oneriler(kitaplar, sorgu, adet) {
+    var s = sadelestir(sorgu);
+    if (s.length < 3) return [];
+    return kitaplar.map(function (k) {
+      var skor = Math.max(benzerlik(sorgu, k.ad), benzerlik(sorgu, k.yazar || ''), benzerlik(sorgu, k.ad + ' ' + (k.yazar || '')));
+      // Sorgu, adın bir parçasına benziyorsa da yakala ("kurk mantolu" → "Kürk Mantolu Madonna").
+      var kelime = sadelestir(k.ad).split(' ');
+      for (var i = 0; i < kelime.length; i++) {
+        var parca = kelime.slice(i, i + s.split(' ').length).join(' ');
+        skor = Math.max(skor, benzerlik(sorgu, parca) * 0.95);
+      }
+      return { kitap: k, skor: skor };
+    }).filter(function (x) { return x.skor >= 0.55; })
+      .sort(function (a, b) { return b.skor - a.skor; }).slice(0, adet || 5).map(function (x) { return x.kitap; });
+  }
+
+  var api = { ara: ara, sadelestir: sadelestir, rakamlar: rakamlar, ozet: ozet,
+    benzerlik: benzerlik, satirCoz: satirCoz, eslestir: eslestir, listeyiCoz: listeyiCoz, oneriler: oneriler };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Arama = api;
 })(this);

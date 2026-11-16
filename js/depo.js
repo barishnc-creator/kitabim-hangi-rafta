@@ -18,7 +18,7 @@
   }
 
   function bos() {
-    return { raflar: [], kitaplar: [], ayarlar: { fiyat: true, stok: true, magazaAdi: '' } };
+    return { raflar: [], kitaplar: [], okulListeleri: [], ayarlar: { fiyat: true, stok: true, magazaAdi: '' } };
   }
 
   function enBuyuk(liste) {
@@ -150,6 +150,45 @@
     d.kitaplar = d.kitaplar.filter(function (k) { return k.id !== kitapId; });
   }
 
+  // ---- Okul listeleri ----
+  // liste: { id, okul, sinif, kalemler: [{ metin, kitapId|null }] }
+  function okulListesiKaydet(d, giris) {
+    var okul = String(giris.okul || '').trim(), sinif = String(giris.sinif || '').trim();
+    if (!okul) throw hata('EKSIK', 'Okul adını yazın.');
+    if (!sinif) throw hata('EKSIK', 'Sınıfı yazın (örn. 7-A).');
+    var ayni = d.okulListeleri.find(function (l) {
+      return l.id !== giris.id && l.okul.toLocaleLowerCase('tr-TR') === okul.toLocaleLowerCase('tr-TR') && l.sinif.toLocaleLowerCase('tr-TR') === sinif.toLocaleLowerCase('tr-TR');
+    });
+    if (ayni) throw hata('AYNI_LISTE', okul + ' · ' + sinif + ' listesi zaten var.');
+    // Aynı okul farklı büyük/küçük harfle yazıldıysa mevcut yazımı kullan (müşteri ekranında tek okul görünsün).
+    var esOkul = d.okulListeleri.find(function (l) { return l.id !== giris.id && l.okul.toLocaleLowerCase('tr-TR') === okul.toLocaleLowerCase('tr-TR'); });
+    if (esOkul) okul = esOkul.okul;
+    var kayit = {
+      id: giris.id || yeniId(), okul: okul.slice(0, 80), sinif: sinif.slice(0, 20),
+      kalemler: (giris.kalemler || []).filter(function (k) { return k && String(k.metin || '').trim(); }).slice(0, 100).map(function (k) {
+        return { metin: String(k.metin).trim().slice(0, 200), kitapId: k.kitapId || null };
+      })
+    };
+    var i = d.okulListeleri.findIndex(function (l) { return l.id === kayit.id; });
+    if (i >= 0) d.okulListeleri[i] = kayit; else d.okulListeleri.push(kayit);
+    return kayit;
+  }
+  function okulListesiSil(d, id) {
+    d.okulListeleri = d.okulListeleri.filter(function (l) { return l.id !== id; });
+  }
+  // Listenin mağazadaki durumu: her kalem için kitap ve yer; kaç tanesi hazır.
+  function listeDurumu(d, liste) {
+    var kalemler = liste.kalemler.map(function (k) {
+      var kitap = k.kitapId && d.kitaplar.find(function (x) { return x.id === k.kitapId; });
+      var yer = kitap && konum(d, kitap.bolmeId);
+      var hazir = !!(kitap && yer && kitap.stok !== 0);
+      return { metin: k.metin, kitap: kitap || null, yer: yer || null, hazir: hazir };
+    });
+    var raflar = {};
+    kalemler.forEach(function (k) { if (k.hazir) raflar[k.yer.raf.no] = (raflar[k.yer.raf.no] || 0) + 1; });
+    return { kalemler: kalemler, toplam: kalemler.length, hazir: kalemler.filter(function (k) { return k.hazir; }).length, raflar: raflar };
+  }
+
   // Yedekten gelen veriyi doğrulayıp eksik alanları tamamlar.
   function duzelt(ham) {
     var d = bos();
@@ -158,6 +197,9 @@
       return { id: r.id, no: Number(r.no) || 0, etiket: r.etiket || '', bolmeler: (r.bolmeler || []).filter(function (b) { return b && b.id; }).map(function (b) { return { id: b.id, no: Number(b.no) || 0 }; }) };
     });
     if (Array.isArray(ham.kitaplar)) d.kitaplar = ham.kitaplar.filter(function (k) { return k && k.id && k.ad; });
+    if (Array.isArray(ham.okulListeleri)) d.okulListeleri = ham.okulListeleri.filter(function (l) { return l && l.id && l.okul; }).map(function (l) {
+      return { id: l.id, okul: String(l.okul), sinif: String(l.sinif || ''), kalemler: Array.isArray(l.kalemler) ? l.kalemler.filter(Boolean) : [] };
+    });
     if (ham.ayarlar) {
       d.ayarlar.fiyat = ham.ayarlar.fiyat !== false;
       d.ayarlar.stok = ham.ayarlar.stok !== false;
@@ -169,7 +211,8 @@
   var api = {
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
-    kitapKaydet: kitapKaydet, kitapSil: kitapSil
+    kitapKaydet: kitapKaydet, kitapSil: kitapSil,
+    okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Depo = api;

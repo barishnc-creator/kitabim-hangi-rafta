@@ -46,6 +46,8 @@
       kitapKaydet: function (g, izin) { return degistir(function (d) { return Depo.kitapKaydet(d, g, { ayniBarkodaIzin: izin }); }); },
       kitapSil: function (id) { return degistir(function (d) { Depo.kitapSil(d, id); }); },
       ayarKaydet: function (alan, deger) { return degistir(function (d) { d.ayarlar[alan] = alan === 'magazaAdi' ? String(deger || '').trim().slice(0, 60) : !!deger; }); },
+      okulListesiKaydet: function (g) { return degistir(function (d) { return Depo.okulListesiKaydet(d, g); }); },
+      okulListesiSil: function (id) { return degistir(function (d) { Depo.okulListesiSil(d, id); }); },
       topluKitapEkle: function (liste) {
         return degistir(function (d) { liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); }); return liste.length; });
       },
@@ -62,7 +64,7 @@
         try { return Promise.resolve(JSON.parse(kok.localStorage.getItem(ARAMA) || '[]').filter(function (a) { return a.zaman >= sinir; })); }
         catch (e) { return Promise.resolve([]); }
       },
-      yerineKoy: function (ham) { return degistir(function (d) { var y = Depo.duzelt(ham); d.raflar = y.raflar; d.kitaplar = y.kitaplar; d.ayarlar = y.ayarlar; }); },
+      yerineKoy: function (ham) { return degistir(function (d) { var y = Depo.duzelt(ham); d.raflar = y.raflar; d.kitaplar = y.kitaplar; d.okulListeleri = y.okulListeleri; d.ayarlar = y.ayarlar; }); },
 
       // Deneme modunda başka bir yetkinin ekranını görmek için: yonetim.html?yerel=1&rol=calisan
       oturum: function () {
@@ -128,7 +130,8 @@
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
         hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok,kapak,eklendi', 'ad'),
-        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi').eq('id', 1).maybeSingle().then(kontrol)
+        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi').eq('id', 1).maybeSingle().then(kontrol),
+        hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul')
       ]).then(function (s) {
         var d = Depo.bos();
         d.raflar = s[0].map(function (r) {
@@ -139,6 +142,7 @@
             fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok, kapak: k.kapak || '', eklendi: k.eklendi };
         });
         if (s[3]) d.ayarlar = { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '' };
+        d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
         return d;
       });
@@ -152,7 +156,7 @@
     // Başka cihazdaki değişiklikler: kısa bir beklemeyle tümünü yeniden yükle.
     var bekle = null;
     sb.channel('kirtasiye').on('postgres_changes', { event: '*', schema: 'public' }, function (p) {
-      if (!/^kirtasiye_(raflar|bolmeler|kitaplar|ayarlar)$/.test(p.table)) return;
+      if (!/^kirtasiye_(raflar|bolmeler|kitaplar|ayarlar|okul_listeleri)$/.test(p.table)) return;
       clearTimeout(bekle);
       bekle = setTimeout(function () { yukle().then(yay).catch(function () {}); }, 300);
     }).subscribe();
@@ -205,6 +209,17 @@
       },
       kitapSil: function (id) {
         return sb.from('kirtasiye_kitaplar').delete().eq('id', id).then(kontrol).then(function () { return yenile(); });
+      },
+      okulListesiKaydet: function (g) {
+        var k = Depo.okulListesiKaydet(kopya(son), g);
+        var satir = { okul: k.okul, sinif: k.sinif, kalemler: k.kalemler };
+        var istek = g.id
+          ? sb.from('kirtasiye_okul_listeleri').update(satir).eq('id', g.id).select('id').single()
+          : sb.from('kirtasiye_okul_listeleri').insert(satir).select('id').single();
+        return istek.then(kontrol).then(function (y) { k.id = y.id; return yenile(k); });
+      },
+      okulListesiSil: function (id) {
+        return sb.from('kirtasiye_okul_listeleri').delete().eq('id', id).then(kontrol).then(function () { return yenile(); });
       },
       topluKitapEkle: function (liste) {
         var satirlar = liste.map(function (g) { return satirYap(Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: true })); });
