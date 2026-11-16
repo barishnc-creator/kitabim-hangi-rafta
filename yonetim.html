@@ -118,6 +118,7 @@
     </header>
 
     <div class="sayfa-ic">
+      <div class="cevrimdisi" id="cevrimdisi" role="status" hidden style="border-radius:12px"></div>
       <div id="genel-mesaj" role="status"></div>
 
       <!-- GENEL BAKIŞ -->
@@ -421,5 +422,11 @@
 <script src="js/panel-gorunum.js"></script>
 <script src="js/panel-harita.js"></script>
 <script src="js/panel-gecmis.js"></script>
+<script>
+  // Çevrimdışı çalışma için uygulama dosyalarını önbelleğe alan hizmet çalışanı.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
 </body>
 </html>

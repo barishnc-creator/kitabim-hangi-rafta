@@ -744,6 +744,11 @@
       }).catch(function (e) { genel('hata', e.message); });
     });
   }
+  Veri.durumDinle(function (dr) {
+    $('cevrimdisi').hidden = !dr.cevrimdisi;
+    if (dr.cevrimdisi) $('cevrimdisi').innerHTML = '<i aria-hidden="true"></i>İnternet bağlantısı yok. Gördüğünüz liste son kaydedilen hâli; bağlantı gelene kadar değişiklikler kaydedilemez.';
+  });
+
   window.addEventListener('hashchange', function () {
     var h = location.hash.slice(1);
     if (ben && sekmeler.indexOf(h) >= 0) sekmeAc(h);

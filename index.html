@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/kiosk.css">
 </head>
 <body class="kiosk-govde">
+<div class="cevrimdisi" id="cevrimdisi" role="status" hidden></div>
 <header class="k-ust">
   <button class="k-marka" type="button" id="ana-sayfa" aria-label="Başlangıç ekranına dön">
     <span class="k-marka-ikon" data-ikon="kitap"></span>
@@ -77,5 +78,11 @@
 <script src="js/tema.js"></script>
 <script src="js/harita.js"></script>
 <script src="js/musteri.js"></script>
+<script>
+  // Çevrimdışı çalışma için uygulama dosyalarını önbelleğe alan hizmet çalışanı.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
 </body>
 </html>

@@ -217,6 +217,25 @@
         return d;
       });
     }
+    // Çevrimdışı: başarılı her yüklemede veriyi cihaza yaz; bağlantı yoksa son kopyayı kullan.
+    var ONBELLEK = 'kitabim-hangi-rafta:onbellek';
+    var asilYukle = yukle;
+    yukle = function () {
+      return asilYukle().then(function (d) {
+        try { kok.localStorage.setItem(ONBELLEK, JSON.stringify({ zaman: new Date().toISOString(), veri: d })); } catch (e) { /* yer yoksa geç */ }
+        durumBildir(null);
+        return d;
+      }, function (hata) {
+        var k = null;
+        try { k = JSON.parse(kok.localStorage.getItem(ONBELLEK)); } catch (e) { k = null; }
+        if (!k || !/ulaşılamadı|fetch|network/i.test(hata.message || '')) throw hata;
+        var d = Depo.duzelt(k.veri);
+        son = d;
+        durumBildir(k.zaman);
+        return d;
+      });
+    };
+    kok.addEventListener('online', function () { yukle().then(yay).catch(function () {}); });
     function yenile(sonuc) { return yukle().then(function (d) { yay(d); return sonuc; }); }
     function satirYap(k) {
       return { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat, stok: k.stok,
@@ -379,7 +398,19 @@
     };
   }
 
+  // Bağlantı durumu: { cevrimdisi: bool, sonGuncelleme: ISO|null }. Sayfalar Veri.durumDinle ile izler.
+  var durumDinleyiciler = [];
+  var durum = { cevrimdisi: !kok.navigator.onLine, sonGuncelleme: null };
+  function durumBildir(eskiZaman) {
+    durum = { cevrimdisi: !!eskiZaman || !kok.navigator.onLine, sonGuncelleme: eskiZaman || durum.sonGuncelleme };
+    durumDinleyiciler.forEach(function (cb) { cb(durum); });
+  }
+  kok.addEventListener('online', function () { durumBildir(null); });
+  kok.addEventListener('offline', function () { durumBildir(durum.sonGuncelleme || null); durum.cevrimdisi = true; durumDinleyiciler.forEach(function (cb) { cb(durum); }); });
+
   var V = BULUT ? bulut() : yerel();
+  V.durumDinle = function (cb) { durumDinleyiciler.push(cb); cb(durum); };
+  V.durum = function () { return durum; };
   V.mod = BULUT ? 'bulut' : 'yerel';
   V.ROL_ADI = ROL_ADI;
   V.dinle = function (cb) { dinleyiciler.push(cb); };

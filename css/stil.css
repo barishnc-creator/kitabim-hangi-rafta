@@ -120,3 +120,7 @@ button.bolme { cursor: pointer; }
 .plan .tutamac { position: absolute; right: -2px; bottom: -2px; width: 16px; height: 16px; background: var(--mavi); border: 2px solid #fff; border-radius: 4px; cursor: nwse-resize; }
 .plan-lejant { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ikincil); }
 .plan-lejant span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+/* Çevrimdışı uyarı şeridi */
+.cevrimdisi { display: flex; align-items: center; justify-content: center; gap: 10px; background: #FEF3C7; color: #92400E; font-size: 14px; font-weight: 600; padding: 9px 16px; text-align: center; }
+.cevrimdisi i { width: 10px; height: 10px; border-radius: 50%; background: #F59E0B; display: inline-block; flex-shrink: 0; }

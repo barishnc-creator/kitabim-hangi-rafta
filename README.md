@@ -7,6 +7,13 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 - **Müşteri ekranı (kiosk):** karşılama ekranı, dokunmatik Türkçe ekran klavyesi (`?kiosk=1`), kapak görselli sonuçlar, büyük raf/bölme kartı ve raf şeması, stok rozeti (Rafta var / Son N adet / Tükendi), raflara göre gezinme, yeni gelenler, raf etiketindeki QR okutulunca bölme içeriği, "Telefonunuza alın" QR'ı, 90 sn boşta kalınca başa dönme, tam ekran.
 - **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak, Excel (CSV) içe/dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat/stok ayarları.
 
+- **Okul listeleri:** okulun listesi yapıştırılır, kitaplarla otomatik (yazım hatasına dayanıklı) eşleştirilir; veli müşteri ekranında okul → sınıf seçip listedeki kitapları raf ve stok durumuyla görür.
+- **Gelince haber ver:** bulunamayan ya da tükenen kitap için müşteri ad ve telefon bırakır (KVKK onaylı); panelde Talepler sekmesinden takip edilir.
+- **Mağaza haritası:** raflar kat planına sürüklenerek yerleştirilir; müşteri ekranı "Buradasınız"dan rafa yolu gösterir.
+- **Görünüm:** mağazanın logosu, ana rengi ve karşılama yazısı.
+- **İşlem geçmişi:** kim, ne zaman, hangi kitabı ekledi, taşıdı, sildi.
+- **İnternetsiz çalışma:** bağlantı kesilse de müşteri ekranı son listeyle arama yapar (hizmet çalışanı + yerel kopya).
+
 ## Ekranlar
 
 - `index.html`: müşteri ekranı. Giriş gerekmez. Arama, barkod/QR okutma, kitap kartı ve raf şeması var. 90 saniye dokunulmazsa başa döner.

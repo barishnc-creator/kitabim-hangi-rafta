@@ -419,6 +419,14 @@
     else if (sonuc.hidden) karsilamaCiz();
   }
   Veri.dinle(function (yeni) { d = yeni; yenidenCiz(); });
+  Veri.durumDinle(function (dr) {
+    var el = $('cevrimdisi');
+    el.hidden = !dr.cevrimdisi;
+    if (dr.cevrimdisi) {
+      var saat = dr.sonGuncelleme ? new Date(dr.sonGuncelleme).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '';
+      el.innerHTML = '<i aria-hidden="true"></i>İnternet bağlantısı yok · Arama son kitap listesiyle çalışıyor' + (saat ? ' (son güncelleme ' + saat + ')' : '');
+    }
+  });
   Veri.yukle().then(function (yeni) {
     d = yeni;
     magazaAdi();
