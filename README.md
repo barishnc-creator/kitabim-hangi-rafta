@@ -2,6 +2,11 @@
 
 Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1, 1.2 …) kurar, kitapları barkodla ya da elle ekler. Müşteri dükkândaki ekranda kitabın adını yazar ya da barkodunu okutur; program kitabın hangi raf ve bölmede olduğunu söyler ve raf şemasında o bölmeyi turuncuyla gösterir.
 
+## Öne çıkanlar
+
+- **Müşteri ekranı (kiosk):** karşılama ekranı, dokunmatik Türkçe ekran klavyesi (`?kiosk=1`), kapak görselli sonuçlar, büyük raf/bölme kartı ve raf şeması, stok rozeti (Rafta var / Son N adet / Tükendi), raflara göre gezinme, yeni gelenler, raf etiketindeki QR okutulunca bölme içeriği, "Telefonunuza alın" QR'ı, 90 sn boşta kalınca başa dönme, tam ekran.
+- **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak, Excel (CSV) içe/dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat/stok ayarları.
+
 ## Ekranlar
 
 - `index.html`: müşteri ekranı. Giriş gerekmez. Arama, barkod/QR okutma, kitap kartı ve raf şeması var. 90 saniye dokunulmazsa başa döner.
@@ -46,3 +51,4 @@ npm test                      # birim testleri (Node 18+)
 Kütüphaneler `vendor/` altında:
 - [html5-qrcode](https://github.com/mebjas/html5-qrcode) 2.3.8 (Apache-2.0): kamera ile barkod/QR okuma. Kamera yalnız https'te ya da localhost'ta açılır.
 - [supabase-js](https://github.com/supabase/supabase-js) 2.49.4 (MIT)
+- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT): raf etiketi ve "telefonuna al" QR'ları

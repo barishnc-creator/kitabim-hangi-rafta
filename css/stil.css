@@ -28,7 +28,7 @@ body {
 }
 h1, h2, h3 { font-family: var(--baslik); margin: 0; line-height: 1.2; }
 a { color: var(--mavi); }
-.gizli-etiket { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.gizli-etiket { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 [hidden] { display: none !important; }
 
 .sayfa { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 22px; }

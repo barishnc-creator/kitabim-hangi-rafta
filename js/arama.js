@@ -50,7 +50,31 @@
     return sonuc.map(function (x) { return x.kitap; });
   }
 
-  var api = { ara: ara, sadelestir: sadelestir, rakamlar: rakamlar };
+  // Arama kayıtlarından özet: en çok arananlar ve sonuç vermeyenler.
+  // kayitlar: [{ sorgu, sonuc (bulunan sayısı), zaman }]
+  function ozet(kayitlar, adet) {
+    adet = adet || 8;
+    var grup = {};
+    (kayitlar || []).forEach(function (k) {
+      var anahtar = sadelestir(k.sorgu);
+      if (anahtar.length < 2) return;
+      var g = grup[anahtar] || (grup[anahtar] = { sorgu: String(k.sorgu).trim(), sayi: 0, bulunamayan: 0, son: '' });
+      g.sayi++;
+      if (!k.sonuc) g.bulunamayan++;
+      if (String(k.zaman || '') > g.son) { g.son = String(k.zaman || ''); g.sorgu = String(k.sorgu).trim(); }
+    });
+    var liste = Object.keys(grup).map(function (a) { return grup[a]; });
+    function sirala(alan) {
+      return function (a, b) { return b[alan] - a[alan] || (b.son > a.son ? 1 : -1); };
+    }
+    return {
+      toplam: (kayitlar || []).length,
+      enCok: liste.filter(function (g) { return g.sayi > g.bulunamayan; }).sort(sirala('sayi')).slice(0, adet),
+      bulunamayan: liste.filter(function (g) { return g.bulunamayan > 0; }).sort(sirala('bulunamayan')).slice(0, adet)
+    };
+  }
+
+  var api = { ara: ara, sadelestir: sadelestir, rakamlar: rakamlar, ozet: ozet };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Arama = api;
 })(this);

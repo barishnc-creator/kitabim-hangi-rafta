@@ -14,8 +14,8 @@ test('ISBN kontrol hanesi doğrulanır', () => {
 
 test('Google Kitaplar yanıtı çözülür', () => {
   const json = { totalItems: 1, items: [{ volumeInfo: { title: 'Kürk Mantolu Madonna', authors: ['Sabahattin Ali'], publisher: 'Yapı Kredi Yayınları' } }] };
-  assert.deepEqual(K.googleCozumle(json), { ad: 'Kürk Mantolu Madonna', yazar: 'Sabahattin Ali', yayinevi: 'Yapı Kredi Yayınları' });
-  assert.deepEqual(K.googleCozumle({ items: [{ volumeInfo: { title: 'A', subtitle: 'B', authors: ['X', 'Y'] } }] }), { ad: 'A: B', yazar: 'X, Y', yayinevi: '' });
+  assert.deepEqual(K.googleCozumle(json), { ad: 'Kürk Mantolu Madonna', yazar: 'Sabahattin Ali', yayinevi: 'Yapı Kredi Yayınları', kapak: '' });
+  assert.deepEqual(K.googleCozumle({ items: [{ volumeInfo: { title: 'A', subtitle: 'B', authors: ['X', 'Y'] } }] }), { ad: 'A: B', yazar: 'X, Y', yayinevi: '', kapak: '' });
   assert.equal(K.googleCozumle({ totalItems: 0 }), null);
   assert.equal(K.googleCozumle(null), null);
   assert.equal(K.googleCozumle({ error: { code: 429 } }), null);
@@ -24,9 +24,9 @@ test('Google Kitaplar yanıtı çözülür', () => {
 test('Open Library yanıtı çözülür ve eksikler birleştirilir', () => {
   const json = { 'ISBN:9780306406157': { title: 'Kitap', authors: [{ name: 'Yazar A' }], publishers: [{ name: 'Yayınevi B' }] } };
   const ol = K.openLibraryCozumle(json, '9780306406157');
-  assert.deepEqual(ol, { ad: 'Kitap', yazar: 'Yazar A', yayinevi: 'Yayınevi B' });
+  assert.deepEqual(ol, { ad: 'Kitap', yazar: 'Yazar A', yayinevi: 'Yayınevi B', kapak: '' });
   assert.equal(K.openLibraryCozumle({}, '9780306406157'), null);
-  assert.deepEqual(K.birlestir({ ad: 'G', yazar: 'GY', yayinevi: '' }, ol), { ad: 'G', yazar: 'GY', yayinevi: 'Yayınevi B' });
+  assert.deepEqual(K.birlestir({ ad: 'G', yazar: 'GY', yayinevi: '', kapak: 'g.jpg' }, ol), { ad: 'G', yazar: 'GY', yayinevi: 'Yayınevi B', kapak: 'g.jpg' });
   assert.deepEqual(K.birlestir(null, ol), ol);
   assert.equal(K.birlestir(null, null), null);
 });
@@ -43,7 +43,7 @@ test('Google bulamazsa Open Library denenir; ağ hatası null döner', async () 
     if (url.includes('googleapis')) return Promise.resolve({ ok: true, json: () => Promise.resolve({ totalItems: 0 }) });
     return Promise.resolve({ ok: true, json: () => Promise.resolve({ 'ISBN:9780306406157': { title: 'OL Kitap', authors: [{ name: 'Z' }], publishers: [{ name: 'P' }] } }) });
   };
-  assert.deepEqual(await K.bul('9780306406157'), { ad: 'OL Kitap', yazar: 'Z', yayinevi: 'P' });
+  assert.deepEqual(await K.bul('9780306406157'), { ad: 'OL Kitap', yazar: 'Z', yayinevi: 'P', kapak: '' });
   assert.equal(cagrilar.length, 2);
   assert.equal(K.baglantiYok, false);
   global.fetch = () => Promise.reject(new Error('ağ yok'));

@@ -27,7 +27,8 @@
     return {
       ad: temiz(v.subtitle ? v.title + ': ' + v.subtitle : v.title),
       yazar: temiz((v.authors || []).join(', ')),
-      yayinevi: temiz(v.publisher)
+      yayinevi: temiz(v.publisher),
+      kapak: temiz(v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail)).replace(/^http:\/\//, 'https://')
     };
   }
 
@@ -37,7 +38,8 @@
     return {
       ad: temiz(v.subtitle ? v.title + ': ' + v.subtitle : v.title),
       yazar: temiz((v.authors || []).map(function (a) { return a.name; }).join(', ')),
-      yayinevi: temiz((v.publishers || []).map(function (p) { return p.name; }).join(', '))
+      yayinevi: temiz((v.publishers || []).map(function (p) { return p.name; }).join(', ')),
+      kapak: temiz(v.cover && (v.cover.medium || v.cover.small))
     };
   }
 
@@ -45,7 +47,7 @@
   function birlestir(a, b) {
     if (!a) return b || null;
     if (!b) return a;
-    return { ad: a.ad || b.ad, yazar: a.yazar || b.yazar, yayinevi: a.yayinevi || b.yayinevi };
+    return { ad: a.ad || b.ad, yazar: a.yazar || b.yazar, yayinevi: a.yayinevi || b.yayinevi, kapak: a.kapak || b.kapak };
   }
 
   function getir(url, ms) {

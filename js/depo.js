@@ -3,8 +3,8 @@
 //
 // Durum şekli:
 // { raflar:   [{ id, no, etiket, bolmeler: [{ id, no }] }],
-//   kitaplar: [{ id, ad, yazar, yayinevi, barkod, bolmeId, fiyat, stok }],
-//   ayarlar:  { fiyat: true, stok: true } }
+//   kitaplar: [{ id, ad, yazar, yayinevi, barkod, bolmeId, fiyat, stok, kapak, eklendi }],
+//   ayarlar:  { fiyat: true, stok: true, magazaAdi: '' } }
 (function (kok) {
   function yeniId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -18,7 +18,7 @@
   }
 
   function bos() {
-    return { raflar: [], kitaplar: [], ayarlar: { fiyat: true, stok: true } };
+    return { raflar: [], kitaplar: [], ayarlar: { fiyat: true, stok: true, magazaAdi: '' } };
   }
 
   function enBuyuk(liste) {
@@ -39,6 +39,21 @@
       if (b) return { raf: r, bolme: b, kod: r.no + '.' + b.no };
     }
     return null;
+  }
+
+  // "2.3" gibi bir koddan bölmeyi bulur; yoksa null.
+  function bolmeBul(d, kod) {
+    var m = /^\s*(\d+)\s*[.,\-/ ]\s*(\d+)\s*$/.exec(String(kod == null ? '' : kod));
+    if (!m) return null;
+    var r = d.raflar.find(function (x) { return x.no === Number(m[1]); });
+    var b = r && r.bolmeler.find(function (x) { return x.no === Number(m[2]); });
+    return b ? { raf: r, bolme: b, kod: r.no + '.' + b.no } : null;
+  }
+
+  // Kapak adresi: yalnız https (sayfa güvenliği için); Google'ın http adresleri https'e çevrilir.
+  function kapakAdresi(url) {
+    var u = String(url || '').trim().replace(/^http:\/\//i, 'https://');
+    return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : '';
   }
 
   function bolmeKitaplari(d, bolmeId) {
@@ -122,7 +137,9 @@
       barkod: barkod,
       bolmeId: giris.bolmeId,
       fiyat: fiyat,
-      stok: stok
+      stok: stok,
+      kapak: kapakAdresi(giris.kapak),
+      eklendi: (onceki && onceki.eklendi) || giris.eklendi || new Date().toISOString()
     };
     var i = d.kitaplar.findIndex(function (k) { return k.id === kayit.id; });
     if (i >= 0) d.kitaplar[i] = kayit; else d.kitaplar.push(kayit);
@@ -144,12 +161,13 @@
     if (ham.ayarlar) {
       d.ayarlar.fiyat = ham.ayarlar.fiyat !== false;
       d.ayarlar.stok = ham.ayarlar.stok !== false;
+      d.ayarlar.magazaAdi = String(ham.ayarlar.magazaAdi || '').slice(0, 60);
     }
     return d;
   }
 
   var api = {
-    bos: bos, duzelt: duzelt, konum: konum, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
+    bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
     kitapKaydet: kitapKaydet, kitapSil: kitapSil
   };

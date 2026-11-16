@@ -17,6 +17,7 @@
   function yerel() {
     var ANAHTAR = 'kitabim-hangi-rafta:v1';
     var REVIZE = 'kitabim-hangi-rafta:revizeler';
+    var ARAMA = 'kitabim-hangi-rafta:aramalar';
     function oku() {
       try { return Depo.duzelt(JSON.parse(kok.localStorage.getItem(ANAHTAR))); } catch (e) { return Depo.bos(); }
     }
@@ -44,7 +45,23 @@
       bolmeSil: function (id) { return degistir(function (d) { Depo.bolmeSil(d, id); }); },
       kitapKaydet: function (g, izin) { return degistir(function (d) { return Depo.kitapKaydet(d, g, { ayniBarkodaIzin: izin }); }); },
       kitapSil: function (id) { return degistir(function (d) { Depo.kitapSil(d, id); }); },
-      ayarKaydet: function (alan, deger) { return degistir(function (d) { d.ayarlar[alan] = deger; }); },
+      ayarKaydet: function (alan, deger) { return degistir(function (d) { d.ayarlar[alan] = alan === 'magazaAdi' ? String(deger || '').trim().slice(0, 60) : !!deger; }); },
+      topluKitapEkle: function (liste) {
+        return degistir(function (d) { liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); }); return liste.length; });
+      },
+      aramaKaydet: function (sorgu, sonuc) {
+        try {
+          var l = JSON.parse(kok.localStorage.getItem(ARAMA) || '[]');
+          l.push({ sorgu: String(sorgu).trim().slice(0, 100), sonuc: sonuc, zaman: new Date().toISOString() });
+          kok.localStorage.setItem(ARAMA, JSON.stringify(l.slice(-2000)));
+        } catch (e) { /* kayıt tutulamazsa arama yine çalışır */ }
+        return Promise.resolve();
+      },
+      aramalar: function (gun) {
+        var sinir = new Date(Date.now() - (gun || 30) * 864e5).toISOString();
+        try { return Promise.resolve(JSON.parse(kok.localStorage.getItem(ARAMA) || '[]').filter(function (a) { return a.zaman >= sinir; })); }
+        catch (e) { return Promise.resolve([]); }
+      },
       yerineKoy: function (ham) { return degistir(function (d) { var y = Depo.duzelt(ham); d.raflar = y.raflar; d.kitaplar = y.kitaplar; d.ayarlar = y.ayarlar; }); },
 
       // Deneme modunda başka bir yetkinin ekranını görmek için: yonetim.html?yerel=1&rol=calisan
@@ -110,8 +127,8 @@
       return Promise.all([
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
-        hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok', 'ad'),
-        sb.from('kirtasiye_ayarlar').select('fiyat,stok').eq('id', 1).maybeSingle().then(kontrol)
+        hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok,kapak,eklendi', 'ad'),
+        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi').eq('id', 1).maybeSingle().then(kontrol)
       ]).then(function (s) {
         var d = Depo.bos();
         d.raflar = s[0].map(function (r) {
@@ -119,14 +136,18 @@
         });
         d.kitaplar = s[2].map(function (k) {
           return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
-            fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok };
+            fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok, kapak: k.kapak || '', eklendi: k.eklendi };
         });
-        if (s[3]) d.ayarlar = { fiyat: s[3].fiyat, stok: s[3].stok };
+        if (s[3]) d.ayarlar = { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '' };
         son = d;
         return d;
       });
     }
     function yenile(sonuc) { return yukle().then(function (d) { yay(d); return sonuc; }); }
+    function satirYap(k) {
+      return { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat, stok: k.stok,
+        kapak: k.kapak || '', guncellendi: new Date().toISOString() };
+    }
 
     // Başka cihazdaki değişiklikler: kısa bir beklemeyle tümünü yeniden yükle.
     var bekle = null;
@@ -176,7 +197,7 @@
       kitapKaydet: function (g, izin) {
         var yeni = !g.id;
         var k = Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: izin }); // doğrulama + düzeltme
-        var satir = { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat, stok: k.stok, guncellendi: new Date().toISOString() };
+        var satir = satirYap(k);
         var istek = yeni
           ? sb.from('kirtasiye_kitaplar').insert(satir).select('id').single()
           : sb.from('kirtasiye_kitaplar').update(satir).eq('id', g.id).select('id').single();
@@ -185,8 +206,24 @@
       kitapSil: function (id) {
         return sb.from('kirtasiye_kitaplar').delete().eq('id', id).then(kontrol).then(function () { return yenile(); });
       },
+      topluKitapEkle: function (liste) {
+        var satirlar = liste.map(function (g) { return satirYap(Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: true })); });
+        var parcalar = [];
+        for (var i = 0; i < satirlar.length; i += 500) parcalar.push(satirlar.slice(i, i + 500));
+        return parcalar.reduce(function (p, parca) {
+          return p.then(function () { return sb.from('kirtasiye_kitaplar').insert(parca).then(kontrol); });
+        }, Promise.resolve()).then(function () { return yenile(liste.length); });
+      },
+      aramaKaydet: function (sorgu, sonuc) {
+        return sb.from('kirtasiye_aramalar').insert({ sorgu: String(sorgu).trim().slice(0, 100), sonuc: sonuc }).then(function () {}, function () {});
+      },
+      aramalar: function (gun) {
+        var sinir = new Date(Date.now() - (gun || 30) * 864e5).toISOString();
+        return sb.from('kirtasiye_aramalar').select('sorgu,sonuc,zaman').gte('zaman', sinir).order('zaman', { ascending: false }).limit(5000).then(kontrol);
+      },
       ayarKaydet: function (alan, deger) {
-        var g = {}; g[alan] = !!deger;
+        var g = {};
+        if (alan === 'magazaAdi') g.magaza_adi = String(deger || '').trim().slice(0, 60); else g[alan] = !!deger;
         return sb.from('kirtasiye_ayarlar').update(g).eq('id', 1).then(kontrol).then(function () { return yenile(); });
       },
       yerineKoy: function () { return Promise.reject(new Error('Bulut modunda yedekten geri yükleme yok.')); },

@@ -38,28 +38,45 @@
     semaCiz();
     panelCiz();
     rafSecenekleri();
+    rafFiltresi();
     listeCiz();
     ayarlariCiz();
+    magazaAdiYaz();
+    if (!$('genel').hidden) panoCiz();
+    if (!$('etiketler').hidden) etiketCiz();
+  }
+
+  function magazaAdiYaz() {
+    var ad = d.ayarlar.magazaAdi || 'Kitabım Hangi Rafta';
+    document.querySelectorAll('.magaza-adi-yaz').forEach(function (el) { el.textContent = ad; });
   }
 
   // ---------- Sekmeler ----------
-  var sekmeler = ['raflar', 'kitaplar', 'revizeler', 'kullanicilar', 'ayarlar'];
+  var sekmeler = ['genel', 'raflar', 'kitaplar', 'etiketler', 'revizeler', 'kullanicilar', 'ayarlar'];
+  var BASLIK = { genel: 'Genel bakış', raflar: 'Raf şeması', kitaplar: 'Kitaplar', etiketler: 'Raf etiketleri', revizeler: 'Revizeler', kullanicilar: 'Kullanıcılar', ayarlar: 'Ayarlar' };
   function sekmeIzinli(ad) {
     var dugme = $('sek-' + ad);
     var y = dugme.getAttribute('data-yetki');
     return !y || yetkili.apply(null, y.split(' '));
   }
   function sekmeAc(ad) {
-    if (!sekmeIzinli(ad)) ad = 'raflar';
+    if (!sekmeIzinli(ad)) ad = 'genel';
     sekmeler.forEach(function (s) {
       $(s).hidden = s !== ad;
       $('sek-' + s).setAttribute('aria-selected', String(s === ad));
     });
     genel('', '');
     if (location.hash !== '#' + ad) history.replaceState(null, '', '#' + ad);
+    $('sayfa-baslik').textContent = BASLIK[ad];
+    if (ad === 'genel') panoCiz();
+    if (ad === 'etiketler') etiketCiz();
     if (ad === 'revizeler') revizeleriCiz();
     if (ad === 'kullanicilar') uyeleriCiz();
   }
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('[data-git]');
+    if (g) sekmeAc(g.getAttribute('data-git'));
+  });
   sekmeler.forEach(function (s) {
     $('sek-' + s).addEventListener('click', function () { sekmeAc(s); });
   });
@@ -71,6 +88,7 @@
     });
     $('ben-ad').textContent = ben.ad || ben.eposta || '';
     $('ben-rol').textContent = Veri.ROL_ADI[ben.rol] || '';
+    $('ben-harf').textContent = (ben.ad || ben.eposta || '?').trim().charAt(0).toLocaleUpperCase('tr-TR');
     $('raf-aciklama').textContent = duzenleyici()
       ? 'Rafları ve bölmeleri dükkândaki düzene göre kurun. Bir bölmeye dokununca içindeki kitaplar açılır.'
       : 'Bir bölmeye dokununca içindeki kitaplar açılır. Rafları yalnız düzenleyici değiştirebilir.';
@@ -170,8 +188,9 @@
         if (tamam) yap(function () { return Veri.bolmeSil(silinecek); }, y.kod + ' bölmesi silindi.').then(function () { seciliBolmeId = null; panelCiz(); }, sus);
       });
     }
-    else if (is === 'bolmeye-ekle') { formuTemizle(seciliBolmeId); sekmeAc('kitaplar'); $('f-barkod').focus(); }
-    else if (is === 'kitap-duzenle') { formaYukle(id); sekmeAc('kitaplar'); $('f-ad').focus(); }
+    else if (is === 'bolmeye-ekle') { formuTemizle(seciliBolmeId); bildir($('form-mesaj'), '', ''); cekmeceAc('f-barkod'); }
+    else if (is === 'kitap-yeni') { formuTemizle(); bildir($('form-mesaj'), '', ''); cekmeceAc('f-barkod'); }
+    else if (is === 'kitap-duzenle') { formaYukle(id); cekmeceAc('f-ad'); }
     else if (is === 'kitap-sil') {
       var k = d.kitaplar.find(function (x) { return x.id === id; });
       if (k) O.pencere('“' + k.ad + '” silinsin mi?', { evet: 'Sil', tehlike: true }).then(function (tamam) {
@@ -230,6 +249,7 @@
     duzenlenenId = null;
     aranan = '';
     ['f-barkod', 'f-ad', 'f-yazar', 'f-yayinevi', 'f-fiyat', 'f-stok'].forEach(function (i) { $(i).value = ''; });
+    kapakGoster('');
     $('form-baslik').textContent = 'Kitap ekle';
     bildir($('barkod-uyari'), '', '');
     if (bolmeId !== undefined) rafSecenekleri(bolmeId);
@@ -246,6 +266,7 @@
     $('f-yayinevi').value = k.yayinevi || '';
     $('f-fiyat').value = k.fiyat == null ? '' : String(k.fiyat).replace('.', ',');
     $('f-stok').value = k.stok == null ? '' : k.stok;
+    kapakGoster(k.kapak);
     bildir($('form-mesaj'), '', '');
     bildir($('barkod-uyari'), '', '');
     rafSecenekleri(k.bolmeId);
@@ -282,6 +303,7 @@
       if (!$('f-ad').value.trim()) $('f-ad').value = b.ad;
       if (!$('f-yazar').value.trim()) $('f-yazar').value = b.yazar;
       if (!$('f-yayinevi').value.trim()) $('f-yayinevi').value = b.yayinevi;
+      if (!$('f-kapak').value && b.kapak) kapakGoster(b.kapak);
       bildir($('form-mesaj'), 'basari', 'Bilgiler internetten getirildi, kontrol edin. Raf ve bölmeyi seçip kaydedin.');
       $('f-bolme').focus();
     });
@@ -300,7 +322,33 @@
   $('f-tara').addEventListener('click', function () {
     Tarayici.ac(function (kod) { $('f-barkod').value = kod; barkodOkundu(); });
   });
-  $('f-vazgec').addEventListener('click', function () { formuTemizle(); bildir($('form-mesaj'), '', ''); });
+  $('f-vazgec').addEventListener('click', cekmeceKapat);
+  $('cekmece-kapat').addEventListener('click', cekmeceKapat);
+  $('cekmece-perde').addEventListener('click', cekmeceKapat);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !$('kitap-form').hidden && !document.querySelector('.kamera-perde')) cekmeceKapat();
+  });
+
+  function kapakGoster(url) {
+    var u = Depo.kapakAdresi(url);
+    $('f-kapak').value = u;
+    $('kapak-onizleme').hidden = !u;
+    if (u) $('kapak-resim').src = u; else $('kapak-resim').removeAttribute('src');
+  }
+  var cekmeceOncesi = null;
+  function cekmeceAc(odak) {
+    cekmeceOncesi = document.activeElement;
+    $('kitap-form').hidden = false;
+    $('cekmece-perde').hidden = false;
+    setTimeout(function () { $(odak || 'f-barkod').focus(); }, 0);
+  }
+  function cekmeceKapat() {
+    $('kitap-form').hidden = true;
+    $('cekmece-perde').hidden = true;
+    formuTemizle();
+    bildir($('form-mesaj'), '', '');
+    if (cekmeceOncesi && cekmeceOncesi.focus) cekmeceOncesi.focus();
+  }
 
   var kaydediliyor = false;
   $('kitap-form').addEventListener('submit', function (e) {
@@ -312,7 +360,8 @@
       ad: $('f-ad').value,
       yazar: $('f-yazar').value,
       yayinevi: $('f-yayinevi').value,
-      bolmeId: $('f-bolme').value
+      bolmeId: $('f-bolme').value,
+      kapak: $('f-kapak').value
     };
     var eski = duzenlenenId && d.kitaplar.find(function (k) { return k.id === duzenlenenId; });
     // Kapalı alanlar formda görünmez; düzenlemede eski değer korunur.
@@ -345,15 +394,150 @@
     });
   });
 
+  var gosterilen = 100;
+  function rafFiltresi() {
+    var secili = $('liste-raf').value;
+    $('liste-raf').innerHTML = '<option value="">Tüm raflar</option>' + O.sirali(d.raflar).map(function (r) {
+      return '<option value="' + r.id + '"' + (r.id === secili ? ' selected' : '') + '>' + r.no + '. Raf' + (r.etiket ? ' · ' + O.kacis(r.etiket) : '') + '</option>';
+    }).join('');
+  }
+  function kapakHucre(k) {
+    return k.kapak
+      ? '<img class="kapak-kucuk" src="' + O.kacis(k.kapak) + '" alt="" loading="lazy">'
+      : '<div class="kapak-yok">' + O.ikon.kitap18 + '</div>';
+  }
   function listeCiz() {
     var s = $('liste-ara').value;
+    var rafId = $('liste-raf').value;
     var liste = s.trim() ? Arama.ara(d.kitaplar, s) : d.kitaplar.slice().sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
-    $('kitap-sayi').textContent = '(' + d.kitaplar.length + ')';
-    $('tum-kitaplar').innerHTML = liste.length
-      ? liste.slice(0, 200).map(kitapSatiri).join('')
-      : '<li class="soluk">' + (d.kitaplar.length ? 'Eşleşen kitap yok.' : 'Henüz kitap eklenmedi.') + '</li>';
+    if (rafId) liste = liste.filter(function (k) { var y = Depo.konum(d, k.bolmeId); return y && y.raf.id === rafId; });
+    $('kitap-sayi').textContent = d.kitaplar.length + ' kitap' + (liste.length !== d.kitaplar.length ? ' · ' + liste.length + ' gösteriliyor' : '');
+    document.querySelectorAll('[data-alan=fiyat]').forEach(function (el) { el.hidden = !d.ayarlar.fiyat; });
+    document.querySelectorAll('[data-alan=stok]').forEach(function (el) { el.hidden = !d.ayarlar.stok; });
+    var yetki = kitapYetkisi();
+    $('tum-kitaplar').innerHTML = liste.length ? liste.slice(0, gosterilen).map(function (k) {
+      var yer = Depo.konum(d, k.bolmeId);
+      return '<tr><td>' + kapakHucre(k) + '</td>' +
+        '<td><b>' + O.kacis(k.ad) + '</b><div class="soluk">' + O.kacis(k.yazar || '—') + (k.barkod ? ' · ' + O.kacis(k.barkod) : '') + '</div></td>' +
+        '<td>' + O.kacis(k.yayinevi || '—') + '</td>' +
+        '<td><span class="kod-rozet">' + (yer ? yer.kod : '?') + '</span></td>' +
+        (d.ayarlar.fiyat ? '<td class="sayi">' + (k.fiyat == null ? '—' : O.para(k.fiyat)) + '</td>' : '') +
+        (d.ayarlar.stok ? '<td class="sayi' + (k.stok === 0 ? ' stok-yok' : '') + '">' + (k.stok == null ? '—' : k.stok) + '</td>' : '') +
+        '<td class="islem">' + (yetki
+          ? '<button type="button" class="dugme kare" data-is="kitap-duzenle" data-id="' + k.id + '" aria-label="' + O.kacis(k.ad) + ' kitabını düzenle">' + O.ikon.kalem + '</button> ' +
+            '<button type="button" class="dugme kare tehlike" data-is="kitap-sil" data-id="' + k.id + '" aria-label="' + O.kacis(k.ad) + ' kitabını sil">' + O.ikon.cop + '</button>'
+          : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="bos-not" style="text-align:center;padding:32px">' +
+      (d.kitaplar.length ? 'Eşleşen kitap yok.' : 'Henüz kitap eklenmedi. Sağ üstteki “Kitap ekle” ile başlayın ya da Excel\'den yükleyin.') + '</td></tr>';
+    $('daha-fazla').hidden = liste.length <= gosterilen;
   }
-  $('liste-ara').addEventListener('input', listeCiz);
+  $('liste-ara').addEventListener('input', function () { gosterilen = 100; listeCiz(); });
+  $('liste-raf').addEventListener('change', function () { gosterilen = 100; listeCiz(); });
+  $('daha-fazla').addEventListener('click', function () { gosterilen += 100; listeCiz(); });
+
+  // ---------- Genel bakış ----------
+  function panoCiz() {
+    var bolmeSayisi = 0, bosBolme = 0;
+    d.raflar.forEach(function (r) { r.bolmeler.forEach(function (b) { bolmeSayisi++; if (!Depo.bolmeKitaplari(d, b.id).length) bosBolme++; }); });
+    var hafta = new Date(Date.now() - 7 * 864e5).toISOString();
+    var yeni = d.kitaplar.filter(function (k) { return (k.eklendi || '') >= hafta; }).length;
+    var tukenen = d.kitaplar.filter(function (k) { return k.stok === 0; }).length;
+    function kpi(renk, ikon, etiket, deger, alt) {
+      return '<div class="kart kpi"><div class="kpi-ikon ' + renk + '">' + O.ikon[ikon] + '</div><div><span>' + etiket + '</span><b>' + deger + '</b>' + (alt ? '<small>' + alt + '</small>' : '') + '</div></div>';
+    }
+    $('kpiler').innerHTML =
+      kpi('mavi', 'kitap18', 'Toplam kitap', d.kitaplar.length.toLocaleString('tr-TR'), yeni ? '+' + yeni + ' bu hafta' : 'Bu hafta yeni yok') +
+      kpi('yesil', 'raf', 'Raf / bölme', d.raflar.length + ' / ' + bolmeSayisi, bosBolme ? bosBolme + ' bölme boş' : 'Tüm bölmeler dolu') +
+      kpi('turuncu', 'ara', 'Müşteri araması', '…', 'Son 30 gün') +
+      kpi('mor', 'etiket', d.ayarlar.stok ? 'Tükenen kitap' : 'Bölme başına kitap', d.ayarlar.stok ? tukenen : (bolmeSayisi ? (d.kitaplar.length / bolmeSayisi).toFixed(1).replace('.', ',') : '0'), d.ayarlar.stok ? 'Stok 0 olanlar' : 'Ortalama');
+
+    var son = d.kitaplar.slice().sort(function (a, b) { return String(b.eklendi || '').localeCompare(String(a.eklendi || '')); }).slice(0, 6);
+    $('pano-son').innerHTML = son.length ? son.map(function (k) {
+      var yer = Depo.konum(d, k.bolmeId);
+      return '<li>' + kapakHucre(k) + '<div class="metin"><b>' + O.kacis(k.ad) + '</b><span>' + O.kacis(k.yazar || k.yayinevi || '') + (k.eklendi ? ' · ' + O.tarihKisa(k.eklendi) : '') + '</span></div><span class="kod-rozet">' + (yer ? yer.kod : '?') + '</span></li>';
+    }).join('') : '<li class="bos-not">Henüz kitap yok.</li>';
+
+    var raflar = O.sirali(d.raflar);
+    var enFazla = Math.max.apply(null, [1].concat(raflar.map(function (r) { return Depo.rafKitapSayisi(d, r); })));
+    $('pano-doluluk').innerHTML = raflar.length ? raflar.map(function (r) {
+      var n = Depo.rafKitapSayisi(d, r);
+      return '<div class="doluluk-satir"><span>' + r.no + '. Raf</span><div class="cubuk" title="' + O.kacis(r.etiket) + '"><i style="width:' + Math.round(n / enFazla * 100) + '%"></i></div><span class="sayi" style="text-align:right">' + n + '</span></div>';
+    }).join('') : '<p class="bos-not">Henüz raf yok.</p>';
+
+    var aramaYetkisi = yetkili('duzenleyici', 'revizeci');
+    if (!aramaYetkisi) {
+      $('pano-encok').innerHTML = $('pano-bulunamayan').innerHTML = '<li class="bos-not">Bu raporu yönetici görür.</li>';
+      return;
+    }
+    Veri.aramalar(30).then(function (kayitlar) {
+      var o = Arama.ozet(kayitlar, 6);
+      var kutu = $('kpiler').children[2];
+      if (kutu) kutu.querySelector('b').textContent = o.toplam.toLocaleString('tr-TR');
+      $('pano-encok').innerHTML = o.enCok.length ? o.enCok.map(function (g, i) {
+        return '<li><span class="rozet-sayi">' + (i + 1) + '</span><div class="metin"><b>' + O.kacis(g.sorgu) + '</b></div><span class="rozet-sayi">' + g.sayi + ' arama</span></li>';
+      }).join('') : '<li class="bos-not">Müşteri ekranında arama yapıldıkça burada listelenir.</li>';
+      $('pano-bulunamayan').innerHTML = o.bulunamayan.length ? o.bulunamayan.map(function (g) {
+        return '<li><div class="metin"><b>' + O.kacis(g.sorgu) + '</b><span>Mağazada bulunamadı</span></div><span class="rozet-sayi uyari">' + g.bulunamayan + ' kez</span></li>';
+      }).join('') : '<li class="bos-not">Bulunamayan arama yok.</li>';
+    }).catch(function () {
+      $('pano-encok').innerHTML = $('pano-bulunamayan').innerHTML = '<li class="bos-not">Arama raporu yüklenemedi.</li>';
+    });
+  }
+
+  // ---------- Raf etiketleri ----------
+  function qrSvg(metin) {
+    if (typeof window.qrcode !== 'function') return '<div class="soluk" style="width:92px">QR yüklenemedi</div>';
+    var qr = window.qrcode(0, 'M');
+    qr.addData(metin);
+    qr.make();
+    return qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
+  }
+  function etiketCiz() {
+    var secili = $('etiket-raf').value;
+    var raflar = O.sirali(d.raflar);
+    $('etiket-raf').innerHTML = '<option value="">Tüm raflar</option>' + raflar.map(function (r) {
+      return '<option value="' + r.id + '"' + (r.id === secili ? ' selected' : '') + '>' + r.no + '. Raf' + (r.etiket ? ' · ' + O.kacis(r.etiket) : '') + '</option>';
+    }).join('');
+    var magaza = d.ayarlar.magazaAdi || 'Kitabım Hangi Rafta';
+    var html = '';
+    raflar.filter(function (r) { return !secili || r.id === secili; }).forEach(function (r) {
+      O.siraliBolmeler(r).forEach(function (b) {
+        var kod = r.no + '.' + b.no;
+        html += '<div class="etiket"><div class="qr">' + qrSvg('RAF:' + kod) + '</div><div><div class="magaza">' + O.kacis(magaza) + '</div>' +
+          '<div class="kod">' + kod + '</div><div class="alt">' + r.no + '. Raf' + (r.etiket ? ' · ' + O.kacis(r.etiket) : '') + '</div></div></div>';
+      });
+    });
+    $('etiket-sayfa').innerHTML = html || '<p class="bos-not">Önce raf ekleyin.</p>';
+  }
+  $('etiket-raf').addEventListener('change', etiketCiz);
+  $('etiket-yazdir').addEventListener('click', function () { window.print(); });
+
+  // ---------- Excel (CSV) ----------
+  function dosyaIndir(ad, icerik, tur) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([icerik], { type: tur }));
+    a.download = ad;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  $('csv-indir').addEventListener('click', function () {
+    dosyaIndir('kitaplar-' + new Date().toISOString().slice(0, 10) + '.csv', Csv.yaz(Csv.kitaplariSatirla(d)), 'text/csv;charset=utf-8');
+  });
+  $('csv-yukle').addEventListener('change', function (e) {
+    var dosya = e.target.files[0];
+    e.target.value = '';
+    if (!dosya) return;
+    dosya.text().then(function (metin) {
+      var h = Csv.iceAktarHazirla(d, Csv.oku(metin));
+      var ozet = h.kitaplar.length + ' kitap eklenecek.' +
+        (h.atlanan ? '\n' + h.atlanan + ' kitap zaten kayıtlı (aynı barkod), atlanacak.' : '') +
+        (h.hatalar.length ? '\n' + h.hatalar.length + ' satırda sorun var:\n' + h.hatalar.slice(0, 5).map(function (x) { return '• ' + x.satir + '. satır: ' + x.mesaj; }).join('\n') + (h.hatalar.length > 5 ? '\n…' : '') : '');
+      if (!h.kitaplar.length) { O.pencere('Eklenecek kitap bulunamadı.\n' + ozet, { evet: 'Tamam' }); return; }
+      return O.pencere(ozet + '\n\nDevam edilsin mi?', { evet: 'Kitapları ekle' }).then(function (tamam) {
+        if (tamam) return yap(function () { return Veri.topluKitapEkle(h.kitaplar); }, function (n) { return n + ' kitap eklendi.'; });
+      });
+    }).catch(function () { genel('hata', 'Dosya okunamadı. CSV olarak kaydettiğinizden emin olun.'); });
+  });
 
   // ---------- Revizeler ----------
   var DURUM = { yeni: 'Yeni', iletildi: 'İletildi', yapildi: 'Yapıldı' };
@@ -367,6 +551,7 @@
     var kap = $('revize-liste');
     return Veri.revizeler().then(function (liste) {
       sonRevizeler = liste;
+      revizeSayaci(liste);
       if (!liste.length) { kap.innerHTML = '<p class="soluk">Henüz revize yok.</p>'; return; }
       kap.innerHTML = liste.map(function (r) {
         return '<article class="revize"><p>' + O.kacis(r.metin) + '</p><div class="alt-satir">' +
@@ -379,6 +564,12 @@
             : '') + '</div></article>';
       }).join('');
     }).catch(function (e) { kap.innerHTML = '<div class="mesaj hata">' + O.kacis(e.message) + '</div>'; });
+  }
+
+  function revizeSayaci(liste) {
+    var n = duzenleyici() ? liste.filter(function (r) { return r.durum === 'yeni'; }).length : 0;
+    $('revize-sayac').hidden = !n;
+    $('revize-sayac').textContent = n;
   }
 
   $('revize-form').addEventListener('submit', function (e) {
@@ -434,7 +625,14 @@
   });
 
   // ---------- Ayarlar ----------
+  $('magaza-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ad = $('ayar-magaza').value;
+    yap(function () { return Veri.ayarKaydet('magazaAdi', ad); }, 'Mağaza adı kaydedildi.').catch(sus);
+  });
+
   function ayarlariCiz() {
+    if (document.activeElement !== $('ayar-magaza')) $('ayar-magaza').value = d.ayarlar.magazaAdi || '';
     $('ayar-fiyat').checked = d.ayarlar.fiyat;
     $('ayar-stok').checked = d.ayarlar.stok;
     $('alan-fiyat').hidden = !d.ayarlar.fiyat;
@@ -505,6 +703,7 @@
   }
 
   var dinleniyor = false;
+  O.ikonlariDoldur();
   function baslat() {
     return Veri.oturum().then(function (o) {
       ben = o;
@@ -517,7 +716,8 @@
         d = yeni;
         hepsiniCiz();
         var h = location.hash.slice(1);
-        sekmeAc(sekmeler.indexOf(h) >= 0 ? h : 'raflar');
+        sekmeAc(sekmeler.indexOf(h) >= 0 ? h : 'genel');
+        if (yetkili('duzenleyici')) Veri.revizeler().then(revizeSayaci, sus);
       }).catch(function (e) { genel('hata', e.message); });
     });
   }

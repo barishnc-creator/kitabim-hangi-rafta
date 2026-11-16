@@ -36,6 +36,8 @@ create table if not exists public.kirtasiye_kitaplar (
   stok int check (stok is null or stok >= 0),
   guncellendi timestamptz not null default now()
 );
+alter table public.kirtasiye_kitaplar add column if not exists kapak text not null default '' check (kapak = '' or kapak like 'https://%');
+alter table public.kirtasiye_kitaplar add column if not exists eklendi timestamptz not null default now();
 create index if not exists kirtasiye_kitaplar_bolme on public.kirtasiye_kitaplar (bolme_id);
 create index if not exists kirtasiye_kitaplar_barkod on public.kirtasiye_kitaplar (barkod) where barkod <> '';
 
@@ -44,7 +46,17 @@ create table if not exists public.kirtasiye_ayarlar (
   fiyat boolean not null default true,
   stok boolean not null default true
 );
+alter table public.kirtasiye_ayarlar add column if not exists magaza_adi text not null default '' check (length(magaza_adi) <= 60);
 insert into public.kirtasiye_ayarlar (id) values (1) on conflict do nothing;
+
+-- Müşteri ekranındaki aramalar (en çok arananlar / bulunamayanlar raporu için). Kişisel bilgi tutulmaz.
+create table if not exists public.kirtasiye_aramalar (
+  id bigint generated always as identity primary key,
+  sorgu text not null check (length(sorgu) between 1 and 100),
+  sonuc int not null default 0 check (sonuc >= 0),
+  zaman timestamptz not null default now()
+);
+create index if not exists kirtasiye_aramalar_zaman on public.kirtasiye_aramalar (zaman);
 
 -- Programın kendisine dair istekler (müdür/yönetici yazar).
 create table if not exists public.kirtasiye_revizeler (
@@ -70,6 +82,7 @@ alter table public.kirtasiye_bolmeler enable row level security;
 alter table public.kirtasiye_kitaplar enable row level security;
 alter table public.kirtasiye_ayarlar enable row level security;
 alter table public.kirtasiye_revizeler enable row level security;
+alter table public.kirtasiye_aramalar enable row level security;
 
 -- Müşteri ekranı girişsiz çalışır: raflar, bölmeler, kitaplar ve ayarlar herkese okunur.
 drop policy if exists okuma on public.kirtasiye_raflar;
@@ -102,6 +115,14 @@ create policy yazma on public.kirtasiye_kitaplar for all to authenticated
 drop policy if exists okuma on public.kirtasiye_uyeler;
 create policy okuma on public.kirtasiye_uyeler for select to authenticated
   using (user_id = auth.uid() or public.kirtasiye_rol() = 'duzenleyici');
+
+-- Aramalar: müşteri ekranı (girişsiz) yalnız ekler; düzenleyici ve revize veren raporda görür.
+drop policy if exists ekleme on public.kirtasiye_aramalar;
+create policy ekleme on public.kirtasiye_aramalar for insert to anon, authenticated with check (true);
+grant insert on public.kirtasiye_aramalar to anon;
+drop policy if exists okuma on public.kirtasiye_aramalar;
+create policy okuma on public.kirtasiye_aramalar for select to authenticated
+  using (public.kirtasiye_rol() in ('duzenleyici', 'revizeci'));
 
 -- Revizeler: düzenleyici ve revizeci görür ve yazar; durumu düzenleyici değiştirir, siler.
 drop policy if exists okuma on public.kirtasiye_revizeler;
