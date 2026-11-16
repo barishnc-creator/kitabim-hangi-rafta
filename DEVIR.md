@@ -26,7 +26,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 1. **Supabase kurulumu (kullanıcı bilgisayardayken):** SQL Editor'de `supabase/kurulum.sql` çalıştır; Edge Function `kirtasiye-kullanici` (Verify JWT kapalı). Yeni Supabase hesabı açılırsa `js/ayar.js`'teki adres ve publishable anahtarı değiştir. (Supabase MCP onay penceresi kullanıcıya ulaşmadı; elle yapılacak.)
 2. **GitHub Pages:** depo ayarlarından Pages'i `main` dalından aç; sunumda bu adres kullanılır.
-3. Sunum hazırlığı: kullanıcı müdüre sunum yapacak. İstenirse slayt sunusu hazırla; demo için `index.html?yerel=1&kiosk=1` ve `yonetim.html?yerel=1` (örnek veri: `tests/e2e/tohum.js`).
+3. Sunum: slayt sunusu hazır (claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak. Demo: `index.html?yerel=1&kiosk=1` ve `yonetim.html?yerel=1` (örnek veri: `tests/e2e/tohum.js`).
 4. Gerçek cihazda kamera testi, Türkçe kitaplarda Google Books kapsamı.
 
 ## Açık sorular
