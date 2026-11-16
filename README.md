@@ -1,18 +1,38 @@
 # Kitabım Hangi Rafta?
 
-Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1, 1.2 …) kurar, kitapları barkodla ya da elle ekler. Müşteri dükkândaki ekranda kitabın adını yazar ya da barkodunu okutur, program kitabın hangi raf ve bölmede olduğunu söyler ve raf şemasında o bölmeyi turuncuyla gösterir.
+Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1, 1.2 …) kurar, kitapları barkodla ya da elle ekler. Müşteri dükkândaki ekranda kitabın adını yazar ya da barkodunu okutur; program kitabın hangi raf ve bölmede olduğunu söyler ve raf şemasında o bölmeyi turuncuyla gösterir.
 
 ## Ekranlar
 
-- `index.html`: müşteri ekranı (arama, barkod/QR okutma, kitap kartı, raf şeması). 90 saniye dokunulmazsa başa döner.
-- `yonetim.html`: çalışan paneli
-  - **Raflar:** raf ekleme ve silme, bölme ekleme ve silme, raf etiketi, bölmedeki kitaplar
-  - **Kitap ekle:** barkod (kamera ya da barkod tabancası), ad, yazar, yayınevi, raf/bölme, fiyat, stok
-  - **Ayarlar:** fiyat ve stok alanlarını açıp kapatma, yedek indirme ve geri yükleme
+- `index.html`: müşteri ekranı. Giriş gerekmez. Arama, barkod/QR okutma, kitap kartı ve raf şeması var. 90 saniye dokunulmazsa başa döner.
+- `yonetim.html`: giriş yapılan panel. Sekmeler yetkiye göre görünür:
 
-## Veri
+| Sekme | Düzenleyici | Revize veren (müdür, yönetici) | Çalışan |
+|---|---|---|---|
+| Raflar | görür, raf/bölme ekler-siler | görür | görür |
+| Kitaplar | ekler, düzenler, siler | görür | ekler, düzenler, siler |
+| Revizeler | görür, yazar, durum değiştirir | görür, yazar | yok |
+| Kullanıcılar | kişi ekler, yetki/şifre değiştirir | yok | yok |
+| Ayarlar | fiyat/stok aç-kapa, yedek | yok | yok |
 
-İlk sürümde veriler tarayıcının kendi hafızasında (localStorage) duruyor, yani yalnız o cihazda saklanıyor. Bulut bağlantısı (Supabase) eklenince çalışanın telefonundan girilen kitap dükkândaki ekranda da görünecek.
+Yetkiler yalnız ekranda değil, veritabanında da kontrol edilir (Supabase RLS).
+
+**Revizeler:** programın kendisine dair istekler ("şu butonu büyüt" gibi). Düzenleyici "Yeni revizeleri kopyala" ile hepsini tek metin hâlinde alıp geliştiriciye iletir, sonra durumlarını "İletildi" ya da "Yapıldı" yapar.
+
+## Kurulum (Supabase)
+
+1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir.
+2. **Kullanıcı sunucusu:** Edge Functions bölümünde `kirtasiye-kullanici` adıyla yeni bir fonksiyon oluştur. İçeriği `supabase/functions/kirtasiye-kullanici/index.ts` dosyasından al. **"Verify JWT" kapalı olmalı**; fonksiyon girişi kendisi kontrol ediyor. CLI ile: `supabase functions deploy kirtasiye-kullanici --no-verify-jwt`.
+3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
+4. **İlk yönetici:** `yonetim.html`'i aç. Hiç düzenleyici yokken "İlk kurulum" formu çıkar; ilk hesabı oradan oluştur. Diğer kişileri sonra Kullanıcılar sekmesinden ekle.
+
+### Yeni projeye taşıma
+
+Yeni Supabase projesinde yukarıdaki 1, 2 ve 4. adımları yap, 3. adımda `js/ayar.js`'teki iki satırı yeni projeninkilerle değiştir. Program sıfır veriyle başlar.
+
+## Deneme modu
+
+Adrese `?yerel=1` eklenirse (`yonetim.html?yerel=1`) program buluta bağlanmaz. Veriler o cihazın tarayıcısında durur, giriş istenmez. Başka bir yetkinin ekranını görmek için örneğin `yonetim.html?yerel=1&rol=calisan` ya da `&rol=revizeci` kullanılır. Bu mod sunum ve deneme içindir.
 
 ## Geliştirme
 
@@ -23,4 +43,6 @@ python3 -m http.server 8000   # http://localhost:8000
 npm test                      # birim testleri (Node 18+)
 ```
 
-Kamera okuma: [html5-qrcode](https://github.com/mebjas/html5-qrcode) 2.3.8 (`vendor/`, Apache-2.0). Kamera yalnızca https'te ya da localhost'ta açılır.
+Kütüphaneler `vendor/` altında:
+- [html5-qrcode](https://github.com/mebjas/html5-qrcode) 2.3.8 (Apache-2.0): kamera ile barkod/QR okuma. Kamera yalnız https'te ya da localhost'ta açılır.
+- [supabase-js](https://github.com/supabase/supabase-js) 2.49.4 (MIT)

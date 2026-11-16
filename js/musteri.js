@@ -129,5 +129,7 @@
   ['pointerdown', 'keydown', 'input'].forEach(function (olay) { document.addEventListener(olay, hareket); });
 
   Veri.dinle(function (yeni) { d = yeni; if (sonSorgu === sorgu.value) goster(); });
-  Veri.yukle().then(function (yeni) { d = yeni; goster(); hareket(); });
+  Veri.yukle().then(function (yeni) { d = yeni; goster(); hareket(); }).catch(function (e) {
+    sonuc.innerHTML = '<div class="mesaj hata">Kitap listesi yüklenemedi: ' + O.kacis(e.message) + '</div>';
+  });
 })();

@@ -14,6 +14,11 @@
   .menu [role="tab"] { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: #374151; font: inherit; font-weight: 500; cursor: pointer; }
   .menu [role="tab"][aria-selected="true"] { background: var(--mavi); color: #fff; font-weight: 600; }
   .menu a { color: #374151; padding: 12px 14px; font-size: 15px; text-decoration: none; }
+  .kullanici-serit { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--ikincil); }
+  .rozet { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 600; background: var(--mavi-acik); color: var(--mavi-koyu); }
+  .rozet.yeni { background: #FEF3C7; color: #92400E; }
+  .rozet.iletildi { background: var(--mavi-acik); color: var(--mavi-koyu); }
+  .rozet.yapildi { background: #DCFCE7; color: var(--yesil); }
   .baslik-satir { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
   .baslik-satir h1 { font-size: 30px; }
   .iki-sutun { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
@@ -23,120 +28,225 @@
   .raf-ekle-form .alan { flex: 1 1 200px; }
   .raf-ekle-form .alan.kisa { flex: 0 1 130px; }
   .kitap-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  .kitap-liste li { border: 1px solid var(--cizgi); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
-  .kitap-liste .metin { flex-grow: 1; min-width: 0; }
+  .kitap-liste li { border: 1px solid var(--cizgi); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .kitap-liste .metin { flex: 1 1 160px; min-width: 0; }
   .kitap-liste .metin b { display: block; font-size: 15px; }
   .kitap-liste .kod { font-family: var(--baslik); font-weight: 700; color: var(--turuncu-koyu); white-space: nowrap; }
   .anahtar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--cizgi); }
   .anahtar input { width: 26px; height: 26px; accent-color: var(--mavi); flex-shrink: 0; }
   .bolum { display: flex; flex-direction: column; gap: 16px; }
+  .giris-kutu { max-width: 420px; width: 100%; margin: 8vh auto 0; }
+  textarea { min-height: 110px; border: 1px solid var(--cizgi-koyu); border-radius: 10px; padding: 12px 14px; font: inherit; resize: vertical; width: 100%; }
+  .revize { border: 1px solid var(--cizgi); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .revize p { margin: 0; white-space: pre-wrap; }
+  .revize .alt-satir { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ikincil); }
+  .revize select, .uye select { min-height: 44px; border: 1px solid var(--cizgi-koyu); border-radius: 10px; padding: 0 10px; font: inherit; background: #fff; }
 </style>
 </head>
 <body>
 <main class="sayfa">
-  <nav class="menu" aria-label="Çalışan menüsü">
-    <strong>Kitabım Hangi Rafta · Çalışan</strong>
-    <div role="tablist" aria-label="Bölümler" style="display:flex;gap:6px;flex-wrap:wrap">
-      <button role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="true">Raflar</button>
-      <button role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false">Kitap ekle</button>
-      <button role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false">Ayarlar</button>
-    </div>
-    <a href="index.html">Müşteri ekranı</a>
-  </nav>
 
-  <div id="genel-mesaj" role="status"></div>
-
-  <!-- RAFLAR -->
-  <section id="raflar" role="tabpanel" aria-labelledby="sek-raflar" class="bolum">
-    <div class="baslik-satir">
+  <!-- GİRİŞ -->
+  <section id="giris" class="giris-kutu" hidden>
+    <form class="kart bolum" id="giris-form">
       <div>
-        <h1>Raf şeması</h1>
-        <p class="soluk" style="font-size:15px;margin-top:4px">Rafları ve bölmeleri dükkândaki düzene göre kurun. Bir bölmeye dokununca içindeki kitaplar açılır.</p>
+        <h1 style="font-size:28px">Çalışan girişi</h1>
+        <p class="soluk" style="margin-top:4px">Kitabım Hangi Rafta</p>
       </div>
-    </div>
-    <form class="kart raf-ekle-form" id="raf-ekle-form">
-      <div class="alan">
-        <label for="raf-etiket">Raf etiketi <span class="soluk">(isteğe bağlı)</span></label>
-        <input id="raf-etiket" placeholder="Örn. Test kitapları">
-      </div>
-      <div class="alan kisa">
-        <label for="raf-bolme">Bölme sayısı</label>
-        <input id="raf-bolme" type="number" min="1" max="30" value="4">
-      </div>
-      <button class="dugme ana" type="submit" id="raf-ekle-dugme"></button>
+      <div class="alan"><label for="g-eposta">E-posta</label><input id="g-eposta" type="email" autocomplete="username" required></div>
+      <div class="alan"><label for="g-sifre">Şifre</label><input id="g-sifre" type="password" autocomplete="current-password" required></div>
+      <div id="giris-mesaj" role="status"></div>
+      <button class="dugme ana" type="submit">Giriş yap</button>
+      <p class="soluk">Hesabınız yoksa ya da şifrenizi unuttuysanız yöneticinize başvurun.</p>
+      <a href="index.html" class="soluk">← Müşteri ekranına dön</a>
     </form>
-    <div class="iki-sutun">
-      <div class="genis"><div class="sema" id="yonetim-sema"></div></div>
-      <aside class="dar kart" id="bolme-panel" aria-live="polite"></aside>
+    <form class="kart bolum" id="kurulum-form" hidden>
+      <div>
+        <h1 style="font-size:26px">İlk kurulum</h1>
+        <p class="soluk" style="margin-top:4px">Henüz yönetici yok. Her şeyi düzenleyebilecek ilk hesabı oluşturun. Bu ekran yalnız bir kez görünür.</p>
+      </div>
+      <div class="alan"><label for="k-ad">Adınız</label><input id="k-ad" required></div>
+      <div class="alan"><label for="k-eposta">E-posta</label><input id="k-eposta" type="email" autocomplete="username" required></div>
+      <div class="alan"><label for="k-sifre">Şifre (en az 6 karakter)</label><input id="k-sifre" type="password" autocomplete="new-password" minlength="6" required></div>
+      <div id="kurulum-mesaj" role="status"></div>
+      <button class="dugme ana" type="submit">Yönetici hesabını oluştur</button>
+    </form>
+  </section>
+
+  <!-- YETKİ YOK -->
+  <section id="yetkisiz" class="giris-kutu" hidden>
+    <div class="kart bolum">
+      <h1 style="font-size:24px">Yetkiniz yok</h1>
+      <p class="soluk" style="font-size:15px">Bu hesap henüz kırtasiye programına eklenmemiş. Yöneticinizden size yetki vermesini isteyin.</p>
+      <button class="dugme" type="button" data-is="cikis">Çıkış yap</button>
     </div>
   </section>
 
-  <!-- KİTAPLAR -->
-  <section id="kitaplar" role="tabpanel" aria-labelledby="sek-kitaplar" class="bolum" hidden>
-    <div class="iki-sutun">
-      <form class="genis kart bolum" id="kitap-form" novalidate>
-        <div class="baslik-satir">
-          <h1 id="form-baslik">Kitap ekle</h1>
+  <!-- PANEL -->
+  <div id="panel" class="bolum" hidden>
+    <nav class="menu" aria-label="Çalışan menüsü">
+      <strong>Kitabım Hangi Rafta</strong>
+      <div role="tablist" aria-label="Bölümler" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="true">Raflar</button>
+        <button role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false">Kitaplar</button>
+        <button role="tab" id="sek-revizeler" aria-controls="revizeler" aria-selected="false" data-yetki="duzenleyici revizeci">Revizeler</button>
+        <button role="tab" id="sek-kullanicilar" aria-controls="kullanicilar" aria-selected="false" data-yetki="duzenleyici">Kullanıcılar</button>
+        <button role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false" data-yetki="duzenleyici">Ayarlar</button>
+      </div>
+      <a href="index.html">Müşteri ekranı</a>
+    </nav>
+    <div class="kullanici-serit">
+      <span id="ben-ad"></span><span class="rozet" id="ben-rol"></span>
+      <button class="dugme" type="button" data-is="cikis" style="min-height:40px">Çıkış</button>
+    </div>
+
+    <div id="genel-mesaj" role="status"></div>
+
+    <!-- RAFLAR -->
+    <section id="raflar" role="tabpanel" aria-labelledby="sek-raflar" class="bolum">
+      <div class="baslik-satir">
+        <div>
+          <h1>Raf şeması</h1>
+          <p class="soluk" style="font-size:15px;margin-top:4px" id="raf-aciklama"></p>
         </div>
+      </div>
+      <form class="kart raf-ekle-form" id="raf-ekle-form" data-yetki="duzenleyici">
         <div class="alan">
-          <label for="f-barkod">Barkod</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <input id="f-barkod" inputmode="numeric" autocomplete="off" style="flex:999 1 220px;min-width:0" placeholder="Okutun ya da yazın">
-            <button class="dugme cerceve" type="button" id="f-tara" style="flex:1 1 170px">Kamerayla okut</button>
-          </div>
-          <span class="soluk">Barkod yoksa boş bırakın; kitap adıyla da bulunur.</span>
-          <div id="barkod-uyari"></div>
+          <label for="raf-etiket">Raf etiketi <span class="soluk">(isteğe bağlı)</span></label>
+          <input id="raf-etiket" placeholder="Örn. Test kitapları">
         </div>
-        <div class="alan">
-          <label for="f-ad">Kitap adı <span class="zorunlu">*</span></label>
-          <input id="f-ad" autocomplete="off">
+        <div class="alan kisa">
+          <label for="raf-bolme">Bölme sayısı</label>
+          <input id="raf-bolme" type="number" min="1" max="30" value="4">
         </div>
-        <div class="izgara-2">
-          <div class="alan"><label for="f-yazar">Yazar</label><input id="f-yazar" autocomplete="off"></div>
-          <div class="alan"><label for="f-yayinevi">Yayınevi</label><input id="f-yayinevi" autocomplete="off"></div>
-          <div class="alan"><label for="f-raf">Raf <span class="zorunlu">*</span></label><select id="f-raf"></select></div>
-          <div class="alan"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
-          <div class="alan" id="alan-fiyat"><label for="f-fiyat">Fiyat (₺)</label><input id="f-fiyat" inputmode="decimal" placeholder="Örn. 250,00"></div>
-          <div class="alan" id="alan-stok"><label for="f-stok">Stok adedi</label><input id="f-stok" inputmode="numeric" placeholder="Örn. 12"></div>
-        </div>
-        <div id="form-mesaj" role="status"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="dugme" type="button" id="f-vazgec">Vazgeç</button>
-          <button class="dugme ana" type="submit">Kaydet</button>
-        </div>
+        <button class="dugme ana" type="submit" id="raf-ekle-dugme"></button>
       </form>
-      <div class="dar kart bolum">
-        <h2 style="font-size:20px">Tüm kitaplar <span class="soluk" id="kitap-sayi"></span></h2>
-        <div class="alan">
-          <label class="gizli-etiket" for="liste-ara">Listede ara</label>
-          <input id="liste-ara" type="search" placeholder="Listede ara">
-        </div>
-        <ul class="kitap-liste" id="tum-kitaplar"></ul>
+      <div class="iki-sutun">
+        <div class="genis"><div class="sema" id="yonetim-sema"></div></div>
+        <aside class="dar kart" id="bolme-panel" aria-live="polite"></aside>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- AYARLAR -->
-  <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
-    <h1 style="font-size:30px">Ayarlar</h1>
-    <div class="iki-sutun">
-      <div class="genis kart">
-        <h2 style="font-size:20px;margin-bottom:6px">Alanlar</h2>
-        <label class="anahtar"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
-        <label class="anahtar" style="border-bottom:0"><span>Stok kullanılsın<br><span class="soluk">Müşteri “Rafta var / Tükendi” görür</span></span><input type="checkbox" id="ayar-stok"></label>
+    <!-- KİTAPLAR -->
+    <section id="kitaplar" role="tabpanel" aria-labelledby="sek-kitaplar" class="bolum" hidden>
+      <div class="iki-sutun">
+        <form class="genis kart bolum" id="kitap-form" novalidate data-yetki="duzenleyici calisan">
+          <div class="baslik-satir"><h1 id="form-baslik">Kitap ekle</h1></div>
+          <div class="alan">
+            <label for="f-barkod">Barkod</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <input id="f-barkod" inputmode="numeric" autocomplete="off" style="flex:999 1 220px;min-width:0" placeholder="Okutun ya da yazın">
+              <button class="dugme cerceve" type="button" id="f-tara" style="flex:1 1 170px">Kamerayla okut</button>
+            </div>
+            <span class="soluk">Barkod yoksa boş bırakın; kitap adıyla da bulunur.</span>
+            <div id="barkod-uyari"></div>
+          </div>
+          <div class="alan">
+            <label for="f-ad">Kitap adı <span class="zorunlu">*</span></label>
+            <input id="f-ad" autocomplete="off">
+          </div>
+          <div class="izgara-2">
+            <div class="alan"><label for="f-yazar">Yazar</label><input id="f-yazar" autocomplete="off"></div>
+            <div class="alan"><label for="f-yayinevi">Yayınevi</label><input id="f-yayinevi" autocomplete="off"></div>
+            <div class="alan"><label for="f-raf">Raf <span class="zorunlu">*</span></label><select id="f-raf"></select></div>
+            <div class="alan"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
+            <div class="alan" id="alan-fiyat"><label for="f-fiyat">Fiyat (₺)</label><input id="f-fiyat" inputmode="decimal" placeholder="Örn. 250,00"></div>
+            <div class="alan" id="alan-stok"><label for="f-stok">Stok adedi</label><input id="f-stok" inputmode="numeric" placeholder="Örn. 12"></div>
+          </div>
+          <div id="form-mesaj" role="status"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="dugme" type="button" id="f-vazgec">Vazgeç</button>
+            <button class="dugme ana" type="submit" id="f-kaydet">Kaydet</button>
+          </div>
+        </form>
+        <div class="dar kart bolum">
+          <h2 style="font-size:20px">Tüm kitaplar <span class="soluk" id="kitap-sayi"></span></h2>
+          <div class="alan">
+            <label class="gizli-etiket" for="liste-ara">Listede ara</label>
+            <input id="liste-ara" type="search" placeholder="Listede ara">
+          </div>
+          <ul class="kitap-liste" id="tum-kitaplar"></ul>
+        </div>
       </div>
-      <div class="dar kart bolum">
-        <h2 style="font-size:20px">Yedek</h2>
-        <p class="soluk" id="mod-bilgi"></p>
-        <button class="dugme" type="button" id="yedek-indir">Yedeği indir</button>
-        <label class="dugme" for="yedek-yukle" style="cursor:pointer">Yedekten geri yükle</label>
-        <input type="file" id="yedek-yukle" accept="application/json,.json" class="gizli-etiket">
+    </section>
+
+    <!-- REVİZELER -->
+    <section id="revizeler" role="tabpanel" aria-labelledby="sek-revizeler" class="bolum" hidden>
+      <div>
+        <h1 style="font-size:30px">Revizeler</h1>
+        <p class="soluk" style="font-size:15px;margin-top:4px">Programla ilgili isteklerinizi yazın: eklenmesini, değişmesini ya da düzeltilmesini istediğiniz şeyler.</p>
       </div>
-    </div>
-  </section>
+      <div class="iki-sutun">
+        <form class="dar kart bolum" id="revize-form">
+          <div class="alan">
+            <label for="revize-metin">Yeni revize</label>
+            <textarea id="revize-metin" placeholder="Örn. Müşteri kartında kitabın sınıfı da yazsın."></textarea>
+          </div>
+          <div id="revize-mesaj" role="status"></div>
+          <button class="dugme ana" type="submit">Revizeyi gönder</button>
+        </form>
+        <div class="genis kart bolum">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <h2 style="font-size:20px">Gönderilen revizeler</h2>
+            <button class="dugme" type="button" id="revize-kopyala" data-yetki="duzenleyici">Yeni revizeleri kopyala</button>
+          </div>
+          <div id="revize-liste" class="bolum" style="gap:10px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KULLANICILAR -->
+    <section id="kullanicilar" role="tabpanel" aria-labelledby="sek-kullanicilar" class="bolum" hidden>
+      <div>
+        <h1 style="font-size:30px">Kullanıcılar</h1>
+        <p class="soluk" style="font-size:15px;margin-top:4px">
+          <b>Düzenleyici:</b> her şeyi yapar. <b>Revize veren:</b> her şeyi görür, revize yazar. <b>Çalışan:</b> yalnız kitap ekler, düzenler, siler.
+        </p>
+      </div>
+      <div class="iki-sutun">
+        <form class="dar kart bolum" id="uye-form">
+          <h2 style="font-size:20px">Kişi ekle</h2>
+          <div class="alan"><label for="u-ad">Ad soyad</label><input id="u-ad" autocomplete="off"></div>
+          <div class="alan"><label for="u-eposta">E-posta</label><input id="u-eposta" type="email" autocomplete="off"></div>
+          <div class="alan"><label for="u-sifre">Şifre (en az 6 karakter)</label><input id="u-sifre" type="text" autocomplete="off"></div>
+          <div class="alan"><label for="u-rol">Yetki</label>
+            <select id="u-rol"><option value="calisan">Çalışan</option><option value="revizeci">Revize veren</option><option value="duzenleyici">Düzenleyici</option></select>
+          </div>
+          <div id="uye-mesaj" role="status"></div>
+          <button class="dugme ana" type="submit">Ekle</button>
+          <p class="soluk">Şifreyi kişiye kendiniz iletin.</p>
+        </form>
+        <div class="genis kart bolum">
+          <h2 style="font-size:20px">Yetkili kişiler</h2>
+          <ul class="kitap-liste" id="uye-liste"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- AYARLAR -->
+    <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
+      <h1 style="font-size:30px">Ayarlar</h1>
+      <div class="iki-sutun">
+        <div class="genis kart">
+          <h2 style="font-size:20px;margin-bottom:6px">Alanlar</h2>
+          <label class="anahtar"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
+          <label class="anahtar" style="border-bottom:0"><span>Stok kullanılsın<br><span class="soluk">Müşteri “Rafta var / Tükendi” görür</span></span><input type="checkbox" id="ayar-stok"></label>
+        </div>
+        <div class="dar kart bolum">
+          <h2 style="font-size:20px">Yedek</h2>
+          <p class="soluk" id="mod-bilgi"></p>
+          <button class="dugme" type="button" id="yedek-indir">Yedeği indir</button>
+          <label class="dugme" for="yedek-yukle" style="cursor:pointer" id="yedek-yukle-etiket">Yedekten geri yükle</label>
+          <input type="file" id="yedek-yukle" accept="application/json,.json" class="gizli-etiket">
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
 
+<script src="vendor/supabase.js"></script>
 <script src="vendor/html5-qrcode.min.js"></script>
+<script src="js/ayar.js"></script>
 <script src="js/arama.js"></script>
 <script src="js/depo.js"></script>
 <script src="js/veri.js"></script>
