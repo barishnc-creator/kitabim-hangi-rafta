@@ -19,6 +19,17 @@
     var REVIZE = 'kitabim-hangi-rafta:revizeler';
     var ARAMA = 'kitabim-hangi-rafta:aramalar';
     var TALEP = 'kitabim-hangi-rafta:talepler';
+    var GECMIS = 'kitabim-hangi-rafta:gecmis';
+    function gecmisYaz(o) {
+      if (!o) return;
+      try {
+        var m = /[?&]rol=(duzenleyici|revizeci|calisan)/.exec(kok.location.search);
+        var l = JSON.parse(kok.localStorage.getItem(GECMIS) || '[]');
+        l.unshift({ zaman: new Date().toISOString(), kim_ad: 'Deneme modu · ' + ROL_ADI[m ? m[1] : 'duzenleyici'], islem: o.islem, konu: o.konu, ayrinti: o.ayrinti });
+        kok.localStorage.setItem(GECMIS, JSON.stringify(l.slice(0, 1000)));
+      } catch (e) { /* geçmiş tutulamazsa işlem yine yapılır */ }
+    }
+    var AYAR_ADI = { fiyat: 'fiyat alanı', stok: 'stok alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası' };
     function talepOku() { try { return JSON.parse(kok.localStorage.getItem(TALEP)) || []; } catch (e) { return []; } }
     function talepYaz(l) { kok.localStorage.setItem(TALEP, JSON.stringify(l)); return Promise.resolve(); }
     function oku() {
@@ -41,25 +52,62 @@
 
     return {
       yukle: function () { var d = oku(); son = d; return Promise.resolve(d); },
-      rafEkle: function (etiket, n) { return degistir(function (d) { return Depo.rafEkle(d, etiket, n); }); },
-      rafGuncelle: function (id, etiket) { return degistir(function (d) { Depo.rafGuncelle(d, id, { etiket: etiket }); }); },
-      rafSil: function (id) { return degistir(function (d) { Depo.rafSil(d, id); }); },
-      bolmeEkle: function (rafId) { return degistir(function (d) { return Depo.bolmeEkle(d, rafId); }); },
-      bolmeSil: function (id) { return degistir(function (d) { Depo.bolmeSil(d, id); }); },
-      kitapKaydet: function (g, izin) { return degistir(function (d) { return Depo.kitapKaydet(d, g, { ayniBarkodaIzin: izin }); }); },
-      kitapSil: function (id) { return degistir(function (d) { Depo.kitapSil(d, id); }); },
+      rafEkle: function (etiket, n) {
+        return degistir(function (d) {
+          var r = Depo.rafEkle(d, etiket, n);
+          gecmisYaz({ islem: 'ekledi', konu: 'raf', ayrinti: r.no + '. Raf' + (r.etiket ? ' · ' + r.etiket : '') + ' (' + r.bolmeler.length + ' bölme)' });
+          return r;
+        });
+      },
+      rafGuncelle: function (id, etiket) {
+        return degistir(function (d) { var r = Depo.rafGuncelle(d, id, { etiket: etiket }); gecmisYaz({ islem: 'guncelledi', konu: 'raf', ayrinti: r.no + '. Raf etiketi: “' + r.etiket + '”' }); });
+      },
+      rafSil: function (id) {
+        return degistir(function (d) { var r = d.raflar.find(function (x) { return x.id === id; }); Depo.rafSil(d, id); gecmisYaz({ islem: 'sildi', konu: 'raf', ayrinti: (r ? r.no : '?') + '. Raf' }); });
+      },
+      bolmeEkle: function (rafId) {
+        return degistir(function (d) { var b = Depo.bolmeEkle(d, rafId); gecmisYaz({ islem: 'ekledi', konu: 'bolme', ayrinti: 'Bölme ' + Depo.konum(d, b.id).kod }); return b; });
+      },
+      bolmeSil: function (id) {
+        return degistir(function (d) { var y = Depo.konum(d, id); Depo.bolmeSil(d, id); gecmisYaz({ islem: 'sildi', konu: 'bolme', ayrinti: 'Bölme ' + (y ? y.kod : '?') }); });
+      },
+      kitapKaydet: function (g, izin) {
+        return degistir(function (d) {
+          var onceki = g.id ? JSON.parse(JSON.stringify(d.kitaplar.find(function (k) { return k.id === g.id; }) || null)) : null;
+          var k = Depo.kitapKaydet(d, g, { ayniBarkodaIzin: izin });
+          try { if (kok.Gecmis) gecmisYaz(kok.Gecmis.kitapOlayi(d, onceki, k)); } catch (e) { /* geçmiş işlemi engellemez */ }
+          return k;
+        });
+      },
+      kitapSil: function (id) {
+        return degistir(function (d) {
+          var onceki = d.kitaplar.find(function (k) { return k.id === id; });
+          try { if (onceki && kok.Gecmis) gecmisYaz(kok.Gecmis.kitapOlayi(d, onceki, null)); } catch (e) { /* geçmiş işlemi engellemez */ }
+          Depo.kitapSil(d, id);
+        });
+      },
       ayarKaydet: function (alan, deger) {
         return degistir(function (d) {
           var g = {}; g[alan] = deger;
           var temiz = Depo.duzelt({ ayarlar: Object.assign({}, d.ayarlar, g) }).ayarlar;
           if (alan === 'fiyat' || alan === 'stok') temiz[alan] = !!deger;
           d.ayarlar[alan] = temiz[alan];
+          gecmisYaz({ islem: 'guncelledi', konu: 'ayar', ayrinti: (AYAR_ADI[alan] || alan) + (alan === 'fiyat' || alan === 'stok' ? (deger ? ' açıldı' : ' kapatıldı') : '') });
         });
       },
-      okulListesiKaydet: function (g) { return degistir(function (d) { return Depo.okulListesiKaydet(d, g); }); },
-      okulListesiSil: function (id) { return degistir(function (d) { Depo.okulListesiSil(d, id); }); },
+      okulListesiKaydet: function (g) {
+        return degistir(function (d) { var l = Depo.okulListesiKaydet(d, g); gecmisYaz({ islem: g.id ? 'guncelledi' : 'ekledi', konu: 'liste', ayrinti: l.okul + ' · ' + l.sinif + ' (' + l.kalemler.length + ' kitap)' }); return l; });
+      },
+      okulListesiSil: function (id) {
+        return degistir(function (d) { var l = d.okulListeleri.find(function (x) { return x.id === id; }); Depo.okulListesiSil(d, id); gecmisYaz({ islem: 'sildi', konu: 'liste', ayrinti: l ? l.okul + ' · ' + l.sinif : '' }); });
+      },
+      gecmis: function () { try { return Promise.resolve(JSON.parse(kok.localStorage.getItem(GECMIS) || '[]')); } catch (e) { return Promise.resolve([]); } },
       topluKitapEkle: function (liste) {
-        return degistir(function (d) { liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); }); return liste.length; });
+        return degistir(function (d) {
+          liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); });
+          gecmisYaz({ islem: 'yukledi', konu: 'kitap', ayrinti: 'Excel\'den ' + liste.length + ' kitap' });
+          return liste.length;
+        });
       },
       aramaKaydet: function (sorgu, sonuc) {
         try {
@@ -301,6 +349,9 @@
       uyeSifre: function (id, sifre) { return fonksiyon({ islem: 'sifre', user_id: id, sifre: sifre }); },
       uyeKaldir: function (id) { return fonksiyon({ islem: 'kaldir', user_id: id }); },
 
+      gecmis: function () {
+        return sb.from('kirtasiye_gecmis').select('zaman,kim_ad,islem,konu,ayrinti').order('zaman', { ascending: false }).limit(500).then(kontrol);
+      },
       talepEkle: function (g) {
         var t = Depo.talepDogrula(g);
         return sb.from('kirtasiye_talepler').insert({ kitap: t.kitap, kitap_id: t.kitapId, ad: t.ad, telefon: t.telefon, notu: t.not, onay: true })

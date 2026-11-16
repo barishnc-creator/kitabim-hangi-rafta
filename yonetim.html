@@ -96,6 +96,7 @@
       <button class="yan-ogesi" role="tab" id="sek-okul" aria-controls="okul" aria-selected="false"><span data-ikon="okul"></span>Okul listeleri</button>
       <button class="yan-ogesi" role="tab" id="sek-talepler" aria-controls="talepler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="zil"></span>Talepler<span class="sayac" id="talep-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-etiketler" aria-controls="etiketler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="etiket"></span>Raf etiketleri</button>
+      <button class="yan-ogesi" role="tab" id="sek-gecmis" aria-controls="gecmis" aria-selected="false" data-yetki="duzenleyici revizeci"><span data-ikon="saat"></span>İşlem geçmişi</button>
       <button class="yan-ogesi" role="tab" id="sek-revizeler" aria-controls="revizeler" aria-selected="false" data-yetki="duzenleyici revizeci"><span data-ikon="revize"></span>Revizeler<span class="sayac" id="revize-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-kullanicilar" aria-controls="kullanicilar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kullanici"></span>Kullanıcılar</button>
       <button class="yan-ogesi" role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="ayar"></span>Ayarlar</button>
@@ -255,6 +256,18 @@
         <div class="etiket-sayfa" id="etiket-sayfa"></div>
       </section>
 
+      <!-- İŞLEM GEÇMİŞİ -->
+      <section id="gecmis" role="tabpanel" aria-labelledby="sek-gecmis" class="bolum" hidden>
+        <div class="arac-cubugu">
+          <div class="ara-kutu"><span data-ikon="ara"></span><label class="gizli-etiket" for="gecmis-ara">Geçmişte ara</label><input id="gecmis-ara" type="search" placeholder="Kitap, raf ya da kişi"></div>
+          <label class="gizli-etiket" for="gecmis-kim">Kişiye göre</label><select id="gecmis-kim"></select>
+          <label class="gizli-etiket" for="gecmis-konu">Konuya göre</label>
+          <select id="gecmis-konu"><option value="">Her şey</option><option value="kitap">Kitaplar</option><option value="raf">Raflar ve bölmeler</option><option value="liste">Okul listeleri</option><option value="ayar">Ayarlar</option></select>
+        </div>
+        <div class="kart"><ul class="gecmis-liste" id="gecmis-liste"></ul></div>
+        <p class="soluk">Son 500 işlem gösterilir. Kayıtlar otomatik tutulur, değiştirilemez.</p>
+      </section>
+
       <!-- REVİZELER -->
       <section id="revizeler" role="tabpanel" aria-labelledby="sek-revizeler" class="bolum" hidden>
         <p class="soluk" style="font-size:15px">Programla ilgili isteklerinizi yazın: eklenmesini, değişmesini ya da düzeltilmesini istediğiniz şeyler.</p>
@@ -395,6 +408,7 @@
 <script src="js/arama.js"></script>
 <script src="js/kitapbilgi.js"></script>
 <script src="js/depo.js"></script>
+<script src="js/gecmis.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/veri.js"></script>
 <script src="js/ortak.js"></script>
@@ -406,5 +420,6 @@
 <script src="js/harita.js"></script>
 <script src="js/panel-gorunum.js"></script>
 <script src="js/panel-harita.js"></script>
+<script src="js/panel-gecmis.js"></script>
 </body>
 </html>
