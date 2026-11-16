@@ -284,6 +284,26 @@
       <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
         <div class="iki-sutun">
           <div class="genis bolum">
+            <form class="kart bolum" id="gorunum-form" data-yetki="duzenleyici">
+              <h2 style="font-size:17px">Görünüm</h2>
+              <div class="alan"><span style="font-size:14px;font-weight:600">Mağaza logosu</span>
+                <div class="logo-alan">
+                  <div class="logo-onizleme" id="logo-onizleme"></div>
+                  <div style="flex:1;min-width:160px"><b id="logo-durum">Logo yok</b><p class="soluk">PNG, JPG ya da WebP. Otomatik küçültülür.</p></div>
+                  <label class="dugme" for="logo-dosya" style="cursor:pointer">Logo seç</label>
+                  <input type="file" id="logo-dosya" accept="image/png,image/jpeg,image/webp" class="gizli-etiket">
+                  <button class="dugme tehlike" type="button" id="logo-kaldir" hidden>Kaldır</button>
+                </div>
+              </div>
+              <div class="alan"><span style="font-size:14px;font-weight:600" id="renk-etiket">Ana renk</span>
+                <div class="renkler" role="radiogroup" aria-labelledby="renk-etiket" id="renkler"></div>
+                <p class="soluk" id="renk-not">Düğmeler, seçili menü ve vurgular bu renge döner. Okunurluk otomatik kontrol edilir.</p>
+              </div>
+              <div class="alan"><label for="ayar-karsilama">Karşılama yazısı (müşteri ekranı)</label><input id="ayar-karsilama" maxlength="80" placeholder="Aradığınız kitabı birlikte bulalım"></div>
+              <div class="mini-kiosk" aria-hidden="true"><div class="bas"><span class="logo" id="mini-logo"></span><b class="magaza-adi-yaz">Kitabım Hangi Rafta</b></div>
+                <div class="gov"><b id="mini-karsilama">Aradığınız kitabı birlikte bulalım</b><div class="ornek-dugme">Kitap adı yazın</div><div class="ornek-dugme koyu">Barkodu okutun</div></div></div>
+              <div><button class="dugme ana" type="submit">Görünümü kaydet</button></div>
+            </form>
             <form class="kart bolum" id="magaza-form">
               <h2 style="font-size:17px">Mağaza</h2>
               <div class="alan"><label for="ayar-magaza">Mağaza adı</label><input id="ayar-magaza" maxlength="60" placeholder="Örn. Deniz Kırtasiye"></div>
@@ -358,9 +378,11 @@
 <script src="js/csv.js"></script>
 <script src="js/veri.js"></script>
 <script src="js/ortak.js"></script>
+<script src="js/tema.js"></script>
 <script src="js/tarayici.js"></script>
 <script src="js/yonetim.js"></script>
 <script src="js/panel-okul.js"></script>
 <script src="js/panel-talep.js"></script>
+<script src="js/panel-gorunum.js"></script>
 </body>
 </html>

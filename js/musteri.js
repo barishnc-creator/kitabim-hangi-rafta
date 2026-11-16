@@ -398,6 +398,7 @@
   function magazaAdi() {
     var ad = d.ayarlar.magazaAdi || 'Kitabım Hangi Rafta?';
     $('magaza-adi').textContent = ad;
+    Tema.uygula(d.ayarlar);
     document.title = ad + ' · Kitabım Hangi Rafta';
   }
   function yenidenCiz() {

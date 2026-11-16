@@ -48,7 +48,14 @@
       bolmeSil: function (id) { return degistir(function (d) { Depo.bolmeSil(d, id); }); },
       kitapKaydet: function (g, izin) { return degistir(function (d) { return Depo.kitapKaydet(d, g, { ayniBarkodaIzin: izin }); }); },
       kitapSil: function (id) { return degistir(function (d) { Depo.kitapSil(d, id); }); },
-      ayarKaydet: function (alan, deger) { return degistir(function (d) { d.ayarlar[alan] = alan === 'magazaAdi' ? String(deger || '').trim().slice(0, 60) : !!deger; }); },
+      ayarKaydet: function (alan, deger) {
+        return degistir(function (d) {
+          var g = {}; g[alan] = deger;
+          var temiz = Depo.duzelt({ ayarlar: Object.assign({}, d.ayarlar, g) }).ayarlar;
+          if (alan === 'fiyat' || alan === 'stok') temiz[alan] = !!deger;
+          d.ayarlar[alan] = temiz[alan];
+        });
+      },
       okulListesiKaydet: function (g) { return degistir(function (d) { return Depo.okulListesiKaydet(d, g); }); },
       okulListesiSil: function (id) { return degistir(function (d) { Depo.okulListesiSil(d, id); }); },
       topluKitapEkle: function (liste) {
@@ -145,7 +152,7 @@
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
         hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok,kapak,eklendi', 'ad'),
-        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi').eq('id', 1).maybeSingle().then(kontrol),
+        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi,renk,logo,karsilama').eq('id', 1).maybeSingle().then(kontrol),
         hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul')
       ]).then(function (s) {
         var d = Depo.bos();
@@ -156,7 +163,7 @@
           return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
             fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok, kapak: k.kapak || '', eklendi: k.eklendi };
         });
-        if (s[3]) d.ayarlar = { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '' };
+        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama } }).ayarlar;
         d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
         return d;
@@ -252,8 +259,12 @@
         return sb.from('kirtasiye_aramalar').select('sorgu,sonuc,zaman').gte('zaman', sinir).order('zaman', { ascending: false }).limit(5000).then(kontrol);
       },
       ayarKaydet: function (alan, deger) {
-        var g = {};
-        if (alan === 'magazaAdi') g.magaza_adi = String(deger || '').trim().slice(0, 60); else g[alan] = !!deger;
+        var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama' };
+        if (sutun[alan]) {
+          var o = {}; o[alan] = deger;
+          g[sutun[alan]] = Depo.duzelt({ ayarlar: o }).ayarlar[alan];
+          if (alan === 'magazaAdi') g.magaza_adi = String(deger || '').trim().slice(0, 60);
+        } else g[alan] = !!deger;
         return sb.from('kirtasiye_ayarlar').update(g).eq('id', 1).then(kontrol).then(function () { return yenile(); });
       },
       yerineKoy: function () { return Promise.reject(new Error('Bulut modunda yedekten geri yükleme yok.')); },

@@ -222,6 +222,9 @@
       d.ayarlar.fiyat = ham.ayarlar.fiyat !== false;
       d.ayarlar.stok = ham.ayarlar.stok !== false;
       d.ayarlar.magazaAdi = String(ham.ayarlar.magazaAdi || '').slice(0, 60);
+      d.ayarlar.renk = /^#[0-9a-f]{6}$/i.test(ham.ayarlar.renk || '') ? ham.ayarlar.renk : '';
+      d.ayarlar.logo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(ham.ayarlar.logo || '') && ham.ayarlar.logo.length <= 300000 ? ham.ayarlar.logo : '';
+      d.ayarlar.karsilama = String(ham.ayarlar.karsilama || '').slice(0, 80);
     }
     return d;
   }
