@@ -29,5 +29,43 @@
     kitap: '<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
   };
 
-  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon };
+  // Tarayıcının confirm/prompt pencereleri yerine sayfa içi pencere.
+  // pencere(mesaj, { girdi: true, deger, evet, tehlike }) → Promise: onayda true (ya da yazılan metin), vazgeçte null.
+  function pencere(mesaj, s) {
+    s = s || {};
+    return new Promise(function (coz) {
+      var onceki = document.activeElement;
+      var perde = document.createElement('div');
+      perde.className = 'kamera-perde';
+      perde.innerHTML =
+        '<form class="kart bolum pencere" role="dialog" aria-modal="true" aria-labelledby="pencere-metin">' +
+        '<p id="pencere-metin" style="margin:0;font-size:17px;white-space:pre-line"></p>' +
+        (s.girdi ? '<div class="alan"><label class="gizli-etiket" for="pencere-girdi">Değer</label><input id="pencere-girdi" autocomplete="off"></div>' : '') +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' +
+        '<button type="button" class="dugme" data-p="hayir">Vazgeç</button>' +
+        '<button type="submit" class="dugme ' + (s.tehlike ? 'tehlike' : 'ana') + '"></button></div></form>';
+      perde.querySelector('#pencere-metin').textContent = mesaj;
+      perde.querySelector('[type=submit]').textContent = s.evet || 'Tamam';
+      var girdi = perde.querySelector('#pencere-girdi');
+      if (girdi) girdi.value = s.deger || '';
+      document.body.appendChild(perde);
+      function bitir(sonuc) {
+        document.removeEventListener('keydown', tus);
+        perde.remove();
+        if (onceki && onceki.focus) onceki.focus();
+        coz(sonuc);
+      }
+      function tus(e) { if (e.key === 'Escape') bitir(null); }
+      document.addEventListener('keydown', tus);
+      perde.querySelector('[data-p=hayir]').addEventListener('click', function () { bitir(null); });
+      perde.addEventListener('click', function (e) { if (e.target === perde) bitir(null); });
+      perde.querySelector('form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        bitir(girdi ? girdi.value : true);
+      });
+      (girdi || perde.querySelector('[type=submit]')).focus();
+    });
+  }
+
+  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon, pencere: pencere };
 })(window);

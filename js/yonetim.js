@@ -153,40 +153,47 @@
     }
     else if (is === 'raf-adlandir') {
       var r = d.raflar.find(function (x) { return x.id === id; });
-      var yeniEtiket = prompt(r.no + '. raf için etiket (örn. Test kitapları):', r.etiket || '');
-      if (yeniEtiket !== null) yap(function () { return Veri.rafGuncelle(id, yeniEtiket); }).catch(sus);
+      O.pencere(r.no + '. raf için etiket (örn. Test kitapları):', { girdi: true, deger: r.etiket || '', evet: 'Kaydet' }).then(function (yeniEtiket) {
+        if (yeniEtiket !== null) yap(function () { return Veri.rafGuncelle(id, yeniEtiket); }).catch(sus);
+      });
     }
     else if (is === 'raf-sil') {
       var rs = d.raflar.find(function (x) { return x.id === id; });
-      if (confirm(rs.no + '. raf ve bölmeleri silinsin mi?')) yap(function () { return Veri.rafSil(id); }, rs.no + '. Raf silindi.').catch(sus);
+      O.pencere(rs.no + '. raf ve bölmeleri silinsin mi?', { evet: 'Sil', tehlike: true }).then(function (tamam) {
+        if (tamam) yap(function () { return Veri.rafSil(id); }, rs.no + '. Raf silindi.').catch(sus);
+      });
     }
     else if (is === 'bolme-sil') {
       var y = Depo.konum(d, seciliBolmeId);
-      if (y && confirm(y.kod + ' bölmesi silinsin mi?')) {
-        var silinecek = seciliBolmeId;
-        yap(function () { return Veri.bolmeSil(silinecek); }, y.kod + ' bölmesi silindi.').then(function () { seciliBolmeId = null; panelCiz(); }, sus);
-      }
+      var silinecek = seciliBolmeId;
+      if (y) O.pencere(y.kod + ' bölmesi silinsin mi?', { evet: 'Sil', tehlike: true }).then(function (tamam) {
+        if (tamam) yap(function () { return Veri.bolmeSil(silinecek); }, y.kod + ' bölmesi silindi.').then(function () { seciliBolmeId = null; panelCiz(); }, sus);
+      });
     }
     else if (is === 'bolmeye-ekle') { formuTemizle(seciliBolmeId); sekmeAc('kitaplar'); $('f-barkod').focus(); }
     else if (is === 'kitap-duzenle') { formaYukle(id); sekmeAc('kitaplar'); $('f-ad').focus(); }
     else if (is === 'kitap-sil') {
       var k = d.kitaplar.find(function (x) { return x.id === id; });
-      if (k && confirm('“' + k.ad + '” silinsin mi?')) {
+      if (k) O.pencere('“' + k.ad + '” silinsin mi?', { evet: 'Sil', tehlike: true }).then(function (tamam) {
+        if (!tamam) return;
         yap(function () { return Veri.kitapSil(id); }, '“' + k.ad + '” silindi.').catch(sus);
         if (duzenlenenId === id) formuTemizle();
-      }
+      });
     }
     else if (is === 'revize-sil') {
-      if (confirm('Bu revize silinsin mi?')) yap(function () { return Veri.revizeSil(id); }).then(revizeleriCiz, sus);
+      O.pencere('Bu revize silinsin mi?', { evet: 'Sil', tehlike: true }).then(function (tamam) {
+        if (tamam) yap(function () { return Veri.revizeSil(id); }).then(revizeleriCiz, sus);
+      });
     }
     else if (is === 'uye-sifre') {
-      var s = prompt('Yeni şifre (en az 6 karakter):');
-      if (s) yap(function () { return Veri.uyeSifre(id, s); }, 'Şifre değiştirildi. Yeni şifreyi kişiye iletin.').catch(sus);
+      O.pencere('Yeni şifre (en az 6 karakter):', { girdi: true, evet: 'Şifreyi değiştir' }).then(function (s) {
+        if (s) yap(function () { return Veri.uyeSifre(id, s); }, 'Şifre değiştirildi. Yeni şifreyi kişiye iletin.').catch(sus);
+      });
     }
     else if (is === 'uye-kaldir') {
-      if (confirm(b.getAttribute('data-ad') + ' kişisinin yetkisi kaldırılsın mı?')) {
-        yap(function () { return Veri.uyeKaldir(id); }, 'Kişi kaldırıldı.').then(uyeleriCiz, sus);
-      }
+      O.pencere(b.getAttribute('data-ad') + ' kişisinin yetkisi kaldırılsın mı?', { evet: 'Kaldır', tehlike: true }).then(function (tamam) {
+        if (tamam) yap(function () { return Veri.uyeKaldir(id); }, 'Kişi kaldırıldı.').then(uyeleriCiz, sus);
+      });
     }
   });
 
@@ -286,8 +293,11 @@
     kaydediliyor = true;
     $('f-kaydet').disabled = true;
     kaydet(false).catch(function (err) {
-      if (err.kod === 'AYNI_BARKOD' && confirm(err.message + '\n\nYine de ayrı bir kayıt olarak eklensin mi?')) return kaydet(true);
-      throw err;
+      if (err.kod !== 'AYNI_BARKOD') throw err;
+      return O.pencere(err.message + '\n\nYine de ayrı bir kayıt olarak eklensin mi?', { evet: 'Yine de ekle' }).then(function (tamam) {
+        if (tamam) return kaydet(true);
+        throw err;
+      });
     }).then(function (k) {
       if (!k) return;
       var yer = Depo.konum(d, k.bolmeId);
@@ -357,7 +367,7 @@
     }).join('\n');
     navigator.clipboard.writeText(metin).then(function () {
       genel('basari', yeni.length + ' revize kopyalandı. Bunları Claude\'a yapıştırabilir, sonra durumlarını “İletildi” yapabilirsiniz.');
-    }, function () { prompt('Kopyalayın:', metin); });
+    }, function () { O.pencere('Kopyalanamadı. Metni seçip kopyalayın:', { girdi: true, deger: metin.replace(/\n/g, ' | ') }); });
   });
 
   // ---------- Kullanıcılar ----------
@@ -425,8 +435,9 @@
     dosya.text().then(function (metin) {
       var ham = JSON.parse(metin);
       var yeni = Depo.duzelt(ham);
-      if (!confirm(yeni.raflar.length + ' raf ve ' + yeni.kitaplar.length + ' kitap yüklenecek. Şu anki verilerin YERİNE geçecek. Devam edilsin mi?')) return;
-      return Veri.yerineKoy(ham).then(function () { genel('basari', 'Yedek yüklendi.'); });
+      return O.pencere(yeni.raflar.length + ' raf ve ' + yeni.kitaplar.length + ' kitap yüklenecek. Şu anki verilerin YERİNE geçecek. Devam edilsin mi?', { evet: 'Yükle', tehlike: true }).then(function (tamam) {
+        if (tamam) return Veri.yerineKoy(ham).then(function () { genel('basari', 'Yedek yüklendi.'); });
+      });
     }).catch(function () {
       genel('hata', 'Dosya okunamadı. Doğru yedek dosyasını seçtiğinizden emin olun.');
     });
