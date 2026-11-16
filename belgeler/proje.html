@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Kitabım Hangi Rafta? · Proje dokümanı</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --mavi: #1D4ED8; --lacivert: #0F172A; --yazi: #1F2937; --soluk: #4B5563; --cizgi: #E5E7EB; --turuncu: #C2410C; --zemin: #F3F5F9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; color: var(--yazi); font-size: 10.5pt; line-height: 1.5; }
+  h1, h2, h3 { font-family: 'Space Grotesk', Inter, sans-serif; color: var(--lacivert); line-height: 1.2; margin: 0; }
+  h2 { font-size: 19pt; margin: 0 0 4mm; padding-top: 2mm; }
+  h3 { font-size: 13pt; margin: 6mm 0 2mm; }
+  p { margin: 0 0 3mm; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  .yeni-sayfa { break-before: page; }
+  .bolum-no { font-family: 'Space Grotesk', sans-serif; color: var(--mavi); font-weight: 700; font-size: 11pt; letter-spacing: .04em; }
+  figure { margin: 3mm 0 5mm; break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--cizgi); border-radius: 6px; display: block; }
+  figcaption { font-size: 9pt; color: var(--soluk); margin-top: 1.5mm; }
+  .yan-yana { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .telefonlar { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 5mm; align-items: start; }
+  .telefonlar img { border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.5pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--cizgi); padding: 2mm 2.5mm; text-align: left; vertical-align: top; }
+  th { background: var(--zemin); font-weight: 600; }
+  td.ok { color: #166534; font-weight: 600; } td.yok { color: #9CA3AF; }
+  .kutu { background: var(--zemin); border-radius: 6px; padding: 4mm 5mm; margin: 3mm 0 5mm; break-inside: avoid; }
+  .kutu.uyari { background: #FFF7ED; border: 1px solid #FDBA74; }
+  .kutu b.baslik { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 11pt; margin-bottom: 1.5mm; color: var(--lacivert); }
+  .etiket { display: inline-block; background: #DBEAFE; color: #1E3A8A; border-radius: 4px; padding: .3mm 2mm; font-size: 8.5pt; font-weight: 600; }
+  /* Kapak */
+  .kapak { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .kapak-ust { background: var(--lacivert); color: #fff; border-radius: 10px; padding: 16mm 14mm; }
+  .kapak-ust h1 { color: #fff; font-size: 34pt; margin: 4mm 0 3mm; }
+  .kapak-ust p { color: #CBD5E1; font-size: 13pt; margin: 0; }
+  .kapak-logo { width: 18mm; height: 18mm; border-radius: 4mm; background: var(--mavi); display: flex; align-items: center; justify-content: center; }
+  .kapak-gorsel img { width: 100%; border-radius: 8px; border: 1px solid var(--cizgi); }
+  .kapak-alt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; font-size: 9.5pt; color: var(--soluk); }
+  .kapak-alt b { display: block; color: var(--yazi); font-size: 10.5pt; }
+  .icindekiler li { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--cizgi); padding: 1.5mm 0; margin: 0; list-style: none; }
+  .icindekiler { padding: 0; }
+  .ozet-izgara { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin: 4mm 0; }
+  .ozet-izgara div { border: 1px solid var(--cizgi); border-radius: 6px; padding: 4mm; break-inside: avoid; }
+  .ozet-izgara b { display: block; font-family: 'Space Grotesk', sans-serif; color: var(--mavi); font-size: 11pt; margin-bottom: 1mm; }
+</style>
+</head>
+<body>
+
+<!-- KAPAK -->
+<section class="kapak">
+  <div class="kapak-ust">
+    <div class="kapak-logo"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+    <h1>Kitabım Hangi Rafta?</h1>
+    <p>Kırtasiye ve kitapçılar için raf takip ve kitap bulma sistemi</p>
+  </div>
+  <div class="kapak-gorsel"><img src="../pdf-img/k2-sonuc.jpg" alt="Müşteri ekranında kitabın rafı ve mağaza haritası"></div>
+  <div class="kapak-alt">
+    <div><b>Belge</b>Proje dokümanı ve kullanım özeti</div>
+    <div><b>Tarih</b>16 Kasım 2026</div>
+    <div><b>Sürüm</b>1.0 · ekran görüntüleri örnek verilerle hazırlanmıştır</div>
+  </div>
+</section>
+
+<!-- İÇİNDEKİLER + ÖZET -->
+<section class="yeni-sayfa">
+  <h2>İçindekiler</h2>
+  <ul class="icindekiler">
+    <li><span>1. Sistem ne işe yarar?</span></li>
+    <li><span>2. Müşteri ekranı</span></li>
+    <li><span>3. Yönetim paneli</span></li>
+    <li><span>4. Kullanıcılar ve yetkiler</span></li>
+    <li><span>5. Altyapı, güvenlik ve kişisel veriler</span></li>
+    <li><span>6. Kurulum ve teslim</span></li>
+    <li><span>7. Donanım seçenekleri</span></li>
+    <li><span>8. Bilinen sınırlar ve sonraki adımlar</span></li>
+  </ul>
+
+  <p class="bolum-no" style="margin-top:8mm">1</p>
+  <h2>Sistem ne işe yarar?</h2>
+  <p>Kırtasiyede en sık sorulan soru “Bu kitap nerede?” sorusudur. <b>Kitabım Hangi Rafta?</b> bu soruyu personele gerek kalmadan yanıtlar. Mağazadaki raflar ve bölmeler (1.1, 1.2, 2.3 …) programa bir kez tanımlanır, kitaplar barkod okutularak ya da elle bölmelere eklenir. Müşteri dükkândaki ekranda kitabın adını yazar ya da barkodunu okutur; program kitabın hangi raf ve bölmede olduğunu söyler, mağaza haritasında oraya giden yolu gösterir.</p>
+  <div class="ozet-izgara">
+    <div><b>Müşteri için</b>Kitabını kendisi bulur, okul listesindeki kitapları tek ekranda görür, olmayan kitap için “gelince haber ver” der.</div>
+    <div><b>Personel için</b>Barkodu okutunca kitap bilgileri kendiliğinden dolar; yalnız rafı seçip kaydeder. Toplu yükleme Excel’den yapılır.</div>
+    <div><b>Yönetici için</b>Raflar, harita, kullanıcılar ve yetkiler; en çok aranan ve aranıp bulunamayan kitapların raporu; işlem geçmişi.</div>
+  </div>
+  <p>Sistem bir web uygulamasıdır: kurulum gerektirmez, dükkândaki dokunmatik ekranda, bilgisayarda, tablette ve telefonda tarayıcıdan açılır. Veriler bulutta tutulur; personelin telefonundan eklenen kitap aynı anda müşteri ekranında görünür.</p>
+</section>
+
+<!-- MÜŞTERİ EKRANI -->
+<section class="yeni-sayfa">
+  <p class="bolum-no">2</p>
+  <h2>Müşteri ekranı</h2>
+  <p>Dükkândaki ekranda açık duran, giriş gerektirmeyen ekrandır. Dokunmatik kiosk modunda Türkçe ekran klavyesi açılır; 90 saniye dokunulmazsa başlangıca döner.</p>
+  <figure><img src="../pdf-img/k1-karsilama.jpg" alt="Karşılama ekranı"><figcaption>Karşılama: kitap adı yazma ve barkod okutma, okul kitap listeleri, raflara göre gezinme, yeni gelen kitaplar. Logo, renk ve karşılama yazısı mağazaya göre değiştirilebilir.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Arama sonucu ve mağaza haritası</h3>
+  <ul>
+    <li>Ad, yazar, yayınevi ya da barkodla arama; Türkçe harf ve büyük-küçük harf farkı önemsizdir.</li>
+    <li>Kitabın kapağı, bilgileri, büyük harflerle <b>raf ve bölme</b>, yön tarifi (“Girişten sağa, kasanın arkası”), fiyat ve stok durumu (Rafta var / Son 2 adet / Tükendi).</li>
+    <li><b>Mağaza haritası:</b> “Buradasınız” noktasından aranan rafa giden yol çizilir, hedef raf yanıp söner. Haritası çizilmemiş mağazada raf şeması gösterilir.</li>
+    <li><b>Telefonunuza alın:</b> müşteri QR’ı okutunca kitabın yeri kendi telefonunda açılır.</li>
+  </ul>
+  <figure><img src="../pdf-img/k2-sonuc.jpg" alt="Arama sonucu"><figcaption>Arama sonucu: kitap bilgileri, raf/bölme, yön tarifi ve haritada yol.</figcaption></figure>
+  <h3>Yazım hatasına dayanıklı arama</h3>
+  <p>Müşteri “kurk mantolu madona” gibi hatalı yazsa da sistem “Bunu mu demek istediniz?” diyerek doğru kitabı önerir. Kitap mağazada yoksa “Gelince haber verilsin” düğmesi çıkar.</p>
+  <figure><img src="../pdf-img/k5-oneri.jpg" alt="Öneri"><figcaption>Bulunamayan aramada öneriler ve “gelince haber ver”.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Okul kitap listeleri <span class="etiket">Sezonun en çok kullanılacak özelliği</span></h3>
+  <p>Veli okulunu ve sınıfını seçer; listedeki bütün kitaplar raf yerleri ve stok durumuyla tek ekranda çıkar. “8 kitaptan 6’sı hazır” özeti, hangi raflara gidileceği ve eksik kitaplar için tek dokunuşla “haber ver” talebi bulunur. Liste QR ile telefona alınabilir.</p>
+  <figure><img src="../pdf-img/k3-okul.jpg" alt="Okul listesi"><figcaption>Okul → sınıf seçimi ve listenin mağazadaki durumu.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Gelince haber ver</h3>
+  <p>Bulunamayan, tükenen ya da okul listesinde eksik olan kitap için müşteri adını ve telefonunu bırakır. Form, kişisel verilerin yalnız bu talep için kullanılacağına dair onay kutusu ve aydınlatma metni içerir. Talepler yönetim panelinde listelenir.</p>
+  <figure><img style="width:86%" src="../pdf-img/k4-talep.jpg" alt="Talep formu"><figcaption>Kiosk modunda ekran klavyesiyle talep formu. Klavye açıkken form ekranın üstüne yaslanır.</figcaption></figure>
+  <h3>Telefonda</h3>
+  <div class="telefonlar">
+    <figure><img src="../pdf-img/t1-telefon-liste.jpg" alt="Telefonda okul listesi"><figcaption>QR ile telefona alınan okul listesi.</figcaption></figure>
+    <figure><img src="../pdf-img/t2-telefon-sonuc.jpg" alt="Telefonda arama"><figcaption>Telefonda arama sonucu.</figcaption></figure>
+    <div class="kutu"><b class="baslik">İnternet kesilirse</b>Müşteri ekranı son kitap listesini cihazda saklar. Bağlantı koptuğunda üstte sarı bir uyarı şeridi çıkar ve arama son listeyle çalışmaya devam eder; bağlantı gelince liste kendiliğinden güncellenir.</div>
+  </div>
+</section>
+
+<!-- YÖNETİM PANELİ -->
+<section class="yeni-sayfa">
+  <p class="bolum-no">3</p>
+  <h2>Yönetim paneli</h2>
+  <p>Personelin e-posta ve şifreyle girdiği bölümdür. Menüdeki sekmeler kişinin yetkisine göre görünür (bkz. bölüm 4).</p>
+  <h3>Genel bakış</h3>
+  <p>Kitap, raf ve bölme sayıları, son 30 gündeki müşteri aramaları, <b>müşterilerin en çok aradıkları</b>, <b>aranıp bulunamayanlar</b> (sipariş fırsatı listesi), son eklenen kitaplar ve raf doluluğu.</p>
+  <figure><img src="../pdf-img/p1-genel.jpg" alt="Genel bakış"><figcaption>Genel bakış panosu.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Raflar ve mağaza haritası</h3>
+  <p>Raflar etiketleri ve bölme sayılarıyla eklenir; bölme eklenip silinebilir. İçinde kitap olan raf ya da bölme yanlışlıkla silinemez. Bir raf silindiğinde diğerleri yeniden numaralanmaz; raflara yapıştırılmış etiketler kaymaz.</p>
+  <figure><img src="../pdf-img/p2-raflar.jpg" alt="Raflar"><figcaption>Raf şeması; seçilen bölmedeki kitaplar sağda.</figcaption></figure>
+  <p>Mağaza haritasında raflar kat planına sürüklenerek yerleştirilir, köşedeki tutamaçla boyutlandırılır, döndürülür; kasa, giriş ve kiosk yeri eklenir. Her rafa müşteriye gösterilecek yön tarifi yazılabilir. Üst üste binen öğeler için uyarı verilir.</p>
+  <figure><img src="../pdf-img/p3-harita.jpg" alt="Harita düzenleyici"><figcaption>Sürükle-bırak harita düzenleyici.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Kitaplar</h3>
+  <ul>
+    <li>Arama ve rafa göre süzme yapılabilen tablo; kapak, yazar, yayınevi, konum, fiyat ve stok.</li>
+    <li><b>Barkoddan otomatik bilgi:</b> kitap barkodu (ISBN) okutulunca ad, yazar, yayınevi ve kapak internetten (Google Kitaplar, yoksa Open Library) gelir; personel yalnız rafı seçip kaydeder. Raf ve bölme bir sonraki kitap için seçili kalır.</li>
+    <li>Barkod kasa tipi okuyucuyla, telefon/tablet kamerasıyla ya da barkodun fotoğrafı çekilerek okunabilir.</li>
+    <li>Aynı barkod ikinci kez girilirse uyarı verir.</li>
+    <li><b>Excel ile toplu işlem:</b> kitap listesi Excel’e aktarılır; Excel’den toplu yükleme yapılır, hatalı satırlar tek tek gösterilir.</li>
+  </ul>
+  <figure><img src="../pdf-img/p4-kitaplar.jpg" alt="Kitaplar"><figcaption>Kitap tablosu.</figcaption></figure>
+  <figure><img src="../pdf-img/p5-kitap-ekle.jpg" alt="Kitap ekle"><figcaption>Kitap ekleme formu (yandan açılır).</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Okul listeleri</h3>
+  <p>Okulun yayınladığı liste olduğu gibi yapıştırılır. Program satırları mağazadaki kitaplarla otomatik eşleştirir: numaralar ve madde işaretleri temizlenir, yazım hataları tolere edilir, farklı sınıfların kitapları (7. sınıf / 8. sınıf) birbirine karışmaz. Eşleşmeyen satırlar için “Kitap ekle” düğmesi çıkar; eşleşmeler elle düzeltilebilir.</p>
+  <figure><img src="../pdf-img/p6-okul.jpg" alt="Okul listeleri"><figcaption>Listeyi yapıştır, eşleştir, kaydet.</figcaption></figure>
+  <h3>Talepler</h3>
+  <p>“Gelince haber ver” talepleri; kitap şu an stoktaysa bu da gösterilir. Durum (Yeni → Arandı → Geldi / İptal) güncellenir, menüde yeni talep sayacı görünür, liste Excel’e aktarılır, kapanan talepler silinir.</p>
+  <figure><img src="../pdf-img/p7-talepler.jpg" alt="Talepler"><figcaption>Talepler.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Raf etiketleri</h3>
+  <p>Her bölme için mağaza adı, bölme kodu ve QR içeren etiketler yazdırılır. Müşteri ekranında etiketteki QR okutulunca o bölmedeki kitaplar listelenir.</p>
+  <figure><img src="../pdf-img/p8-etiketler.jpg" alt="Etiketler"><figcaption>Yazdırılabilir QR’lı raf etiketleri.</figcaption></figure>
+  <h3>İşlem geçmişi</h3>
+  <p>Kimin, ne zaman, hangi kitabı eklediği, taşıdığı, güncellediği ya da sildiği; raf, okul listesi ve ayar değişiklikleri. Kayıtları veritabanı kendisi tutar; hiç kimse (yönetici dahil) değiştiremez ya da silemez.</p>
+  <figure><img src="../pdf-img/p9-gecmis.jpg" alt="İşlem geçmişi"><figcaption>İşlem geçmişi; kişi ve konuya göre süzülebilir.</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Revizeler</h3>
+  <p>Müdür ya da yönetici programla ilgili isteklerini (yeni özellik, değişiklik) buraya yazar. İstekler “Yeni / İletildi / Yapıldı” olarak takip edilir; yeni istekler tek düğmeyle toplu kopyalanıp geliştiriciye iletilir.</p>
+  <figure><img src="../pdf-img/p10-revizeler.jpg" alt="Revizeler"><figcaption>Revizeler.</figcaption></figure>
+  <h3>Ayarlar ve görünüm</h3>
+  <p>Mağaza adı, logo, ana renk (hazır renkler ya da özel renk), müşteri ekranının karşılama yazısı; fiyat ve stok alanlarının açılıp kapatılması; yedek indirme. Seçilen renk beyaz yazıyla okunmayacak kadar açıksa okunur olması için otomatik koyulaştırılır.</p>
+  <figure><img src="../pdf-img/p11-ayarlar.jpg" alt="Ayarlar"><figcaption>Görünüm ayarları ve canlı önizleme.</figcaption></figure>
+</section>
+
+<!-- YETKİLER + ALTYAPI -->
+<section class="yeni-sayfa">
+  <p class="bolum-no">4</p>
+  <h2>Kullanıcılar ve yetkiler</h2>
+  <p>Kişiler Kullanıcılar sekmesinden ad, e-posta, şifre ve yetkiyle eklenir; yetki ve şifre sonradan değiştirilebilir. Son düzenleyici kaldırılamaz. Yetkiler yalnız ekranda değil, veritabanında da uygulanır: ekranı kurcalayan biri yetkisi olmayan işlemi yapamaz.</p>
+  <table>
+    <tr><th>Bölüm</th><th>Düzenleyici</th><th>Revize veren (müdür)</th><th>Çalışan</th><th>Müşteri ekranı</th></tr>
+    <tr><td>Kitap arama, harita, okul listesi görme</td><td class="ok">Evet</td><td class="ok">Evet</td><td class="ok">Evet</td><td class="ok">Evet</td></tr>
+    <tr><td>Kitap ekleme, düzenleme, silme, Excel yükleme</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="ok">Evet</td><td class="yok">Hayır</td></tr>
+    <tr><td>Raf ve bölme yönetimi</td><td class="ok">Evet</td><td>Görür</td><td>Görür</td><td class="yok">—</td></tr>
+    <tr><td>Mağaza haritasını düzenleme</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="yok">Hayır</td><td>Haritayı görür</td></tr>
+    <tr><td>Okul listelerini yönetme</td><td class="ok">Evet</td><td>Görür</td><td class="ok">Evet</td><td class="yok">—</td></tr>
+    <tr><td>Talepler (müşteri telefonları)</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="ok">Evet</td><td>Yalnız talep bırakır</td></tr>
+    <tr><td>Raf etiketi yazdırma</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="ok">Evet</td><td class="yok">—</td></tr>
+    <tr><td>Revize yazma</td><td class="ok">Evet</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="yok">—</td></tr>
+    <tr><td>İşlem geçmişi, arama raporu</td><td class="ok">Evet</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="yok">—</td></tr>
+    <tr><td>Kullanıcılar, ayarlar, görünüm</td><td class="ok">Evet</td><td class="yok">Hayır</td><td class="yok">Hayır</td><td class="yok">—</td></tr>
+  </table>
+
+  <p class="bolum-no">5</p>
+  <h2>Altyapı, güvenlik ve kişisel veriler</h2>
+  <ul>
+    <li><b>Web uygulaması:</b> sade HTML/CSS/JavaScript; kurulum ve uygulama mağazası gerektirmez. Telefon, tablet ve dokunmatik ekranda uyumlu çalışır.</li>
+    <li><b>Bulut veritabanı:</b> Supabase (PostgreSQL). Değişiklikler bütün ekranlara anında yansır.</li>
+    <li><b>Erişim kuralları:</b> her tablo için satır düzeyinde güvenlik (RLS). Giriş yapmamış müşteri ekranı yalnız kitapları okuyabilir, talep ve arama kaydı ekleyebilir; kimsenin telefonunu okuyamaz.</li>
+    <li><b>Kişisel veri (KVKK):</b> talep formunda açık onay ve aydınlatma metni; telefonlar yalnız düzenleyici ve çalışana görünür; kapanan taleplerin düzenli silinmesi önerilir (en geç 90 gün). Arama raporunda kişisel bilgi tutulmaz.</li>
+    <li><b>Gizli anahtar yok:</b> uygulamada yalnız herkese açık olması tasarlanmış anahtar bulunur; hesap açma gibi yetkili işlemler sunucu tarafındaki fonksiyonda yapılır.</li>
+    <li><b>Test:</b> 34 otomatik birim testi ve her özellik için tarayıcıda uçtan uca testler. Veritabanı kurulum dosyası gerçek PostgreSQL üzerinde çalıştırılıp erişim kuralları rol rol doğrulandı.</li>
+  </ul>
+</section>
+
+<!-- KURULUM + DONANIM + SINIRLAR -->
+<section class="yeni-sayfa">
+  <p class="bolum-no">6</p>
+  <h2>Kurulum ve teslim</h2>
+  <ol>
+    <li><b>Veritabanı:</b> Supabase’te proje açılır, hazır kurulum dosyası (<i>supabase/kurulum.sql</i>) SQL Editor’de bir kez çalıştırılır.</li>
+    <li><b>Kullanıcı sunucusu:</b> hesap açma fonksiyonu (<i>kirtasiye-kullanici</i>) Supabase’e yüklenir.</li>
+    <li><b>Yayın:</b> uygulama dosyaları GitHub Pages (ya da benzeri) üzerinde yayınlanır; proje adresi ve açık anahtar <i>js/ayar.js</i> dosyasına yazılır.</li>
+    <li><b>İlk yönetici:</b> yönetim paneli ilk açıldığında “İlk kurulum” ekranından yönetici hesabı oluşturulur.</li>
+    <li><b>Mağaza düzeni:</b> raflar ve bölmeler eklenir, harita çizilir, logo ve renk seçilir, etiketler yazdırılıp raflara yapıştırılır.</li>
+    <li><b>Kitaplar:</b> barkod okutarak ya da Excel’den toplu olarak eklenir; okul listeleri girilir.</li>
+    <li><b>Kiosk:</b> dükkândaki ekranda müşteri ekranı <i>?kiosk=1</i> ile tam ekran açılır (ekran klavyesi etkin).</li>
+  </ol>
+  <div class="kutu"><b class="baslik">Teslim paketi</b>Kaynak kodu, veritabanı kurulum dosyası, kullanıcı sunucusu, kurulum talimatı (README) ve bu doküman. Mağaza kendi Supabase hesabıyla “sıfır” veriyle teslim alır; veriler mağazaya aittir.</div>
+
+  <p class="bolum-no">7</p>
+  <h2>Donanım seçenekleri</h2>
+  <table>
+    <tr><th>Seçenek</th><th>İçerik</th><th>Not</th></tr>
+    <tr><td>Ekonomik</td><td>Mevcut bilgisayar ya da tablet + USB barkod okuyucu</td><td>Okuyucu klavye gibi çalışır, ek ayar gerekmez.</td></tr>
+    <tr><td>Orta</td><td>10 inç Android “fiyat gör” terminali</td><td>Barkod okuyucusu dahili, tezgâh üstü.</td></tr>
+    <tr><td>Profesyonel</td><td>21,5 inç ayaklı dokunmatik kiosk</td><td>Ekran klavyesiyle tam kiosk deneyimi.</td></tr>
+    <tr><td>Gösterişli</td><td>32 inç ayaklı dokunmatik kiosk</td><td>Mağaza girişine; harita büyük ve net görünür.</td></tr>
+  </table>
+  <p>Personel için ek donanım gerekmez: kitap ekleme telefon kamerasıyla da yapılabilir.</p>
+
+  <p class="bolum-no">8</p>
+  <h2>Bilinen sınırlar ve sonraki adımlar</h2>
+  <ul>
+    <li>Bulut kurulumu (Supabase ve yayın) henüz yapılmadı; bu dokümandaki ekranlar deneme modunda örnek verilerle hazırlandı. Bulut veri yolu sahte sunucuyla test edildi, gerçek kurulumdan sonra birlikte denenecek.</li>
+    <li>Barkoddan bilgi getirme Google Kitaplar ve Open Library’ye dayanır; bazı Türkçe kitaplar bu kaynaklarda eksik olabilir. Bu durumda bilgiler elle girilir.</li>
+    <li>Canlı kamerayla barkod okuma gerçek cihazlarda denenecek; sorun çıkan cihazlarda “fotoğraf çekerek okut” yedeği vardır.</li>
+    <li>Talep formundaki aydınlatma metni örnektir; mağazanın kendi bilgileriyle güncellenmesi ve bir hukukçuya kontrol ettirilmesi önerilir.</li>
+    <li>İleride eklenebilecekler: çok şubeli kullanım, SMS/WhatsApp ile otomatik “kitabınız geldi” bildirimi, satış programı entegrasyonu.</li>
+  </ul>
+</section>
+</body>
+</html>
