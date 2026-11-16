@@ -228,6 +228,7 @@
 
   function formuTemizle(bolmeId) {
     duzenlenenId = null;
+    aranan = '';
     ['f-barkod', 'f-ad', 'f-yazar', 'f-yayinevi', 'f-fiyat', 'f-stok'].forEach(function (i) { $(i).value = ''; });
     $('form-baslik').textContent = 'Kitap ekle';
     bildir($('barkod-uyari'), '', '');
@@ -260,13 +261,44 @@
       '<button type="button" class="dugme" data-is="kitap-duzenle" data-id="' + ayni.id + '">O kitabı düzenle</button></div>';
   }
 
-  // Barkod tabancası kodu yazıp Enter'a basar: formu göndermek yerine ada geç.
+  // Yeni kitapta ISBN okununca adı, yazarı ve yayınevini internetten getirip boş alanlara yazar.
+  // Çalışana yalnız raf/bölmeyi kontrol edip kaydetmek kalır.
+  var aranan = '';
+  function bilgiGetir() {
+    var kod = $('f-barkod').value.replace(/\s+/g, '');
+    if (duzenlenenId || !KitapBilgi.isbnMi(kod) || kod === aranan) return;
+    if ($('barkod-uyari').innerHTML) return; // zaten kayıtlı
+    aranan = kod;
+    bildir($('form-mesaj'), 'basari', 'Kitap bilgileri internetten aranıyor…');
+    KitapBilgi.bul(kod).then(function (b) {
+      if ($('f-barkod').value.replace(/\s+/g, '') !== kod) return; // bu arada barkod değişti
+      if (!b) {
+        bildir($('form-mesaj'), 'hata', KitapBilgi.baglantiYok
+          ? 'Kitap bilgilerine internetten ulaşılamadı. Bilgileri elle girin.'
+          : 'Bu barkod internette bulunamadı. Bilgileri elle girin.');
+        $('f-ad').focus();
+        return;
+      }
+      if (!$('f-ad').value.trim()) $('f-ad').value = b.ad;
+      if (!$('f-yazar').value.trim()) $('f-yazar').value = b.yazar;
+      if (!$('f-yayinevi').value.trim()) $('f-yayinevi').value = b.yayinevi;
+      bildir($('form-mesaj'), 'basari', 'Bilgiler internetten getirildi, kontrol edin. Raf ve bölmeyi seçip kaydedin.');
+      $('f-bolme').focus();
+    });
+  }
+  function barkodOkundu() {
+    barkodKontrol();
+    bilgiGetir();
+    if (!KitapBilgi.isbnMi($('f-barkod').value) || duzenlenenId) $('f-ad').focus();
+  }
+
+  // Barkod tabancası kodu yazıp Enter'a basar: formu göndermek yerine bilgileri getir.
   $('f-barkod').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); barkodKontrol(); $('f-ad').focus(); }
+    if (e.key === 'Enter') { e.preventDefault(); barkodOkundu(); }
   });
-  $('f-barkod').addEventListener('change', barkodKontrol);
+  $('f-barkod').addEventListener('change', function () { barkodKontrol(); bilgiGetir(); });
   $('f-tara').addEventListener('click', function () {
-    Tarayici.ac(function (kod) { $('f-barkod').value = kod; barkodKontrol(); $('f-ad').focus(); });
+    Tarayici.ac(function (kod) { $('f-barkod').value = kod; barkodOkundu(); });
   });
   $('f-vazgec').addEventListener('click', function () { formuTemizle(); bildir($('form-mesaj'), '', ''); });
 
