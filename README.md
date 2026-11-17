@@ -11,6 +11,7 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 - **Gelince haber ver:** bulunamayan ya da tükenen kitap için müşteri ad ve telefon bırakır (KVKK onaylı); panelde Talepler sekmesinden takip edilir.
 - **Mağaza haritası:** raflar kat planına sürüklenerek yerleştirilir; müşteri ekranı "Buradasınız"dan rafa yolu gösterir.
 - **Görünüm:** mağazanın logosu, ana rengi ve karşılama yazısı.
+- **Şube eksikleri:** şubeden gelen barkodlu eksik listesi (Excel .xlsx ya da .csv) yüklenir; her kitabın raf ve bölmesi bulunur, raf sırasına göre toplama listesi çıkar (stok yetersiz / stokta yok / kayıtlı değil uyarılarıyla). Liste Excel olarak indirilir ya da “Toplandı” kutucuklarıyla yazdırılır. Excel okuma/yazma dış kütüphanesiz (`js/xlsx.js`).
 - **İşlem geçmişi:** kim, ne zaman, hangi kitabı ekledi, taşıdı, sildi.
 - **İnternetsiz çalışma:** bağlantı kesilse de müşteri ekranı son listeyle arama yapar (hizmet çalışanı + yerel kopya).
 

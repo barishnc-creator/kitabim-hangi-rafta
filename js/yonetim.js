@@ -723,6 +723,8 @@
       bildir($('form-mesaj'), '', '');
       if (giris && giris.ad) $('f-ad').value = giris.ad;
       cekmeceAc(giris && giris.ad ? 'f-yazar' : 'f-barkod');
+      // Barkod verildiyse (ör. şube listesindeki kayıtsız kitap) bilgiler internetten gelsin.
+      if (giris && giris.barkod) { $('f-barkod').value = giris.barkod; barkodKontrol(); bilgiGetir(); }
     }
   };
 

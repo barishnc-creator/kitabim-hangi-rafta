@@ -161,3 +161,27 @@ table.tablo { width: 100%; border-collapse: collapse; font-size: 14px; min-width
 .gecmis-liste li:last-child { border-bottom: 0; }
 .gecmis-liste .ikon-kutu { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 .gecmis-liste .gun { display: block; grid-template-columns: none; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ikincil); padding: 16px 0 6px; border-bottom: 0; }
+
+/* Şube eksikleri */
+.sube-birak { border: 2px dashed var(--cizgi-koyu); border-radius: 14px; padding: 22px; text-align: center; color: var(--ikincil); display: flex; gap: 10px; align-items: center; justify-content: center; }
+.sube-birak.uzerinde { border-color: var(--mavi); background: var(--mavi-acik); color: var(--mavi-koyu); }
+.sube-ozet { display: flex; gap: 10px; flex-wrap: wrap; }
+.sube-ozet span { border-radius: 12px; padding: 10px 14px; background: #F1F5F9; font-size: 14px; }
+.sube-ozet b { display: block; font-family: var(--baslik); font-size: 24px; line-height: 1.1; }
+.rozet { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; background: #F1F5F9; color: #334155; }
+.rozet.r-var { background: #DCFCE7; color: #166534; }
+.rozet.r-az { background: #FEF3C7; color: #92400E; }
+.rozet.r-tukendi { background: #FFEDD5; color: #9A3412; }
+.rozet.r-kayitsiz { background: #FEE2E2; color: #991B1B; }
+.sube-tablo tr.raf-satir td { background: #F1F5F9; font-family: var(--baslik); font-weight: 700; font-size: 15px; }
+.kutucuk { display: inline-block; width: 18px; height: 18px; border: 1.5px solid #334155; border-radius: 3px; }
+.sadece-yazdir { display: none; }
+@media print {
+  .sadece-yazdir { display: block; }
+  th .sadece-yazdir { display: inline; }
+  #sube-yazdir-baslik h2 { font-size: 18px; margin: 0 0 6px; }
+  .sube-tablo { min-width: 0; font-size: 12px; }
+  .sube-tablo td, .sube-tablo th { padding: 5px 8px; }
+  .tablo-kutu { border: 0; box-shadow: none; overflow: visible; }
+}
+#sube-filtre { max-width: 100%; min-width: 0; }

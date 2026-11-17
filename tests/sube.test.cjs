@@ -1,0 +1,105 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const Depo = require('../js/depo.js');
+const Sube = require('../js/sube.js');
+const Xlsx = require('../js/xlsx.js');
+
+function magaza() {
+  const d = Depo.bos();
+  const r1 = Depo.rafEkle(d, 'Okul', 2);
+  const r3 = Depo.rafEkle(d, 'Roman', 2);
+  Depo.kitapKaydet(d, { ad: 'Kürk Mantolu Madonna', barkod: '9789750719387', bolmeId: r3.bolmeler[0].id, stok: 5 });
+  Depo.kitapKaydet(d, { ad: 'Penguin Klasik', barkod: '9780140449136', bolmeId: r3.bolmeler[1].id, stok: 1 });
+  Depo.kitapKaydet(d, { ad: '7. Sınıf Matematik', barkod: '9786050000018', bolmeId: r1.bolmeler[1].id, stok: 0 });
+  Depo.kitapKaydet(d, { ad: 'Atlas', barkod: '8690000000017', bolmeId: r1.bolmeler[0].id, stok: null });
+  return d;
+}
+
+test('Barkod anahtarı: tire/boşluk silinir, ISBN-10 ISBN-13’e çevrilir', () => {
+  assert.equal(Sube.barkodAnahtar('978-975-07-1938-7'), '9789750719387');
+  assert.equal(Sube.barkodAnahtar('0140449132'), '9780140449136');
+  assert.equal(Sube.barkodAnahtar(' 8690000000017 '), '8690000000017');
+});
+
+test('Sütunlar: başlık satırı üstte açıklama olsa da bulunur', () => {
+  const s = Sube.sutunlariBul([['Şube: Kadıköy'], [], ['Sıra', 'Barkod', 'Kitap Adı', 'Eksik Adet']]);
+  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.adet], [2, 1, 2, 3]);
+});
+
+test('Sütunlar: başlık yoksa barkod sütunu içerikten seçilir', () => {
+  const s = Sube.sutunlariBul([['Kürk', '9789750719387', '2'], ['Atlas', '8690000000017', '1']]);
+  assert.equal(s.baslikSatiri, -1);
+  assert.equal(s.barkod, 1);
+  assert.equal(s.adet, -1);
+});
+
+test('Sütunlar: başlıkta “barkod” yazmasa da barkodların üstündeki satır başlık sayılır', () => {
+  const s = Sube.sutunlariBul([['Ürün', 'Kod', 'Miktar'], ['Kürk', '9789750719387', '2'], ['Atlas', '8690000000017', '1']]);
+  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.adet], [0, 1, 0, 2]);
+});
+
+test('Eşleştirme: raf ve bölme bulunur, toplama sırasına dizilir, durumlar doğru', () => {
+  const d = magaza();
+  const satirlar = [
+    ['Barkod', 'Ad', 'Adet'],
+    ['9789750719387', 'Kürk', '2'],
+    ['0140449132', 'Penguin', '3'],
+    ['9786050000018', 'Matematik', '1'],
+    ['9786059999999', 'Bilinmeyen kitap', '4'],
+    ['8690000000017', 'Atlas', ''],
+    ['978-975-07-1938-7', 'Kürk tekrar', '1'],
+    ['yok', 'geçersiz', '1']
+  ];
+  const sonuc = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
+  assert.deepEqual(sonuc.kalemler.map((k) => [k.yer ? k.yer.kod : '-', k.durum, k.adet]), [
+    ['1.1', 'var', 1],      // Atlas: stok takip edilmiyor, adet boş → 1
+    ['1.2', 'tukendi', 1],  // Matematik: stok 0
+    ['2.1', 'var', 3],      // Kürk: 2 + 1 (aynı barkod iki kez)
+    ['2.2', 'az', 3],       // Penguin: stok 1, istenen 3 (ISBN-10 ile eşleşti)
+    ['-', 'kayitsiz', 4]
+  ]);
+  assert.equal(sonuc.atlanan, 1);
+  assert.deepEqual(sonuc.ozet, { kalem: 5, adet: 12, var: 2, az: 1, tukendi: 1, kayitsiz: 1 });
+});
+
+test('Stok kapalıysa stok uyarısı verilmez', () => {
+  const d = magaza();
+  d.ayarlar.stok = false;
+  const satirlar = [['Barkod'], ['9786050000018'], ['9780140449136']];
+  const sonuc = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
+  assert.deepEqual(sonuc.kalemler.map((k) => k.durum), ['var', 'var']);
+  assert.equal(Sube.ciktiSatirlari(sonuc, false)[0].includes('Mağaza stoğu'), false);
+});
+
+test('Excel çıktısı: başlık + satırlar, barkod metin olarak kalır', async () => {
+  const d = magaza();
+  const satirlar = [['Barkod', 'Adet'], ['9789750719387', '2'], ['9786059999999', '1']];
+  const cikti = Sube.ciktiSatirlari(Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar)), true);
+  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet', 'Mağaza stoğu', 'Durum', 'Listedeki ad']);
+  assert.deepEqual(cikti[1].slice(0, 5), [1, '2. Raf · Roman', '2.1', '9789750719387', 'Kürk Mantolu Madonna']);
+  assert.equal(cikti[2][9], 'Kayıtlı değil');
+  const geri = await Xlsx.oku(Xlsx.yaz(cikti, { kalinBaslik: true }));
+  assert.equal(geri.satirlar[1][3], '9789750719387');
+});
+
+test('Xlsx: openpyxl ve LibreOffice ile yapılmış dosyalar okunur', async () => {
+  const a = await Xlsx.oku(fs.readFileSync(path.join(__dirname, 'veri/openpyxl-ornek.xlsx')));
+  assert.equal(a.sayfa, 'Eksikler');
+  assert.deepEqual(a.satirlar[2], ['Barkod', 'Kitap Adı', 'Adet']);
+  assert.deepEqual(a.satirlar[3], ['9789750719387', 'Kürk Mantolu Madonna', '3']);
+  assert.deepEqual(a.satirlar[4], ['978-975-07-3364-7', 'Simyacı & "Can"', '1']);
+  assert.equal(a.satirlar[9][4], 'uzak hücre');
+  const b = await Xlsx.oku(fs.readFileSync(path.join(__dirname, 'veri/libreoffice-ornek.xlsx')));
+  assert.deepEqual(b.satirlar, [['Barkod', 'Ürün Adı', 'Eksik Adet'], ['9789750719387', 'Kürk Mantolu Madonna', '2'], ['0140449132', 'Penguin', '1']]);
+});
+
+test('Xlsx: yazılan dosya geri okunur, özel karakterler korunur; eski .xls açık hata verir', async () => {
+  const bayt = Xlsx.yaz([['A', 'B'], ['<&>"\'', 3.5], ['ç ğ ı ö ş ü', null]], { sayfa: 'Liste/1' });
+  const r = await Xlsx.oku(bayt);
+  assert.equal(r.sayfa, 'Liste 1');
+  assert.deepEqual(r.satirlar, [['A', 'B'], ['<&>"\'', '3.5'], ['ç ğ ı ö ş ü']]);
+  await assert.rejects(Xlsx.oku(new Uint8Array([0xD0, 0xCF, 0x11, 0xE0, 0, 0])), /xls/);
+  await assert.rejects(Xlsx.oku(new TextEncoder().encode('düz metin')), /Excel/);
+});
