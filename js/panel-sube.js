@@ -14,7 +14,7 @@
   function csvMetni(arabellek) {
     var metin = new TextDecoder('utf-8').decode(arabellek);
     // Türkçe Excel'in "CSV" kaydı çoğu zaman Windows-1254'tür; bozuk karakter varsa onunla dene.
-    if (metin.indexOf('�') >= 0) { try { metin = new TextDecoder('windows-1254').decode(arabellek); } catch (e) { /* desteklenmiyor */ } }
+    if (metin.indexOf(String.fromCharCode(0xFFFD)) >= 0) { try { metin = new TextDecoder('windows-1254').decode(arabellek); } catch (e) { /* desteklenmiyor */ } }
     return metin;
   }
 
