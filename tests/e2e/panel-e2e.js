@@ -1,5 +1,5 @@
 const { chromium } = require('playwright');
-const OUT = process.argv[2];
+const OUT = process.argv[2] || require('os').tmpdir();
 (async () => {
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });

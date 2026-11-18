@@ -1,7 +1,8 @@
 const { chromium } = require('playwright');
 const tohum = require('./tohum.js');
-const OUT = process.argv[2], K = 'http://localhost:8765/';
-const SB = 'https://woogrfdcjonaurwgwoor.supabase.co';
+const OUT = process.argv[2] || require('os').tmpdir(), K = 'http://localhost:8765/';
+// Sahte Supabase adresi js/ayar.js'ten okunur; proje taşınınca test de kendiliğinden uyar.
+const SB = require('fs').readFileSync(require('path').join(__dirname, '../../js/ayar.js'), 'utf8').match(/supabaseUrl:\s*'([^']+)'/)[1].replace(/\/$/, '');
 // Sahte Supabase verisi (REST yanıtları)
 const VERI = {
   kirtasiye_raflar: [{ id: 'r1', no: 1, etiket: 'Okul' }, { id: 'r2', no: 2, etiket: 'Roman' }],

@@ -1,6 +1,6 @@
 const { chromium, devices } = require('playwright');
 const tohum = require('./tohum.js');
-const OUT = process.argv[2] + '/pdf-img', K = 'http://localhost:8765/';
+const OUT = (process.argv[2] || require('os').tmpdir()) + '/pdf-img', K = 'http://localhost:8765/';
 const fs = require('fs'); fs.mkdirSync(OUT, { recursive: true });
 function zenginlestir() {
   const v = JSON.parse(localStorage.getItem('kitabim-hangi-rafta:v1'));

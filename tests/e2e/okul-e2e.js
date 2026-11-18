@@ -1,6 +1,6 @@
 const { chromium, devices } = require('playwright');
 const tohum = require('./tohum.js');
-const OUT = process.argv[2], K = 'http://localhost:8765/';
+const OUT = process.argv[2] || require('os').tmpdir(), K = 'http://localhost:8765/';
 (async () => {
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 1366, height: 900 } });
