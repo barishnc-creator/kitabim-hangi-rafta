@@ -39,13 +39,34 @@
     return dedektorSozu;
   }
 
-  function ilkKod(sonuclar) {
+  function ilkSonuc(sonuclar) {
     for (var i = 0; i < (sonuclar || []).length; i++) {
       var v = sonuclar[i] && String(sonuclar[i].rawValue || '').trim();
-      if (v) return v;
+      if (v) return { deger: v, bicim: sonuclar[i].format };
     }
-    return '';
+    return null;
   }
+
+  // ---- Ortak çizim tuvali ----
+  // iPhone Safari'de tuval başına (~16 MP) ve toplam tuval belleğine sınır var; 24 MP fotoğrafı tuvale çizmek
+  // ya da her parça için yeni tuval açmak bir süre sonra okumayı bozar. Bu yüzden tek tuval kullanılır ve
+  // okuyucuya tuval değil piksel verisi (ImageData) verilir; okuyucu da kendi tuvalini açmaz.
+  var ortakTuval = null, ortakCtx = null;
+  function cizim(kaynak, sx, sy, sw, sh, dw, dh, donuk) {
+    if (!ortakTuval) {
+      ortakTuval = document.createElement('canvas');
+      ortakCtx = ortakTuval.getContext('2d', { willReadFrequently: true });
+    }
+    dw = Math.max(1, Math.round(dw)); dh = Math.max(1, Math.round(dh));
+    ortakTuval.width = donuk ? dh : dw; ortakTuval.height = donuk ? dw : dh;
+    var ctx = ortakCtx;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    if (donuk) { ctx.translate(dh, 0); ctx.rotate(Math.PI / 2); }
+    ctx.drawImage(kaynak, sx, sy, sw, sh, 0, 0, dw, dh);
+    return ctx.getImageData(0, 0, ortakTuval.width, ortakTuval.height);
+  }
+  function tuvaliBirak() { if (ortakTuval) { ortakTuval.width = ortakTuval.height = 1; } }
 
   // ---- Fotoğraftan okuma ----
   // Barkod fotoğrafın küçük bir köşesindeyse: önce bütün resim, sonra üst üste binen parçalar büyütülerek denenir.
@@ -72,45 +93,58 @@
     });
   }
 
-  function kesit(img, p, hedef) {
+  // Bir pencereyi (oran olarak) hedef genişliğe ölçekleyip çizer; donuk ise 90° çevrilmiş halini.
+  function kesit(img, p, hedef, donuk) {
     var W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
     var sx = p.x * W, sy = p.y * H, sw = p.g * W, sh = p.h * H;
-    var olcek = Math.min(hedef / sw, 3);
-    var c = document.createElement('canvas');
-    c.width = Math.round(sw * olcek); c.height = Math.round(sh * olcek);
-    var ctx = c.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    return c;
+    // Bütün resimde uzun kenar 'hedef' piksele küçültülür (büyütülmez); parçalarda genişlik 'hedef' olur, en fazla 3 kat.
+    var olcek = p.g === 1 ? Math.min(hedef / Math.max(sw, sh), 1) : Math.min(hedef / sw, 3);
+    return cizim(img, sx, sy, sw, sh, sw * olcek, sh * olcek, donuk);
   }
 
-  // Kitap yan çekildiyse barkod dikey kalır; düz okunamazsa resim 90° çevrilip yeniden denenir.
-  function cevir(img) {
-    var W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+  function veridenDosya(veri) {
     var c = document.createElement('canvas');
-    c.width = H; c.height = W;
-    var ctx = c.getContext('2d');
-    ctx.translate(H, 0); ctx.rotate(Math.PI / 2);
-    ctx.drawImage(img, 0, 0);
-    return c;
-  }
-
-  function tuvaldenDosya(c) {
+    c.width = veri.width; c.height = veri.height;
+    c.getContext('2d').putImageData(veri, 0, 0);
     return new Promise(function (tamam) {
-      c.toBlob(function (b) { tamam(new File([b], 'kesit.png', { type: 'image/png' })); }, 'image/png');
+      c.toBlob(function (b) { c.width = c.height = 1; tamam(new File([b], 'kesit.png', { type: 'image/png' })); }, 'image/png');
     });
   }
 
-  // Parça parça tarama; coz(tuval) bir kod döndürür ya da hata fırlatır.
+  // Denenecek görüntüler sırasıyla: bütün resim (iki ölçek), parçalar, bütün resim büyük boyda; sonra 90° çevrilmiş halleri.
+  // Büyük boy en fazla 4096 px: iPhone'un tuval sınırının (~16 MP) altında kalır.
+  function denemeler() {
+    var pen = pencereler(), liste = [];
+    [false, true].forEach(function (donuk) {
+      liste.push({ p: pen[0], hedef: 2000, donuk: donuk }, { p: pen[0], hedef: 1300, donuk: donuk });
+      for (var j = 1; j < pen.length; j++) liste.push({ p: pen[j], hedef: 1200, donuk: donuk });
+      if (!donuk) liste.push({ p: pen[0], hedef: 3000, donuk: false }, { p: pen[0], hedef: 4096, donuk: false });
+    });
+    return liste;
+  }
+
+  // Parça parça tarama. coz(ImageData) → {deger, bicim} ya da null.
+  // Çizgili barkod iki ayrı görüntüde aynı okununca kabul edilir (bkz. barkodonay.js).
   function parcaParca(img, coz, ilerleme) {
-    var pen = pencereler(), kaynak = img, i = 0, n = pen.length * 2;
+    var liste = denemeler(), i = 0, onay = new kok.BarkodOnay.Onay(2), bulunan = -1;
     function sonraki() {
-      if (i >= n) return Promise.reject(new Error('okunamadı'));
-      if (i === pen.length) kaynak = cevir(img);
-      var j = i % pen.length;
-      i++;
-      if (ilerleme) ilerleme(i, n);
-      return Promise.resolve(kesit(kaynak, pen[j], j === 0 ? 1600 : 900)).then(coz).catch(sonraki);
+      if (i >= liste.length) {
+        var tek = onay.tekAday();
+        return tek ? tek : Promise.reject(new Error('okunamadı'));
+      }
+      var d = liste[i];
+      // İlk okumadan sonra aynı parçayı başka ölçekte bir kez daha dene: doğrulama hızlı gelsin.
+      if (bulunan >= 0) { d = { p: liste[bulunan].p, hedef: liste[bulunan].hedef * 0.7, donuk: liste[bulunan].donuk }; bulunan = -2; }
+      else i++;
+      if (ilerleme) ilerleme(i, liste.length);
+      var veri;
+      try { veri = kesit(img, d.p, d.hedef, d.donuk); } catch (e) { return sonraki(); }
+      return Promise.resolve(veri).then(coz).catch(function () { return null; }).then(function (s) {
+        var kabul = s ? onay.ekle(s.deger, s.bicim) : '';
+        if (kabul) return kabul;
+        if (s && bulunan === -1) bulunan = i - 1;
+        return sonraki();
+      });
     }
     return sonraki();
   }
@@ -123,7 +157,12 @@
     var F = kok.Html5QrcodeSupportedFormats;
     var h = new kok.Html5Qrcode(alan.id, { verbose: false, formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.QR_CODE] });
     return {
-      coz: function (c) { return tuvaldenDosya(c).then(function (f) { return h.scanFile(f, false); }); },
+      coz: function (veri) {
+        return veridenDosya(veri).then(function (f) { return h.scanFileV2(f, false); }).then(function (r) {
+          var bicim = r && r.result && r.result.format ? String(r.result.format.formatName || '').toLowerCase() : '';
+          return { deger: r.decodedText, bicim: bicim === 'qr_code' ? 'qr_code' : bicim };
+        });
+      },
       bitir: function () { alan.remove(); }
     };
   }
@@ -131,14 +170,14 @@
   function fotoOku(dosya, ilerleme) {
     return resimYukle(dosya).then(function (img) {
       return dedektor().then(function (d) {
-        var coz = function (c) { return d.detect(c).then(function (s) { var k = ilkKod(s); if (!k) throw new Error('yok'); return k; }); };
-        return coz(img).catch(function () { return parcaParca(img, coz, ilerleme); });
+        var coz = function (veri) { return d.detect(veri).then(ilkSonuc); };
+        return parcaParca(img, coz, ilerleme);
       }, function () {
         if (!kok.Html5Qrcode) throw new Error('okuyucu yok');
         var e = eskiCozucu();
         return parcaParca(img, e.coz, ilerleme).then(function (k) { e.bitir(); return k; }, function (x) { e.bitir(); throw x; });
       });
-    });
+    }).then(function (k) { tuvaliBirak(); return k; }, function (x) { tuvaliBirak(); throw x; });
   }
 
   // ---- Canlı kamera ----
@@ -149,6 +188,7 @@
     if (akis) { akis.getTracks().forEach(function (t) { t.stop(); }); akis = null; }
     var bitti = eskiOkuyucu && eskiOkuyucu.isScanning ? eskiOkuyucu.stop().catch(function () {}) : Promise.resolve();
     eskiOkuyucu = null;
+    tuvaliBirak();
     return bitti.then(function () { if (p) p.remove(); });
   }
 
@@ -170,9 +210,7 @@
     video.setAttribute('playsinline', ''); video.setAttribute('muted', ''); video.muted = true; video.autoplay = true;
     var cerceve = document.createElement('div'); cerceve.className = 'kamera-cerceve';
     alan.appendChild(video); alan.appendChild(cerceve);
-    var tuval = document.createElement('canvas');
-    var ctx = tuval.getContext('2d', { willReadFrequently: true });
-    var tur = 0;
+    var tur = 0, onay = new kok.BarkodOnay.Onay(2);
 
     return navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -195,11 +233,12 @@
         var butun = (tur++ % 4) === 3;
         var sw = butun ? W : Math.round(W * 0.9), sh = butun ? H : Math.round(H * 0.6);
         var sx = Math.round((W - sw) / 2), sy = Math.round((H - sh) / 2);
-        tuval.width = sw; tuval.height = sh;
-        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-        d.detect(tuval).then(function (s) {
-          var k = ilkKod(s);
-          if (k) bitir(k); else dongu = setTimeout(tara, 60);
+        var veri;
+        try { veri = cizim(video, sx, sy, sw, sh, sw, sh); } catch (e) { dongu = setTimeout(tara, 200); return; }
+        d.detect(veri).then(function (s) {
+          // Çizgili barkod iki karede aynı okununca kabul edilir (bulanık karede yanlış okumaya karşı).
+          var o = ilkSonuc(s), k = o ? onay.ekle(o.deger, o.bicim) : '';
+          if (k) bitir(k); else dongu = setTimeout(tara, o ? 0 : 60);
         }, function () { dongu = setTimeout(tara, 200); });
       }
       tara();

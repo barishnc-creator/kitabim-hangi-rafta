@@ -61,6 +61,25 @@ function sahteKamera() {
   console.log('yan çekilmiş fotoğraf:', yan);
   if (yan !== BEKLENEN) tamam = false;
 
+  // 24 MP iPhone fotoğrafı: okunmalı, okurken iPhone Safari'nin tuval sınırını (~16,7 MP) aşan tuval açılmamalı.
+  const buyuk = await p.evaluate(async () => {
+    const r = await fetch('tests/veri/kitap-arka.jpg'); const img = await createImageBitmap(await r.blob());
+    const c = document.createElement('canvas'); c.width = 4284; c.height = 5712;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise((t) => c.toBlob(t, 'image/jpeg', 0.85)); c.width = c.height = 1;
+    let enBuyuk = 0;
+    const hd = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'height');
+    Object.defineProperty(HTMLCanvasElement.prototype, 'height', { configurable: true, set(v) { hd.set.call(this, v); enBuyuk = Math.max(enBuyuk, this.width * v); }, get() { return hd.get.call(this); } });
+    const O = window.OffscreenCanvas;
+    if (O) window.OffscreenCanvas = function (w, h) { enBuyuk = Math.max(enBuyuk, w * h); return new O(w, h); };
+    let kod;
+    try { kod = await Tarayici.fotoOku(new File([blob], 'buyuk.jpg', { type: 'image/jpeg' })); } catch (e) { kod = 'HATA ' + e.message; }
+    Object.defineProperty(HTMLCanvasElement.prototype, 'height', hd); if (O) window.OffscreenCanvas = O;
+    return { kod, mp: enBuyuk / 1e6 };
+  });
+  console.log('24 MP fotoğraf:', buyuk.kod, '| en büyük tuval:', buyuk.mp.toFixed(1), 'MP');
+  if (buyuk.kod !== BEKLENEN || buyuk.mp > 16.7) tamam = false;
+
   console.log(tamam ? 'SONUÇ: geçti' : 'SONUÇ: BAŞARISIZ');
   console.log('hatalar:', h);
   await b.close();
