@@ -36,7 +36,7 @@ Yetkiler yalnız ekranda değil, veritabanında da kontrol edilir (Supabase RLS)
 
 1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir.
 2. **Kullanıcı sunucusu:** Edge Functions bölümünde `kirtasiye-kullanici` adıyla yeni bir fonksiyon oluştur. İçeriği `supabase/functions/kirtasiye-kullanici/index.ts` dosyasından al. **"Verify JWT" kapalı olmalı**; fonksiyon girişi kendisi kontrol ediyor. CLI ile: `supabase functions deploy kirtasiye-kullanici --no-verify-jwt`.
-3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
+3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Fonksiyon panelde başka bir adla kaydolduysa (Supabase editörü rastgele ad verebilir) o adı `fonksiyon` satırına yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
 4. **İlk yönetici:** `yonetim.html`'i aç. Hiç düzenleyici yokken "İlk kurulum" formu çıkar; ilk hesabı oradan oluştur. Diğer kişileri sonra Kullanıcılar sekmesinden ekle.
 
 ### Yeni projeye taşıma

@@ -251,7 +251,7 @@
     }).subscribe();
 
     function fonksiyon(govde) {
-      return sb.functions.invoke('kirtasiye-kullanici', { body: govde }).then(function (s) {
+      return sb.functions.invoke(A.fonksiyon || 'kirtasiye-kullanici', { body: govde }).then(function (s) {
         if (!s.error) return s.data;
         var ctx = s.error.context;
         if (ctx && typeof ctx.json === 'function') {
