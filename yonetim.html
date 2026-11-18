@@ -428,8 +428,13 @@
       <span class="soluk">Kitap barkodu okutulunca ad, yazar, yayınevi ve kapak internetten gelir.</span>
       <div id="barkod-uyari"></div>
     </div>
-    <div class="onizleme" id="kapak-onizleme" hidden><img id="kapak-resim" alt=""><span class="soluk">Kapak görseli internetten alındı.</span></div>
+    <div class="onizleme" id="kapak-onizleme" hidden><img id="kapak-resim" alt=""><span class="soluk" id="kapak-not">Kapak görseli internetten alındı.</span></div>
     <input type="hidden" id="f-kapak">
+    <div class="alan" id="kapak-foto-alan" hidden>
+      <label class="dugme cerceve" for="f-kapak-foto" id="f-kapak-dugme" style="cursor:pointer;align-self:flex-start"><span data-ikon="kamera"></span>Kapaktan doldur</label>
+      <input type="file" id="f-kapak-foto" accept="image/*" capture="environment" class="gizli-etiket">
+      <span class="soluk">Barkod internette bulunamazsa kapağın fotoğrafını çekin: ad, yazar ve yayınevi kapaktan okunur, fotoğraf kapak resmi olur.</span>
+    </div>
     <div class="alan">
       <label for="f-ad">Kitap adı <span class="zorunlu">*</span></label>
       <input id="f-ad" autocomplete="off">

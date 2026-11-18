@@ -53,11 +53,17 @@ Dosyalar: `kiosk.webmanifest`, `yonetim.webmanifest`, `simge/` (kaynak `simge/*.
 1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir.
 2. **Kullanıcı sunucusu:** Edge Functions bölümünde `kirtasiye-kullanici` adıyla yeni bir fonksiyon oluştur. İçeriği `supabase/functions/kirtasiye-kullanici/index.ts` dosyasından al. **"Verify JWT" kapalı olmalı**; fonksiyon girişi kendisi kontrol ediyor. CLI ile: `supabase functions deploy kirtasiye-kullanici --no-verify-jwt`.
 3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Fonksiyon panelde başka bir adla kaydolduysa (Supabase editörü rastgele ad verebilir) o adı `fonksiyon` satırına yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
-4. **İlk yönetici:** `yonetim.html`'i aç. Hiç düzenleyici yokken "İlk kurulum" formu çıkar; ilk hesabı oradan oluştur. Diğer kişileri sonra Kullanıcılar sekmesinden ekle.
+4. **Kitap bilgisi sunucusu (isteğe bağlı, önerilir):** barkod Google Kitaplar'da yoksa Google aramasıyla bulur, bulunamayan kitapta kapak fotoğrafından ad/yazar/yayınevini okur ve fotoğrafı kapak resmi yapar. Kurulmazsa program eskisi gibi tarayıcıdan Google Kitaplar ve Open Library'ye sorar (anahtarsız Google Kitaplar'ın ortak günlük kotası sık sık dolar).
+   - [Google AI Studio](https://aistudio.google.com/apikey)'dan bir API anahtarı al. İstersen aynı Google Cloud projesinde **Books API**'yi de etkinleştir (kapak resimleri ve hızlı sonuç için; açılmazsa sunucu doğrudan Google aramasına geçer).
+   - Supabase → Edge Functions → Secrets: `GOOGLE_API_KEY` = anahtar. İsteğe bağlı `GEMINI_MODEL` (varsayılan `gemini-2.5-flash`; model emekliye ayrılırsa sunucu sıradakini dener).
+   - Edge Functions'ta `kitap-bilgi` adıyla fonksiyon oluştur, içeriği `supabase/functions/kitap-bilgi/index.ts`. **"Verify JWT" kapalı**; giriş ve yetkiyi (düzenleyici, çalışan) fonksiyon kendisi kontrol eder. Başka adla kaydolduysa `js/ayar.js`'teki `kitapFonksiyon` satırına o adı yaz.
+   - Mevcut kurulumda SQL Editor'de `supabase/kapak-depo.sql`'i bir kez çalıştır (kapak fotoğrafları deposu; yeni kurulumda `kurulum.sql` içinde var).
+   - Ücretsiz kota (Kasım 2026): `gemini-2.5-flash` ile Google Arama'lı cevap günde 500 istek; kapak okuma ve Google Kitaplar bundan ayrı sayılır.
+5. **İlk yönetici:** `yonetim.html`'i aç. Hiç düzenleyici yokken "İlk kurulum" formu çıkar; ilk hesabı oradan oluştur. Diğer kişileri sonra Kullanıcılar sekmesinden ekle.
 
 ### Yeni projeye taşıma
 
-Yeni Supabase projesinde yukarıdaki 1, 2 ve 4. adımları yap, 3. adımda `js/ayar.js`'teki iki satırı yeni projeninkilerle değiştir. Program sıfır veriyle başlar.
+Yeni Supabase projesinde yukarıdaki 1, 2, 4 ve 5. adımları yap, 3. adımda `js/ayar.js`'teki iki satırı yeni projeninkilerle değiştir. Program sıfır veriyle başlar.
 
 ## Deneme modu
 
@@ -70,6 +76,7 @@ Derleme adımı yok, düz HTML/CSS/JS.
 ```
 python3 -m http.server 8000   # http://localhost:8000
 npm test                      # birim testleri (Node 18+)
+npm run test:fonksiyon        # kitap-bilgi sunucu fonksiyonunun testleri (Deno 2)
 ```
 
 Kütüphaneler `vendor/` altında:

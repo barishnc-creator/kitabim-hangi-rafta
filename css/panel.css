@@ -185,3 +185,4 @@ table.tablo { width: 100%; border-collapse: collapse; font-size: 14px; min-width
   .tablo-kutu { border: 0; box-shadow: none; overflow: visible; }
 }
 #sube-filtre { max-width: 100%; min-width: 0; }
+.mesgul { opacity: .6; pointer-events: none; }

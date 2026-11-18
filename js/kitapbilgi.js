@@ -62,26 +62,43 @@
   }
 
   // Bulamazsa null döner; hiçbir zaman hata fırlatmaz.
+  // sunucu (isteğe bağlı): bulutta kitap-bilgi fonksiyonunu çağıran işlev. Varsa önce o sorulur
+  // (kendi Google anahtarıyla Google Kitaplar, Open Library, gerekirse Google Arama); ulaşılamazsa doğrudan aranır.
   // api.baglantiYok: son aramada iki kaynağa da ulaşılamadıysa true.
   // api.kotaDoldu: Google Kitaplar istek sınırı yüzünden cevap vermediyse ve kitap başka yerde de bulunamadıysa true.
-  function bul(kod) {
+  // api.kaynak: bilginin geldiği yer ('google-kitaplar', 'open-library', 'google-arama' ya da '').
+  function bul(kod, sunucu) {
     api.baglantiYok = false;
     api.kotaDoldu = false;
+    api.kaynak = '';
     if (!isbnMi(kod)) return Promise.resolve(null);
     var isbn = rakam(kod);
+    if (typeof sunucu === 'function') {
+      return Promise.resolve().then(function () { return sunucu({ islem: 'isbn', isbn: isbn }); }).then(function (c) {
+        var b = c && c.bilgi;
+        if (!b || !b.ad) return null;
+        api.kaynak = b.kaynak || '';
+        return { ad: temiz(b.ad), yazar: temiz(b.yazar), yayinevi: temiz(b.yayinevi), kapak: temiz(b.kapak) };
+      }, function () { return dogrudan(isbn); });
+    }
+    return dogrudan(isbn);
+  }
+
+  function dogrudan(isbn) {
     return getir('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn, 6000).then(function (g) {
       var sonuc = g === KOTA ? null : googleCozumle(g);
-      if (sonuc && sonuc.ad && sonuc.yazar && sonuc.yayinevi) return sonuc;
+      if (sonuc && sonuc.ad && sonuc.yazar && sonuc.yayinevi) { api.kaynak = 'google-kitaplar'; return sonuc; }
       return getir('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data', 6000).then(function (o) {
         var son = birlestir(sonuc, openLibraryCozumle(o, isbn));
         api.baglantiYok = !son && g === undefined && o === undefined;
         api.kotaDoldu = !son && g === KOTA;
+        if (son) api.kaynak = sonuc ? 'google-kitaplar' : 'open-library';
         return son;
       });
     });
   }
 
-  var api = { isbnMi: isbnMi, googleCozumle: googleCozumle, openLibraryCozumle: openLibraryCozumle, birlestir: birlestir, bul: bul, baglantiYok: false, kotaDoldu: false };
+  var api = { isbnMi: isbnMi, googleCozumle: googleCozumle, openLibraryCozumle: openLibraryCozumle, birlestir: birlestir, bul: bul, baglantiYok: false, kotaDoldu: false, kaynak: '' };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.KitapBilgi = api;
 })(this);

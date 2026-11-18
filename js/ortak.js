@@ -52,6 +52,7 @@
   ikon.konum20 = s('<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>');
   ikon.saat = s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>');
   ikon.sube = s('<path d="M3 9l1.5-5h15L21 9M3 9h18M4 9v11h16V9M9 20v-6h6v6"/>');
+  ikon.kamera = s('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>');
   ikon.geri = s('<path d="M19 12H5M12 19l-7-7 7-7"/>');
 
   // <span data-ikon="ad"> öğelerini simgeyle doldurur.

@@ -63,3 +63,22 @@ test('Google kotası dolunca (429) "bulunamadı" değil "kota doldu" bilinir', a
   assert.equal(await K.bul('9789750719387'), null);
   assert.equal(K.kotaDoldu, false);
 });
+
+test('sunucu varsa önce o sorulur; Google araması kaynağı bildirilir', async () => {
+  global.fetch = () => { throw new Error('doğrudan internete gidilmemeliydi'); };
+  const istekler = [];
+  const sunucu = (g) => { istekler.push(g); return Promise.resolve({ bilgi: { ad: 'Kınalı Serçe', yazar: 'Şermin Yaşar', yayinevi: 'Kronik Kitap', kapak: '', kaynak: 'google-arama' } }); };
+  assert.deepEqual(await K.bul('9786259506586', sunucu), { ad: 'Kınalı Serçe', yazar: 'Şermin Yaşar', yayinevi: 'Kronik Kitap', kapak: '' });
+  assert.deepEqual(istekler, [{ islem: 'isbn', isbn: '9786259506586' }]);
+  assert.equal(K.kaynak, 'google-arama');
+});
+
+test('sunucu bulamazsa null; sunucuya ulaşılamazsa doğrudan aranır', async () => {
+  global.fetch = () => { throw new Error('gidilmemeli'); };
+  assert.equal(await K.bul('9786259506586', () => Promise.resolve({ bilgi: null })), null);
+  global.fetch = (url) => Promise.resolve({ ok: true, json: () => Promise.resolve(url.includes('googleapis')
+    ? { items: [{ volumeInfo: { title: 'Doğrudan', authors: ['A'], publisher: 'B' } }] } : {}) });
+  const b = await K.bul('9786259506586', () => Promise.reject(new Error('Kitap bilgi sunucusu kurulmamış')));
+  assert.equal(b.ad, 'Doğrudan');
+  assert.equal(K.kaynak, 'google-kitaplar');
+});

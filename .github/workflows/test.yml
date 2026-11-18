@@ -13,3 +13,7 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm run test:fonksiyon

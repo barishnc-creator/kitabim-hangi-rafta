@@ -3,6 +3,7 @@
   "private": true,
   "description": "Kırtasiye raf takip programı",
   "scripts": {
-    "test": "node --test tests/*.test.cjs"
+    "test": "node --test tests/*.test.cjs",
+    "test:fonksiyon": "KITAP_BILGI_TEST=1 deno test --allow-env --node-modules-dir=none --no-lock supabase/functions/kitap-bilgi/test.ts"
   }
 }

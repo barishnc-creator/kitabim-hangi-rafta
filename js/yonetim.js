@@ -295,14 +295,14 @@
     if ($('barkod-uyari').innerHTML) return; // zaten kayıtlı
     aranan = kod;
     bildir($('form-mesaj'), 'basari', 'Kitap bilgileri internetten aranıyor…');
-    KitapBilgi.bul(kod).then(function (b) {
+    KitapBilgi.bul(kod, Veri.kitapBilgi).then(function (b) {
       if ($('f-barkod').value.replace(/\s+/g, '') !== kod) return; // bu arada barkod değişti
       if (!b) {
         bildir($('form-mesaj'), 'hata', KitapBilgi.baglantiYok
           ? 'Kitap bilgilerine internetten ulaşılamadı. Bilgileri elle girin.'
           : KitapBilgi.kotaDoldu
             ? 'Google Kitaplar şu an yoğun olduğu için cevap vermedi (günlük ücretsiz sınır doldu). Biraz sonra barkodu yeniden okutun ya da bilgileri elle girin.'
-            : 'Bu barkod internette bulunamadı. Bilgileri elle girin.');
+            : 'Bu barkod internette bulunamadı. ' + (Veri.kitapBilgi ? 'Kapağın fotoğrafını çekin (Kapaktan doldur) ya da bilgileri elle girin.' : 'Bilgileri elle girin.'));
         $('f-ad').focus();
         return;
       }
@@ -310,7 +310,9 @@
       if (!$('f-yazar').value.trim()) $('f-yazar').value = b.yazar;
       if (!$('f-yayinevi').value.trim()) $('f-yayinevi').value = b.yayinevi;
       if (!$('f-kapak').value && b.kapak) kapakGoster(b.kapak);
-      bildir($('form-mesaj'), 'basari', 'Bilgiler internetten getirildi, kontrol edin. Raf ve bölmeyi seçip kaydedin.');
+      bildir($('form-mesaj'), 'basari', KitapBilgi.kaynak === 'google-arama'
+        ? 'Bilgiler internette arama yapılarak bulundu; kaydetmeden önce mutlaka kontrol edin. Raf ve bölmeyi seçip kaydedin.'
+        : 'Bilgiler internetten getirildi, kontrol edin. Raf ve bölmeyi seçip kaydedin.');
       $('f-bolme').focus();
     });
   }
@@ -335,8 +337,56 @@
     if (e.key === 'Escape' && !$('kitap-form').hidden && !document.querySelector('.kamera-perde')) cekmeceKapat();
   });
 
+  // ---- Kapaktan doldur: fotoğraf küçültülür, sunucuda yapay zekâ okur, fotoğraf kapak resmi olur ----
+  $('kapak-foto-alan').hidden = !Veri.kitapBilgi;
+  function kapakFotoHazirla(dosya) {
+    return new Promise(function (tamam, hata) {
+      var url = URL.createObjectURL(dosya), img = new Image();
+      img.onload = function () {
+        var W = img.naturalWidth || img.width, H = img.naturalHeight || img.height, o = Math.min(1, 1024 / Math.max(W, H));
+        var c = document.createElement('canvas');
+        c.width = Math.round(W * o); c.height = Math.round(H * o);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var veri = c.toDataURL('image/jpeg', 0.85);
+        c.width = c.height = 1; // iPhone'da tuval belleğini hemen bırak
+        URL.revokeObjectURL(url);
+        tamam(veri.replace(/^data:image\/jpeg;base64,/, ''));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); hata(new Error('Fotoğraf açılamadı.')); };
+      img.src = url;
+    });
+  }
+  $('f-kapak-foto').addEventListener('change', function (e) {
+    var dosya = e.target.files[0];
+    e.target.value = '';
+    if (!dosya || !Veri.kitapBilgi) return;
+    var dugme = $('f-kapak-dugme');
+    dugme.classList.add('mesgul');
+    bildir($('form-mesaj'), 'basari', 'Kapak okunuyor…');
+    kapakFotoHazirla(dosya).then(function (resim) {
+      return Veri.kitapBilgi({ islem: 'kapak', resim: resim, isbn: $('f-barkod').value.replace(/\D/g, '') });
+    }).then(function (c) {
+      if (c.kapak) { kapakGoster(c.kapak); $('kapak-not').textContent = 'Kapak resmi çektiğiniz fotoğraftan.'; }
+      var b = c.bilgi, ek = !c.kapak && c.depoHatasi ? ' Kapak resmi kaydedilemedi.' : '';
+      if (b) {
+        if (!$('f-ad').value.trim()) $('f-ad').value = b.ad || '';
+        if (!$('f-yazar').value.trim()) $('f-yazar').value = b.yazar || '';
+        if (!$('f-yayinevi').value.trim()) $('f-yayinevi').value = b.yayinevi || '';
+        bildir($('form-mesaj'), 'basari', 'Bilgiler kapaktan okundu; kontrol edin, eksik varsa tamamlayın.' + ek);
+        $('f-bolme').focus();
+      } else {
+        bildir($('form-mesaj'), 'hata', (c.kapak ? 'Kapak resmi kaydedildi ama ' : '') + 'kapaktaki yazılar okunamadı' +
+          (c.uyari ? ' (' + c.uyari + ')' : '') + '. Bilgileri elle girin.' + ek);
+        $('f-ad').focus();
+      }
+    }).catch(function (x) {
+      bildir($('form-mesaj'), 'hata', 'Kapak okunamadı: ' + (x && x.message ? x.message : 'bilinmeyen hata') + ' Bilgileri elle girin.');
+    }).then(function () { dugme.classList.remove('mesgul'); });
+  });
+
   function kapakGoster(url) {
     var u = Depo.kapakAdresi(url);
+    $('kapak-not').textContent = 'Kapak görseli internetten alındı.';
     $('f-kapak').value = u;
     $('kapak-onizleme').hidden = !u;
     if (u) $('kapak-resim').src = u; else $('kapak-resim').removeAttribute('src');

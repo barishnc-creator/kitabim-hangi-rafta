@@ -250,20 +250,23 @@
       bekle = setTimeout(function () { yukle().then(yay).catch(function () {}); }, 300);
     }).subscribe();
 
-    function fonksiyon(govde) {
-      return sb.functions.invoke(A.fonksiyon || 'kirtasiye-kullanici', { body: govde }).then(function (s) {
+    function cagir(ad, govde, sunucuAdi) {
+      return sb.functions.invoke(ad, { body: govde }).then(function (s) {
         if (!s.error) return s.data;
         var ctx = s.error.context;
         if (ctx && typeof ctx.json === 'function') {
           return ctx.json().then(function (j) { throw new Error((j && j.hata) || 'İşlem yapılamadı.'); },
-            function () { throw new Error('Kullanıcı sunucusu kurulmamış ya da ulaşılamıyor.'); });
+            function () { throw new Error(sunucuAdi + ' kurulmamış ya da ulaşılamıyor.'); });
         }
-        throw new Error('Kullanıcı sunucusuna ulaşılamadı.');
+        throw new Error(sunucuAdi + ' ulaşılamadı.');
       });
     }
+    function fonksiyon(govde) { return cagir(A.fonksiyon || 'kirtasiye-kullanici', govde, 'Kullanıcı sunucusu'); }
 
     return {
       yukle: yukle,
+      // Barkoddan kitap bilgisi ve kapaktan okuma (supabase/functions/kitap-bilgi).
+      kitapBilgi: function (govde) { return cagir(A.kitapFonksiyon || 'kitap-bilgi', govde, 'Kitap bilgi sunucusu'); },
 
       rafEkle: function (etiket, n) {
         var r = Depo.rafEkle(kopya(son), etiket, n);

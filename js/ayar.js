@@ -5,5 +5,7 @@ window.AYAR = {
   supabaseUrl: 'https://kkcfzrchrdiroiskibhw.supabase.co',
   supabaseKey: 'sb_publishable_bTVxqKLF9lEiwBizbF0Qog_HDeMYL9l',
   // Kullanıcı yönetimi fonksiyonunun Supabase'deki adı (Edge Functions listesindeki ad).
-  fonksiyon: 'smart-processor'
+  fonksiyon: 'smart-processor',
+  // Kitap bilgisi fonksiyonunun adı (barkoddan Google araması, kapaktan okuma). Kurulmamışsa program eskisi gibi çalışır.
+  kitapFonksiyon: 'kitap-bilgi'
 };

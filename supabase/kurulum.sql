@@ -301,6 +301,12 @@ begin
   end loop;
 end $$;
 
+-- Kapak fotoğrafları deposu (kitap-bilgi fonksiyonu yükler, herkes görüntüler; tarayıcıya yazma izni yok).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('kapaklar', 'kapaklar', true, 1048576, array['image/jpeg'])
+on conflict (id) do update
+  set public = true, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
 -- İLK DÜZENLEYİCİ (kurulumdan sonra bir kez, e-postayı değiştirerek):
 -- insert into public.kirtasiye_uyeler (user_id, ad, eposta, rol)
 -- select id, 'Yönetici', email, 'duzenleyici' from auth.users where email = 'ORNEK@EPOSTA.COM'
