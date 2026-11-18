@@ -5,6 +5,7 @@ const fs = require('fs'); fs.mkdirSync(OUT, { recursive: true });
 function zenginlestir() {
   const v = JSON.parse(localStorage.getItem('kitabim-hangi-rafta:v1'));
   v.ayarlar.magazaAdi = 'Örnek Kırtasiye';
+  v.kitaplar.forEach((k, i) => { if (!k.barkod) k.barkod = '97860500' + String(10000 + i * 37).slice(-5); });
   v.ayarlar.plan = { raflar: { r1: { x: 6, y: 8, w: 30, h: 13, tarif: 'Girişten sola, duvar boyunca' }, r2: { x: 6, y: 36, w: 30, h: 13, tarif: 'Girişten sola, ikinci sıra' }, r3: { x: 60, y: 8, w: 13, h: 42, tarif: 'Girişten sağa, kasanın arkası' }, r4: { x: 82, y: 8, w: 12, h: 42, tarif: 'En sağ köşe' } },
     nesneler: [{ id: 'k', tur: 'kasa', x: 56, y: 64, w: 22, h: 13 }, { id: 'g', tur: 'giris', x: 41, y: 92, w: 18, h: 8 }], kiosk: { x: 50, y: 86 } };
   v.okulListeleri = [
@@ -57,6 +58,11 @@ function zenginlestir() {
   await sekme('gecmis', 'p9-gecmis');
   await sekme('revizeler', 'p10-revizeler');
   await sekme('ayarlar', 'p11-ayarlar');
+  // Şube eksikleri: örnek listeyi indir, geri yükle
+  await p.click('#sek-sube'); await p.fill('#sube-ad', 'Kadıköy şubesi');
+  const [ind] = await Promise.all([p.waitForEvent('download'), p.click('#sube-ornek')]);
+  await p.setInputFiles('#sube-dosya', await ind.path()); await p.waitForSelector('#sube-sonuc:not([hidden])');
+  await p.waitForTimeout(300); await p.evaluate(() => document.getElementById('sube-ozet').scrollIntoView()); await p.evaluate(() => window.scrollBy(0, -140)); await foto('p12-sube');
   // Telefon
   const t = await b.newContext({ ...devices['iPhone 13'] }); const tp = await t.newPage();
   await tp.goto(K + 'index.html?yerel=1'); await tp.evaluate(tohum); await tp.evaluate(zenginlestir);
