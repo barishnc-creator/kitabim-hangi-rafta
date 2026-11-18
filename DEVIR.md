@@ -23,13 +23,26 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Şimdilik ücretsiz altyapı; müdür onaylarsa ücretli yeni Supabase projesine sıfır veriyle taşınır.
 - Fiyat paketleri iç fiyat notundadır (kullanıcıda); herkese açık depoya yazılmaz.
 
+## Canlı kurulum (18 Kasım 2026, tamamlandı)
+
+- **Yayın:** GitHub Pages, `main` dalı, kök klasör (`.nojekyll` var).
+  - Müşteri ekranı: https://barishnc-creator.github.io/kitabim-hangi-rafta/
+  - Yönetim paneli: https://barishnc-creator.github.io/kitabim-hangi-rafta/yonetim.html
+- **Supabase:** kullanıcının yeni, ayrı hesabı (kırtasiye için açıldı), proje `kitabim-hangi-rafta`, bölge eu-central-1 (Frankfurt), ref `kkcfzrchrdiroiskibhw`. Adres ve publishable anahtar `js/ayar.js`'te.
+  - `supabase/kurulum.sql` SQL Editor'de çalıştırıldı (API yetkileri dosyada açıkça veriliyor).
+  - Kullanıcı fonksiyonu panelde **`smart-processor`** adıyla kaydoldu (Supabase editörü rastgele ad verdi); kod `supabase/functions/kirtasiye-kullanici/index.ts`, Verify JWT kapalı. `js/ayar.js` → `fonksiyon: 'smart-processor'`.
+  - Bu yeni hesap Claude'un Supabase MCP bağlantısında **yok** (MCP kullanıcının eski hesabına bağlı: ortak-muhasebe, csn). Veritabanı değişiklikleri SQL Editor'den kullanıcıya yaptırılır.
+  - Bulut ortamı "Claude Bulut" ağ izin listesinde `kkcfzrchrdiroiskibhw.supabase.co` var; REST ve fonksiyon buradan curl ile test edilebilir.
+- Kullanıcı canlı adreste programın çalıştığını doğruladı. İlk yönetici hesabını kendisi oluşturacak/oluşturdu (şifre Claude'da yok).
+- Deneme sürümü (yerel veri, örnek doldurma): claude.ai/artifact/W2Go9k3SPxdrxF93SZNXDw — kaynağı scratchpad'deydi; yeniden üretmek için `index.html`/`yonetim.html`'den supabase.js ve service worker çıkarılıp `js/ayar.js` boş bırakılır.
+
 ## Sıradaki işler
 
-1. **Supabase kurulumu (kullanıcı bilgisayardayken):** SQL Editor'de `supabase/kurulum.sql` çalıştır; Edge Function `kirtasiye-kullanici` (Verify JWT kapalı). Yeni Supabase hesabı açılırsa `js/ayar.js`'teki adres ve publishable anahtarı değiştir. (Supabase MCP onay penceresi kullanıcıya ulaşmadı; elle yapılacak.)
-2. **GitHub Pages:** depo ayarlarından Pages'i `main` dalından aç; sunumda bu adres kullanılır.
-3. Sunum: slayt sunusu hazır (claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak. Demo: `index.html?yerel=1&kiosk=1` ve `yonetim.html?yerel=1` (örnek veri: `tests/e2e/tohum.js`).
-4. Gerçek cihazda kamera testi, Türkçe kitaplarda Google Books kapsamı.
+1. Kullanıcı canlı sistemi deneyip revize verecek; revizeleri bu depoda yap, test et, push et (Pages otomatik güncellenir).
+2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (16 slayt, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak.
+3. Proje PDF'i (`belgeler/`) şube eksik listesi özelliğini henüz içermiyor; istenirse sayfa ekle ve `node belgeler/yap.js`.
+4. Gerçek cihazda kamera testi, Türkçe kitaplarda Google Books kapsamı, Microsoft Excel ile gerçek şube listesi denemesi.
 
 ## Açık sorular
 
-- Yeni Supabase hesabı mı, ortak-muhasebe projesi mi? (Öneri: yeni Supabase hesabı.)
+- Yok (Supabase kararı verildi: yeni hesap).
