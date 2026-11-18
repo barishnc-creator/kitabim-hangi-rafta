@@ -8,7 +8,7 @@ Kırtasiye için "Kitabım Hangi Rafta?": müşteri ekranı (kiosk, `index.html`
 
 Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür), çalışan (kitap ekler/çıkarır). Revizeler programın kendisine dair isteklerdir; Claude'a iletilir.
 
-## Yapılanlar (hepsi bitti, 43 birim testi geçiyor)
+## Yapılanlar (hepsi bitti, 49 birim testi geçiyor)
 
 - Temel: raf/bölme şeması, barkod (kamera + fotoğraf + USB okuyucu), ISBN'den Google Books / Open Library ile otomatik bilgi ve kapak, CSV, QR raf etiketleri, fiyat/stok aç-kapa, roller, Supabase RLS.
 - Profesyonel sürüm: kenar menülü panel, genel bakış panosu, kiosk karşılama ekranı, Türkçe ekran klavyesi, kapaklar.
@@ -16,6 +16,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Revize 1 (17 Kasım): **Şube eksikleri** sekmesi. Şubeden gelen barkodlu Excel listesi → raf/bölme eşleştirme → Excel'e indirme ve yazdırma. Dosyalar: `js/xlsx.js` (kütüphanesiz .xlsx okuma/yazma), `js/sube.js` (eşleştirme kuralları), `js/panel-sube.js`, testler `tests/sube.test.cjs` + `tests/veri/*.xlsx`. Eski .xls desteklenmez (kullanıcıya .xlsx olarak kaydetmesi söylenir). Sunuma eklendi (slayt 10 “Şube eksik listesi”, Standart pakete yazıldı); proje PDF'inde de var (18 Kasım).
 - Uygulama olarak kurulum (18 Kasım): iki ayrı manifest (`kiosk.webmanifest` tam ekran "Kitabım Nerede", `yonetim.webmanifest` "Raf Yönetimi"), simgeler `simge/`, iPad meta etiketleri, panelde "Uygulama olarak kur" düğmesi (`js/kur.js`). Chrome kurulabilirlik denetimi iki sayfada da temiz. Kurulum talimatı README'de.
 - Barkod okuma (18 Kasım, kullanıcının iPhone denemesinden): html5-qrcode canlı görüntüyü çerçeve boyutuna (~300 px) küçültüp tarıyordu, iPhone'da okumuyordu. Yeni motor: `vendor/barcode-detector.js` (barcode-detector 3.2.3 ponyfill) + `vendor/zxing_reader.wasm` (zxing-wasm 3.1.6, ZXing-C++, MIT). Android'de yerleşik BarcodeDetector, yoksa bu motor; ikisi de yoksa html5-qrcode yedek. Kendi tarama döngüsü: 1920×1080 kamera, çerçeve içi tam çözünürlükte, destekleniyorsa 2x yakınlaştırma. Fotoğraftan okuma parça parça + 90° döndürme. Test `tests/e2e/barkod-e2e.js`: gerçek kitap fotoğrafından ffmpeg ile üretilen bulanık/titreyen sahte kamera, yeni sürüm 0,2 sn'de okuyor, eski sürüm hiç okuyamıyordu. QR (raf etiketleri) de okunuyor. Kullanıcı iPhone'da canlı kamerayla denedi: **çalışıyor** (18 Kasım).
+- Fotoğraftan okuma düzeltmesi (18 Kasım; kullanıcı: net fotoğraf bazen okunamıyor): eski kod 24 MP iPhone fotoğrafını tam boy tuvale çiziyordu (24,5 MP; iPhone Safari sınırı ~16,7 MP) ve her parça için yeni tuval açıp bırakmıyordu, tuval belleği dolunca okuma bozuluyordu. Şimdi tek ortak tuval, okuyucuya ImageData verilir (okuyucu kendi tuvalini açmaz), döndürme parça içinde; en büyük tuval ≤ 4096 px uzun kenar. `tests/e2e/barkod-e2e.js` 24 MP fotoğrafı ve tuval boyutunu denetler (eski kodda başarısız). `js/barkodonay.js`: çizgili barkod iki okumada aynı çıkınca kabul (canlı kamera ve fotoğraf), QR hemen; tek aday kalırsa yalnız geçerli ISBN kabul. Bilinen sınır: çok bulanık fotoğrafta ZXing tutarlı yanlış sayı okuyabiliyor (9789944886666 → 0718974886666, kontrol hanesi tutuyor); `minLineCount` 3–4 denendi, işe yaramadı, vendor dosyası değiştirilmedi.
 - `belgeler/`: müşteriye verilecek proje dokümanı (PDF + kaynağı `proje.html`, `node belgeler/yap.js` ile yeniden üretilir). Sürüm 1.1 (18 Kasım): şube eksik listesi sayfası ve görüntüsü (`pdf-img/p12-sube.jpg`), tablete uygulama olarak kurulum, canlı kurulum ve iPhone kamera durumu, 43 test; resim yolları düzeltildi (`pdf-img/`, eskiden kırık `../pdf-img/`). Ekran görüntüleri `node tests/e2e/pdf-goruntu.js <klasör>` ile üretilir (yerel sunucu açıkken), örnek kitaplara barkod verir. İç kullanım fiyat notu kullanıcıda; depoda yok.
 - `tests/e2e/`: Playwright senaryoları (yerel sunucu `python3 -m http.server 8765` ile). 18 Kasım: 10 senaryonun hepsi temiz. Çevrimdışı testi sahte Supabase adresini `js/ayar.js`'ten okur (proje taşınınca bozulmaz); klasör verilmezse ekran görüntüleri geçici klasöre yazılır.
 
@@ -40,6 +41,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
+0. Kullanıcı iPhone'da "Fotoğraf çekerek okut"u yeniden denesin (service worker sürümü khr-v6; sayfa bir kez yenilenmeli).
 1. Kullanıcı canlı sistemi deneyip revize verecek; revizeleri bu depoda yap, test et, push et (Pages otomatik güncellenir).
 2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (16 slayt, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak.
 3. Sunuma "tablete uygulama olarak kurulur" bilgisi eklenebilir (PDF'te var).
