@@ -41,6 +41,15 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
+**ÖNCE BU (18 Kasım, kullanıcının yeni bilgisi):** Mağaza programı hazır alacak; personel kitap bilgisi TAMAMLAMAZ, ürünleri yalnız **Excel ile, adetli** ekler. Kararlar:
+- Excel'de raf/bölme YOK → yeni kitaplar "Rafa yerleştirilecek" listesine düşsün; personel rafa koyarken barkodu okutup bölme seçer.
+- Kayıtlı barkod Excel'de tekrar gelirse **adet stoğa eklenir** (3 + 5 = 8).
+- Excel sütunları bilinmiyor: **kullanıcı örnek Excel gönderecek**; gelmeden içe aktarmayı yazma.
+- Kitap bilgisi (ad/yazar/yayınevi/kapak) toplu olarak internetten tamamlanmalı (Excel'de ad yoksa zorunlu). Ücretsiz planda: Google Kitaplar (kendi anahtarı, Books API etkin olmalı) + Open Library; Google araması faturalandırma ister (kullanıcı kart istemiyor gibi; "ücret ödemeden" yol sordu). Kapaktan doldur tek tek iş olduğu için bu akışta ikincil.
+- Bugünkü Excel yüklemesi (`js/csv.js` iceAktarHazirla): yalnız CSV, "Kitap adı" ve "Raf/Bölme" zorunlu, aynı barkodu atlıyor → yeni akışa göre değişecek (.xlsx için `js/xlsx.js` hazır).
+- Kullanıcı Supabase kurulumunu (GOOGLE_API_KEY, kitap-bilgi, kapak-depo.sql) henüz yapmadı/bildirmedi.
+
+
 0. **Kitap bilgisi sunucusu yazıldı, kullanıcının kurulumu bekleniyor** (18 Kasım). Kök neden: anahtarsız Google Kitaplar isteği Google'ın ortak projesinden (624717413613) düşüyor, günlük kota doluyor → 429 → "internette bulunamadı". Kullanıcı "Google'da normal aramada çıkıyor" dedi (örnek 9786259506586 Kınalı Serçe, Kronik Kitap) ve onay verdi.
    - `supabase/functions/kitap-bilgi/index.ts`: `isbn` → Google Kitaplar (GOOGLE_API_KEY ile) → Open Library → Gemini + Google Search grounding (JSON metinden ayıklanır); `kapak` → fotoğraf `kapaklar` deposuna (service role) + Gemini görselden ad/yazar/yayınevi (responseSchema). Yetki: düzenleyici, çalışan. Model `GEMINI_MODEL` ya da gemini-2.5-flash → 3.1-flash-lite → 2.5-flash-lite (404'te sıradaki). Testler `npm run test:fonksiyon` (Deno, sahte fetch; CI'da da çalışır). Arama fikri önce OpenRouter `google/gemini-2.5-flash:online` ile doğrulandı (3 ISBN, uydurmadı).
    - Tarayıcı: `KitapBilgi.bul(kod, Veri.kitapBilgi)` önce sunucu, ulaşılamazsa doğrudan; `KitapBilgi.kaynak` ('google-arama' ise "mutlaka kontrol edin"). Formda "Kapaktan doldur" (yalnız bulut modunda; foto 1024 px JPEG). `js/ayar.js` → `kitapFonksiyon: 'kitap-bilgi'`. sw khr-v9. E2E `tests/e2e/kapak-e2e.js`.
