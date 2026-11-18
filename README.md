@@ -32,6 +32,22 @@ Yetkiler yalnız ekranda değil, veritabanında da kontrol edilir (Supabase RLS)
 
 **Revizeler:** programın kendisine dair istekler ("şu butonu büyüt" gibi). Düzenleyici "Yeni revizeleri kopyala" ile hepsini tek metin hâlinde alıp geliştiriciye iletir, sonra durumlarını "İletildi" ya da "Yapıldı" yapar.
 
+## Uygulama olarak kurma
+
+İki ekran da tarayıcıdan ayrı birer uygulama olarak kurulur. Kendi simgesiyle, adres çubuğu olmadan açılır ve güncellemeler kendiliğinden gelir.
+
+| Cihaz | Nasıl |
+|---|---|
+| Android tablet/telefon (Chrome) | Adresi aç → sağ üstte ⋮ → **Uygulamayı yükle** (ya da **Ana ekrana ekle**) |
+| iPad / iPhone (Safari) | Adresi aç → **Paylaş** düğmesi → **Ana Ekrana Ekle** |
+| Windows / Mac (Chrome, Edge) | Adres çubuğunun sağındaki **yükle** simgesi → **Yükle** |
+
+- Müşteri ekranı (`index.html`) "Kitabım Nerede" adıyla, tam ekran kurulur.
+- Yönetim paneli (`yonetim.html`) "Raf Yönetimi" adıyla kurulur. Tarayıcı izin verdiğinde kenar menüde **Uygulama olarak kur** düğmesi de çıkar.
+- Müşteri tabletini kilitlemek için: Android'de **Ayarlar → Güvenlik → Uygulama sabitleme**, iPad'de **Ayarlar → Erişilebilirlik → Rehberli Erişim**.
+
+Dosyalar: `kiosk.webmanifest`, `yonetim.webmanifest`, `simge/` (kaynak `simge/*.svg`), kur düğmesi `js/kur.js`.
+
 ## Kurulum (Supabase)
 
 1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir.
