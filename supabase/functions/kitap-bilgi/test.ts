@@ -51,7 +51,7 @@ Deno.test("Google Kitaplar ve Open Library bulamazsa Google Arama ile bulunur", 
   const t = ortam([
     [/googleapis\.com\/books/, () => j({ totalItems: 0 })],
     [/openlibrary/, () => j({})],
-    [/gemini-2\.5-flash:generateContent/, () => geminiCevap('```json\n{"bulundu": true, "ad": "Kınalı Serçe", "yazar": "Şermin Yaşar, İlber Ortaylı", "yayinevi": "Kronik Kitap"}\n```')],
+    [/gemini-flash-latest:generateContent/, () => geminiCevap('```json\n{"bulundu": true, "ad": "Kınalı Serçe", "yazar": "Şermin Yaşar, İlber Ortaylı", "yayinevi": "Kronik Kitap"}\n```')],
   ]);
   const r = await isle({ islem: "isbn", isbn: ISBN }, t.o);
   esit(r.veri, { bilgi: { ad: "Kınalı Serçe", yazar: "Şermin Yaşar, İlber Ortaylı", yayinevi: "Kronik Kitap", kapak: "", kaynak: "google-arama" } });
@@ -79,16 +79,28 @@ Deno.test("Yapay zekâ bulamadım derse uydurma bilgi dönmez", async () => {
 Deno.test("Model emekliye ayrılmışsa (404) sıradaki model denenir", async () => {
   const t = ortam([
     [/eski-model:generateContent/, () => j({ error: "yok" }, 404)],
-    [/gemini-2\.5-flash:generateContent/, () => geminiCevap('{"bulundu": true, "ad": "Kitap", "yazar": "Y", "yayinevi": "P"}')],
+    [/gemini-flash-latest:generateContent/, () => geminiCevap('{"bulundu": true, "ad": "Kitap", "yazar": "Y", "yayinevi": "P"}')],
   ], "eski-model");
   const r = await isle({ islem: "isbn", isbn: ISBN }, t.o);
   esit((r.veri as { bilgi: { ad: string } }).bilgi.ad, "Kitap");
 });
 
-Deno.test("Yapay zekâ kotası dolarsa uyarı döner, hata fırlatmaz", async () => {
+Deno.test("Google araması kotası (429) uyarı döner; başka model denenmez", async () => {
   const t = ortam([[/generateContent/, () => j({}, 429)]]);
   const r = await isle({ islem: "isbn", isbn: ISBN }, t.o);
-  esit(r.veri, { bilgi: null, uyari: "Yapay zekâ günlük ücretsiz sınırına ulaştı." });
+  esit((r.veri as { bilgi: null; uyari: string }).bilgi, null);
+  esit(/faturalandırma/.test((r.veri as { uyari: string }).uyari), true);
+  esit(t.istekler.filter((x) => x.url.includes("generateContent")).length, 1);
+});
+
+Deno.test("Kapak: model yoğunsa (503) ya da kotası dolmuşsa (429) sıradaki model denenir", async () => {
+  const t = ortam([
+    [/gemini-flash-lite-latest:/, () => j({}, 503)],
+    [/gemini-3\.1-flash-lite:/, () => j({}, 429)],
+    [/gemini-flash-latest:/, () => geminiCevap('{"bulundu": true, "ad": "Kınalı Serçe", "yazar": "Şermin Yaşar", "yayinevi": "Kronik"}')],
+  ]);
+  const r = await isle({ islem: "kapak", resim: btoa("x") }, t.o);
+  esit((r.veri as { bilgi: { ad: string } }).bilgi.ad, "Kınalı Serçe");
 });
 
 Deno.test("Geçersiz ISBN reddedilir, dışarıya istek gitmez", async () => {
@@ -118,7 +130,7 @@ Deno.test("Kapak: yapay zekâ çalışmasa da fotoğraf kapak olarak kalır", as
   const v = r.veri as { bilgi: null; kapak: string; uyari: string };
   esit(v.bilgi, null);
   esit(v.kapak.startsWith("https://depo.ornek/kapaklar/kapak-"), true);
-  esit(v.uyari.startsWith("Yapay zekâ hatası (500)"), true);
+  esit(/çok yoğun/.test(v.uyari), true);
 });
 
 Deno.test("Kapak: bozuk ya da çok büyük resim reddedilir", async () => {
@@ -126,4 +138,30 @@ Deno.test("Kapak: bozuk ya da çok büyük resim reddedilir", async () => {
   esit((await isle({ islem: "kapak", resim: "<script>" }, t.o)).durum, 400);
   esit((await isle({ islem: "kapak", resim: "A".repeat(1_400_001) }, t.o)).durum, 400);
   esit(t.kaydedilen.length, 0);
+});
+
+Deno.test("Kapak: cevap vermeyen model zaman aşımıyla atlanır", async () => {
+  const t = ortam([[/gemini-3\.1-flash-lite:/, () => geminiCevap('{"bulundu": true, "ad": "Kitap", "yazar": "", "yayinevi": ""}')]]);
+  const asil = t.o.fetch;
+  t.o.fetch = ((url: string, init?: RequestInit) => /gemini-flash-lite-latest:/.test(url)
+    ? new Promise((_, red) => init?.signal?.addEventListener("abort", () => red(new Error("abort"))))
+    : asil(url, init)) as typeof fetch;
+  const r = await isle({ islem: "kapak", resim: btoa("x") }, { ...t.o, zamanAsimi: 50 });
+  esit((r.veri as { bilgi: { ad: string } }).bilgi.ad, "Kitap");
+});
+
+Deno.test("Kapak: fotoğraf kitap kapağı değilse kapak resmi olarak kaydedilmez", async () => {
+  const t = ortam([[/generateContent/, () => geminiCevap('{"bulundu": false, "ad": "", "yazar": "", "yayinevi": ""}')]]);
+  const r = await isle({ islem: "kapak", resim: btoa("x") }, t.o);
+  esit(r.veri, { bilgi: null, kapak: "" });
+  esit(t.kaydedilen.length, 0);
+});
+
+Deno.test("Books API anahtarda kapalıysa (403) Google Kitaplar anahtarsız denenir", async () => {
+  const t = ortam([[/googleapis\.com\/books/, (url) => url.includes("key=")
+    ? j({ error: { code: 403 } }, 403)
+    : j({ items: [{ volumeInfo: { title: "Kınalı Serçe", authors: ["Şermin Yaşar"], publisher: "Kronik" } }] })]]);
+  const r = await isle({ islem: "isbn", isbn: ISBN }, t.o);
+  esit((r.veri as { bilgi: { ad: string } }).bilgi.ad, "Kınalı Serçe");
+  esit(t.istekler.length, 2);
 });

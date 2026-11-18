@@ -374,6 +374,8 @@
         if (!$('f-yayinevi').value.trim()) $('f-yayinevi').value = b.yayinevi || '';
         bildir($('form-mesaj'), 'basari', 'Bilgiler kapaktan okundu; kontrol edin, eksik varsa tamamlayın.' + ek);
         $('f-bolme').focus();
+      } else if (!c.kapak && !c.uyari && !c.depoHatasi) {
+        bildir($('form-mesaj'), 'hata', 'Fotoğrafta bir kitap kapağı tanınamadı. Kapağı düz ve kadrajı dolduracak şekilde çekip yeniden deneyin ya da bilgileri elle girin.');
       } else {
         bildir($('form-mesaj'), 'hata', (c.kapak ? 'Kapak resmi kaydedildi ama ' : '') + 'kapaktaki yazılar okunamadı' +
           (c.uyari ? ' (' + c.uyari + ')' : '') + '. Bilgileri elle girin.' + ek);

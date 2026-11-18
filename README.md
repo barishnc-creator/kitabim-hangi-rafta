@@ -55,10 +55,11 @@ Dosyalar: `kiosk.webmanifest`, `yonetim.webmanifest`, `simge/` (kaynak `simge/*.
 3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Fonksiyon panelde başka bir adla kaydolduysa (Supabase editörü rastgele ad verebilir) o adı `fonksiyon` satırına yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
 4. **Kitap bilgisi sunucusu (isteğe bağlı, önerilir):** barkod Google Kitaplar'da yoksa Google aramasıyla bulur, bulunamayan kitapta kapak fotoğrafından ad/yazar/yayınevini okur ve fotoğrafı kapak resmi yapar. Kurulmazsa program eskisi gibi tarayıcıdan Google Kitaplar ve Open Library'ye sorar (anahtarsız Google Kitaplar'ın ortak günlük kotası sık sık dolar).
    - [Google AI Studio](https://aistudio.google.com/apikey)'dan bir API anahtarı al. İstersen aynı Google Cloud projesinde **Books API**'yi de etkinleştir (kapak resimleri ve hızlı sonuç için; açılmazsa sunucu doğrudan Google aramasına geçer).
-   - Supabase → Edge Functions → Secrets: `GOOGLE_API_KEY` = anahtar. İsteğe bağlı `GEMINI_MODEL` (varsayılan `gemini-2.5-flash`; model emekliye ayrılırsa sunucu sıradakini dener).
+   - Supabase → Edge Functions → Secrets: `GOOGLE_API_KEY` = anahtar. İsteğe bağlı `GEMINI_MODEL` (boşsa `gemini-flash-latest` / `gemini-flash-lite-latest` takma adları ve yedekleri kullanılır; model emekliye ayrılır ya da yoğun olursa sunucu sıradakini dener).
    - Edge Functions'ta `kitap-bilgi` adıyla fonksiyon oluştur, içeriği `supabase/functions/kitap-bilgi/index.ts`. **"Verify JWT" kapalı**; giriş ve yetkiyi (düzenleyici, çalışan) fonksiyon kendisi kontrol eder. Başka adla kaydolduysa `js/ayar.js`'teki `kitapFonksiyon` satırına o adı yaz.
    - Mevcut kurulumda SQL Editor'de `supabase/kapak-depo.sql`'i bir kez çalıştır (kapak fotoğrafları deposu; yeni kurulumda `kurulum.sql` içinde var).
-   - Ücretsiz kota (Kasım 2026): `gemini-2.5-flash` ile Google Arama'lı cevap günde 500 istek; kapak okuma ve Google Kitaplar bundan ayrı sayılır.
+   - Ücretsiz planda (Kasım 2026, gerçek anahtarla denendi): kapaktan okuma çalışır (1–6 sn). **Google Arama ile bulma ücretsiz planda yoktur** (429); Google hesabında faturalandırma açılırsa ayda 5.000 arama ücretsiz, sonrası 1.000 aramada 14 $. Faturalandırma yoksa sunucu bu adımı atlar, "Kapaktan doldur" önerilir.
+   - Google Kitaplar'ın anahtarla çalışması için anahtarın Google Cloud projesinde **Books API** etkin olmalı (ücretsiz). Kapalıysa sunucu anahtarsız dener.
 5. **İlk yönetici:** `yonetim.html`'i aç. Hiç düzenleyici yokken "İlk kurulum" formu çıkar; ilk hesabı oradan oluştur. Diğer kişileri sonra Kullanıcılar sekmesinden ekle.
 
 ### Yeni projeye taşıma

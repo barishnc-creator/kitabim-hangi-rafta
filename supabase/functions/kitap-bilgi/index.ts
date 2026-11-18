@@ -22,10 +22,14 @@ type Ortam = {
   fetch: typeof fetch;
   // Kapak fotoğrafını depoya koyar, herkese açık adresini döndürür.
   kapakKaydet: (bayt: Uint8Array, ad: string) => Promise<string>;
+  zamanAsimi?: number; // bir yapay zekâ isteği için en fazla bekleme (ms)
 };
 
 // Model emekliye ayrılırsa (404) sıradaki denenir; GEMINI_MODEL ile değiştirilebilir.
-const YEDEK_MODELLER = ["gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash-lite"];
+// "gemini-flash-latest" Google'ın her zaman en güncel Flash modelini gösteren takma adıdır (model emekliye ayrılınca kod değişmez).
+// Arama için güçlü modeller önce; kapak okumak kolay iş olduğu için orada hızlı "lite" modeller önce denenir.
+const ARAMA_MODELLERI = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"];
+const KAPAK_MODELLERI = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"];
 
 const temiz = (x: unknown, uzunluk = 200) => String(x ?? "").replace(/\s+/g, " ").trim().slice(0, uzunluk);
 
@@ -57,8 +61,11 @@ function bilgiYap(o: Record<string, unknown> | null, kaynak: string, kapak = "")
 
 async function googleKitaplar(isbn: string, o: Ortam): Promise<Bilgi | null> {
   try {
-    const r = await o.fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${encodeURIComponent(o.anahtar)}`);
-    if (!r.ok) return null; // Books API bu anahtarda açık değilse 403 döner; sıradaki kaynağa geçilir
+    const adres = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`;
+    let r = await o.fetch(`${adres}&key=${encodeURIComponent(o.anahtar)}`, { signal: AbortSignal.timeout(8000) });
+    // Books API bu anahtarda açık değilse 400/403 döner: anahtarsız da dene (ortak kota o an boşsa sonuç gelir).
+    if (r.status === 400 || r.status === 403) r = await o.fetch(adres, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
     const v = (await r.json())?.items?.[0]?.volumeInfo;
     if (!v?.title) return null;
     return {
@@ -75,7 +82,7 @@ async function googleKitaplar(isbn: string, o: Ortam): Promise<Bilgi | null> {
 
 async function openLibrary(isbn: string, o: Ortam): Promise<Bilgi | null> {
   try {
-    const r = await o.fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+    const r = await o.fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, { signal: AbortSignal.timeout(8000) });
     if (!r.ok) return null;
     const v = (await r.json())?.[`ISBN:${isbn}`];
     if (!v?.title) return null;
@@ -102,7 +109,9 @@ export class GeminiHatasi extends Error {
 }
 
 async function gemini(parts: unknown[], o: Ortam, secenek: { arama?: boolean; sema?: unknown }): Promise<string> {
-  const modeller = [...new Set([o.model, ...YEDEK_MODELLER].filter(Boolean))];
+  const modeller = [...new Set([o.model, ...(secenek.arama ? ARAMA_MODELLERI : KAPAK_MODELLERI)].filter(Boolean))];
+  let sonHata: GeminiHatasi | undefined;
+  // 404 (model yok/emekli), 429 (modelin kotası) ve 5xx (yoğunluk) durumunda sıradaki model denenir.
   for (const model of modeller) {
     const govde: Record<string, unknown> = { contents: [{ role: "user", parts }], generationConfig: { temperature: 0 } };
     if (secenek.arama) govde.tools = [{ google_search: {} }];
@@ -110,18 +119,34 @@ async function gemini(parts: unknown[], o: Ortam, secenek: { arama?: boolean; se
       (govde.generationConfig as Record<string, unknown>).responseMimeType = "application/json";
       (govde.generationConfig as Record<string, unknown>).responseSchema = secenek.sema;
     }
-    const r = await o.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": o.anahtar },
-      body: JSON.stringify(govde),
-    });
-    if (r.status === 404) continue; // model yok ya da emekli: sıradakini dene
-    if (r.status === 429) throw new GeminiHatasi("Yapay zekâ günlük ücretsiz sınırına ulaştı.", true);
-    if (!r.ok) throw new GeminiHatasi(`Yapay zekâ hatası (${r.status}): ${temiz(await r.text(), 160)}`);
-    const j = await r.json();
-    return (j?.candidates?.[0]?.content?.parts || []).map((p: { text?: string }) => p.text || "").join("");
+    let r: Response;
+    try {
+      r = await o.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": o.anahtar },
+        body: JSON.stringify(govde),
+        signal: AbortSignal.timeout(o.zamanAsimi ?? 20_000), // takılan model personeli bekletmesin
+      });
+    } catch {
+      sonHata = new GeminiHatasi("Yapay zekâ zamanında cevap vermedi; biraz sonra yeniden deneyin.");
+      continue;
+    }
+    if (r.ok) {
+      const j = await r.json();
+      return (j?.candidates?.[0]?.content?.parts || []).map((p: { text?: string }) => p.text || "").join("");
+    }
+    if (r.status === 404) { sonHata ??= new GeminiHatasi("Yapay zekâ modeli bulunamadı; GEMINI_MODEL ayarını güncelleyin."); continue; }
+    if (r.status === 429) {
+      sonHata = new GeminiHatasi(secenek.arama
+        ? "Google araması için Google hesabında faturalandırma açık olmalı (ücretsiz planda yok) ya da aylık sınır doldu."
+        : "Yapay zekâ ücretsiz kullanım sınırına ulaştı; biraz sonra yeniden deneyin.", true);
+      if (secenek.arama) break; // arama kotası bütün projeyi kapsar; başka model denemek boşuna
+      continue; // modelin kendi kotası dolmuş olabilir: sıradakini dene
+    }
+    if (r.status >= 500) { sonHata = new GeminiHatasi("Yapay zekâ şu an çok yoğun; biraz sonra yeniden deneyin."); continue; }
+    throw new GeminiHatasi(`Yapay zekâ hatası (${r.status}): ${temiz(await r.text(), 160)}`);
   }
-  throw new GeminiHatasi("Yapay zekâ modeli bulunamadı; GEMINI_MODEL ayarını güncelleyin.");
+  throw sonHata ?? new GeminiHatasi("Yapay zekâ modeli bulunamadı; GEMINI_MODEL ayarını güncelleyin.");
 }
 
 async function aramaIleBul(isbn: string, o: Ortam): Promise<Bilgi | null> {
@@ -192,20 +217,25 @@ export async function isle(govde: Record<string, unknown>, o: Ortam): Promise<{ 
     }
     const isbn = String(govde.isbn || "").replace(/\D/g, "").slice(0, 13);
     // 1,4 milyon base64 karakter ≈ 1 MB: depo sınırı (kapak-depo.sql). Tarayıcı fotoğrafı 1024 px’e küçültüp ~200 KB gönderir.
-    // Önce fotoğrafı kaydet: yapay zekâ çalışmasa da kapak resmi kalsın.
+    let b: Bilgi | null = null;
+    let uyari = "";
+    try {
+      b = await kapaktanOku(resim, o);
+    } catch (e) {
+      uyari = e instanceof Error ? e.message : String(e);
+    }
+    // Yapay zekâ "bu bir kitap kapağı değil" dediyse fotoğraf kapak resmi yapılmaz;
+    // okundu ya da yapay zekâ cevap veremediyse fotoğraf kapak resmi olarak saklanır.
     let kapak = "";
     let depoHatasi = "";
-    try {
-      kapak = await o.kapakKaydet(base64Bayt(resim), `${isbn || "kapak"}-${Date.now()}.jpg`);
-    } catch (e) {
-      depoHatasi = e instanceof Error ? e.message : String(e);
+    if (b || uyari) {
+      try {
+        kapak = await o.kapakKaydet(base64Bayt(resim), `${isbn || "kapak"}-${Date.now()}.jpg`);
+      } catch (e) {
+        depoHatasi = e instanceof Error ? e.message : String(e);
+      }
     }
-    try {
-      const b = await kapaktanOku(resim, o);
-      return { durum: 200, veri: { bilgi: b ? { ...b, kapak } : null, kapak, depoHatasi: depoHatasi || undefined } };
-    } catch (e) {
-      return { durum: 200, veri: { bilgi: null, kapak, uyari: e instanceof Error ? e.message : String(e), depoHatasi: depoHatasi || undefined } };
-    }
+    return { durum: 200, veri: { bilgi: b ? { ...b, kapak } : null, kapak, uyari: uyari || undefined, depoHatasi: depoHatasi || undefined } };
   }
 
   return { durum: 400, veri: { hata: "Bilinmeyen işlem." } };
