@@ -96,6 +96,18 @@ create table if not exists public.kirtasiye_talepler (
 );
 create index if not exists kirtasiye_talepler_zaman on public.kirtasiye_talepler (olusturuldu);
 
+-- API yetkileri açıkça verilir (projede "yeni tablolara otomatik API erişimi" kapalı olsa da çalışsın).
+-- Kimin neyi görüp değiştirebileceğini aşağıdaki RLS kuralları belirler.
+grant select on public.kirtasiye_raflar, public.kirtasiye_bolmeler, public.kirtasiye_kitaplar,
+  public.kirtasiye_ayarlar, public.kirtasiye_okul_listeleri to anon, authenticated;
+grant insert, update, delete on public.kirtasiye_raflar, public.kirtasiye_bolmeler, public.kirtasiye_kitaplar,
+  public.kirtasiye_okul_listeleri to authenticated;
+grant update on public.kirtasiye_ayarlar to authenticated;
+grant select on public.kirtasiye_uyeler to authenticated;
+grant select, insert, update, delete on public.kirtasiye_revizeler, public.kirtasiye_talepler to authenticated;
+grant insert on public.kirtasiye_talepler, public.kirtasiye_aramalar to anon, authenticated;
+grant select on public.kirtasiye_aramalar to authenticated;
+
 -- Giriş yapan kişinin rolü (yoksa null).
 create or replace function public.kirtasiye_rol()
 returns text language sql stable security definer set search_path = public as $$
@@ -197,6 +209,7 @@ create table if not exists public.kirtasiye_gecmis (
 );
 create index if not exists kirtasiye_gecmis_zaman on public.kirtasiye_gecmis (zaman desc);
 alter table public.kirtasiye_gecmis enable row level security;
+grant select on public.kirtasiye_gecmis to authenticated;
 drop policy if exists okuma on public.kirtasiye_gecmis;
 create policy okuma on public.kirtasiye_gecmis for select to authenticated
   using (public.kirtasiye_rol() in ('duzenleyici', 'revizeci'));
