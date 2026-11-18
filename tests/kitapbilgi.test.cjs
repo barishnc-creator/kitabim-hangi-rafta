@@ -50,3 +50,16 @@ test('Google bulamazsa Open Library denenir; ağ hatası null döner', async () 
   assert.equal(await K.bul('9780306406157'), null);
   assert.equal(K.baglantiYok, true);
 });
+
+test('Google kotası dolunca (429) "bulunamadı" değil "kota doldu" bilinir', async () => {
+  global.fetch = (url) => {
+    if (url.includes('googleapis')) return Promise.resolve({ ok: false, status: 429, json: () => Promise.resolve({}) });
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+  };
+  assert.equal(await K.bul('9789750719387'), null);
+  assert.equal(K.kotaDoldu, true);
+  assert.equal(K.baglantiYok, false);
+  global.fetch = (url) => Promise.resolve({ ok: true, json: () => Promise.resolve({ totalItems: 0 }) });
+  assert.equal(await K.bul('9789750719387'), null);
+  assert.equal(K.kotaDoldu, false);
+});

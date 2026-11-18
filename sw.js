@@ -1,6 +1,6 @@
 // Çevrimdışı çalışma: uygulama dosyalarını önbellekte tutar.
 // Strateji: önce ağ (güncel sürüm), ağ yoksa önbellek. Supabase ve Google istekleri önbelleğe alınmaz.
-var SURUM = 'khr-v7';
+var SURUM = 'khr-v8';
 var DOSYALAR = [
   './', 'index.html', 'yonetim.html',
   'css/stil.css', 'css/kiosk.css', 'css/panel.css',

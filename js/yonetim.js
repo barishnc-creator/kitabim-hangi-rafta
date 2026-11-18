@@ -300,7 +300,9 @@
       if (!b) {
         bildir($('form-mesaj'), 'hata', KitapBilgi.baglantiYok
           ? 'Kitap bilgilerine internetten ulaşılamadı. Bilgileri elle girin.'
-          : 'Bu barkod internette bulunamadı. Bilgileri elle girin.');
+          : KitapBilgi.kotaDoldu
+            ? 'Google Kitaplar şu an yoğun olduğu için cevap vermedi (günlük ücretsiz sınır doldu). Biraz sonra barkodu yeniden okutun ya da bilgileri elle girin.'
+            : 'Bu barkod internette bulunamadı. Bilgileri elle girin.');
         $('f-ad').focus();
         return;
       }
