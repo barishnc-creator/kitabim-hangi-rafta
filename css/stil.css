@@ -93,7 +93,9 @@ button.bolme { cursor: pointer; }
 /* Kamera penceresi */
 .kamera-perde { position: fixed; inset: 0; background: rgba(17, 24, 39, .75); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
 .kamera-kutu { background: #111827; color: #fff; border-radius: 18px; padding: 18px; width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; }
-.kamera-kutu #kamera-alani { width: 100%; min-height: 260px; border-radius: 12px; overflow: hidden; background: #1F2937; }
+.kamera-kutu #kamera-alani { width: 100%; min-height: 260px; border-radius: 12px; overflow: hidden; background: #1F2937; position: relative; }
+.kamera-kutu #kamera-alani > video { display: block; width: 100%; height: auto; max-height: 55vh; object-fit: cover; }
+.kamera-cerceve { position: absolute; left: 5%; right: 5%; top: 20%; bottom: 20%; border: 3px solid rgba(255, 255, 255, .9); border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .35); pointer-events: none; }
 .kamera-kutu p { margin: 0; color: #D1D5DB; font-size: 14px; }
 
 /* Mağaza haritası (müşteri ekranı ve panel ortak) */

@@ -1,25 +1,54 @@
-// Kamerayla barkod / QR okuma. vendor/html5-qrcode.min.js kütüphanesini kullanır.
+// Kamerayla barkod / QR okuma.
+// Motor: cihazın yerleşik BarcodeDetector'ı (Android Chrome) ya da yoksa vendor/barcode-detector.js
+// (ZXing-C++ / WebAssembly, iPhone Safari dahil her yerde). Görüntü küçültülmeden, tam çözünürlükte taranır.
+// Yedek: ikisi de çalışmazsa vendor/html5-qrcode.min.js.
 // Kullanım: Tarayici.ac(function (kod) { ... })
 // Not: Barkod tabancası (USB okuyucu) klavye gibi yazdığı için ek ayar gerektirmez.
 (function (kok) {
-  var okuyucu = null;
+  var BICIMLER = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'];
   var perde = null;
+  var akis = null;       // MediaStream
+  var dongu = null;      // tarama zamanlayıcısı
+  var eskiOkuyucu = null; // html5-qrcode (yedek)
+  var dedektorSozu = null;
 
-  function bicimler() {
-    var F = kok.Html5QrcodeSupportedFormats;
-    return [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.QR_CODE];
+  // ---- Motor seçimi ----
+  function dedektor() {
+    if (dedektorSozu) return dedektorSozu;
+    dedektorSozu = Promise.resolve().then(function () {
+      var Yerli = kok.BarcodeDetector;
+      if (Yerli && Yerli.getSupportedFormats) {
+        return Yerli.getSupportedFormats().then(function (b) {
+          if (b.indexOf('ean_13') >= 0) return new Yerli({ formats: BICIMLER.filter(function (x) { return b.indexOf(x) >= 0; }) });
+          throw new Error('yerleşik okuyucu EAN desteklemiyor');
+        });
+      }
+      throw new Error('yerleşik okuyucu yok');
+    }).catch(function () {
+      var API = kok.BarcodeDetectionAPI;
+      if (!API || !API.BarcodeDetector) throw new Error('okuyucu yüklenemedi');
+      // WebAssembly dosyası programla birlikte gelir (internetsiz de çalışır).
+      var taban = new URL('vendor/', document.baseURI).href;
+      API.setZXingModuleOverrides({ locateFile: function (dosya) { return taban + dosya; } });
+      var d = new API.BarcodeDetector({ formats: BICIMLER });
+      // Motoru önceden yükle: ilk okuma beklemesin. Yüklenemezse yedeğe geçilir.
+      var bos = document.createElement('canvas'); bos.width = bos.height = 8;
+      return d.detect(bos).then(function () { return d; });
+    });
+    dedektorSozu.catch(function () { dedektorSozu = null; });
+    return dedektorSozu;
   }
 
-  function kapat() {
-    var p = perde;
-    perde = null;
-    var bitti = okuyucu && okuyucu.isScanning ? okuyucu.stop().catch(function () {}) : Promise.resolve();
-    okuyucu = null;
-    return bitti.then(function () { if (p) p.remove(); });
+  function ilkKod(sonuclar) {
+    for (var i = 0; i < (sonuclar || []).length; i++) {
+      var v = sonuclar[i] && String(sonuclar[i].rawValue || '').trim();
+      if (v) return v;
+    }
+    return '';
   }
 
-  // Fotoğrafta barkod genelde küçük bir köşededir; okuyucu bütün fotoğrafta bulamayınca
-  // fotoğraf üst üste binen parçalara bölünür ve her parça büyütülerek ayrı ayrı denenir.
+  // ---- Fotoğraftan okuma ----
+  // Barkod fotoğrafın küçük bir köşesindeyse: önce bütün resim, sonra üst üste binen parçalar büyütülerek denenir.
   // Döndürür: [{x, y, g, h}]: oran olarak (0–1) kesit pencereleri, önce bütün resim.
   function pencereler() {
     var liste = [{ x: 0, y: 0, g: 1, h: 1 }];
@@ -72,51 +101,126 @@
     });
   }
 
-  // Fotoğraftan kod okur. Cihazda yerleşik barkod okuyucu varsa (Android Chrome) önce o denenir.
-  function fotoOku(dosya, ilerleme) {
+  // Parça parça tarama; coz(tuval) bir kod döndürür ya da hata fırlatır.
+  function parcaParca(img, coz, ilerleme) {
+    var pen = pencereler(), kaynak = img, i = 0, n = pen.length * 2;
+    function sonraki() {
+      if (i >= n) return Promise.reject(new Error('okunamadı'));
+      if (i === pen.length) kaynak = cevir(img);
+      var j = i % pen.length;
+      i++;
+      if (ilerleme) ilerleme(i, n);
+      return Promise.resolve(kesit(kaynak, pen[j], j === 0 ? 1600 : 900)).then(coz).catch(sonraki);
+    }
+    return sonraki();
+  }
+
+  function eskiCozucu() {
     var alan = document.createElement('div');
     alan.id = 'foto-oku-' + Date.now();
     alan.style.cssText = 'position:fixed;left:-10000px;top:0;width:1000px;height:10px;overflow:hidden';
     document.body.appendChild(alan);
-    var cozucu = new kok.Html5Qrcode(alan.id, { verbose: false, formatsToSupport: bicimler() });
-    function temizle(s) { alan.remove(); return s; }
+    var F = kok.Html5QrcodeSupportedFormats;
+    var h = new kok.Html5Qrcode(alan.id, { verbose: false, formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.QR_CODE] });
+    return {
+      coz: function (c) { return tuvaldenDosya(c).then(function (f) { return h.scanFile(f, false); }); },
+      bitir: function () { alan.remove(); }
+    };
+  }
 
+  function fotoOku(dosya, ilerleme) {
     return resimYukle(dosya).then(function (img) {
-      var yerlesik = null;
-      if ('BarcodeDetector' in kok) {
-        try { yerlesik = new kok.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] }); } catch (e) { yerlesik = null; }
-      }
-      var ilk = yerlesik
-        ? yerlesik.detect(img).then(function (s) { if (s && s[0]) return s[0].rawValue; throw new Error('yok'); })
-        : Promise.reject(new Error('yok'));
-      return ilk.catch(function () {
-        var pen = pencereler(), kaynak = img, i = 0, n = pen.length * 2;
-        function sonraki() {
-          if (i >= n) throw new Error('okunamadı');
-          if (i === pen.length) kaynak = cevir(img);
-          var j = i % pen.length;
-          i++;
-          if (ilerleme) ilerleme(i, n);
-          return tuvaldenDosya(kesit(kaynak, pen[j], j === 0 ? 1600 : 900))
-            .then(function (f) { return cozucu.scanFile(f, false); })
-            .catch(sonraki);
-        }
-        return sonraki();
+      return dedektor().then(function (d) {
+        var coz = function (c) { return d.detect(c).then(function (s) { var k = ilkKod(s); if (!k) throw new Error('yok'); return k; }); };
+        return coz(img).catch(function () { return parcaParca(img, coz, ilerleme); });
+      }, function () {
+        if (!kok.Html5Qrcode) throw new Error('okuyucu yok');
+        var e = eskiCozucu();
+        return parcaParca(img, e.coz, ilerleme).then(function (k) { e.bitir(); return k; }, function (x) { e.bitir(); throw x; });
       });
-    }).then(temizle, function (e) { temizle(); throw e; });
+    });
+  }
+
+  // ---- Canlı kamera ----
+  function kapat() {
+    var p = perde;
+    perde = null;
+    if (dongu) { clearTimeout(dongu); dongu = null; }
+    if (akis) { akis.getTracks().forEach(function (t) { t.stop(); }); akis = null; }
+    var bitti = eskiOkuyucu && eskiOkuyucu.isScanning ? eskiOkuyucu.stop().catch(function () {}) : Promise.resolve();
+    eskiOkuyucu = null;
+    return bitti.then(function () { if (p) p.remove(); });
   }
 
   // Yakın çekimde iPhone kamerası odaklanamaz. Yakınlaştırma destekleniyorsa 2x açılır,
   // böylece barkod 20–30 cm uzakta tutulup net okunur.
-  function yakinlastir() {
+  function iyilestir(iz) {
     try {
-      var yetenek = okuyucu && okuyucu.getRunningTrackCapabilities ? okuyucu.getRunningTrackCapabilities() : null;
+      var y = iz.getCapabilities ? iz.getCapabilities() : null;
       var ayar = [];
-      if (yetenek && yetenek.zoom && yetenek.zoom.max >= 1.5) ayar.push({ zoom: Math.min(2, yetenek.zoom.max) });
-      if (yetenek && yetenek.focusMode && yetenek.focusMode.indexOf('continuous') >= 0) ayar.push({ focusMode: 'continuous' });
-      if (ayar.length) return okuyucu.applyVideoConstraints({ advanced: ayar }).then(function () { return true; }, function () { return false; });
+      if (y && y.zoom && y.zoom.max >= 1.5) ayar.push({ zoom: Math.min(2, y.zoom.max) });
+      if (y && y.focusMode && y.focusMode.indexOf('continuous') >= 0) ayar.push({ focusMode: 'continuous' });
+      if (ayar.length) return iz.applyConstraints({ advanced: ayar }).then(function () { return !!(y.zoom && y.zoom.max >= 1.5); }, function () { return false; });
     } catch (e) { /* desteklenmiyor */ }
     return Promise.resolve(false);
+  }
+
+  function canliBaslat(alan, durum, d, bitir) {
+    var video = document.createElement('video');
+    video.setAttribute('playsinline', ''); video.setAttribute('muted', ''); video.muted = true; video.autoplay = true;
+    var cerceve = document.createElement('div'); cerceve.className = 'kamera-cerceve';
+    alan.appendChild(video); alan.appendChild(cerceve);
+    var tuval = document.createElement('canvas');
+    var ctx = tuval.getContext('2d', { willReadFrequently: true });
+    var tur = 0;
+
+    return navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    }).then(function (s) {
+      if (!perde) { s.getTracks().forEach(function (t) { t.stop(); }); return false; }
+      akis = s;
+      video.srcObject = s;
+      return video.play().catch(function () {}).then(function () { return iyilestir(s.getVideoTracks()[0]); });
+    }).then(function (yakin) {
+      if (!perde) return;
+      durum.textContent = yakin
+        ? 'Barkodu çerçeveye getirin; kendiliğinden okunur. Görüntü bulanıksa telefonu biraz uzaklaştırın.'
+        : 'Barkodu 20–30 cm uzaktan çerçeveye getirin; kendiliğinden okunur. Çok yaklaşırsanız görüntü bulanıklaşır.';
+      function tara() {
+        if (!perde || !akis) return;
+        var W = video.videoWidth, H = video.videoHeight;
+        if (!W || video.readyState < 2) { dongu = setTimeout(tara, 150); return; }
+        // Çoğunlukla çerçevenin içi (tam çözünürlükte), arada bir de bütün görüntü taranır.
+        var butun = (tur++ % 4) === 3;
+        var sw = butun ? W : Math.round(W * 0.9), sh = butun ? H : Math.round(H * 0.6);
+        var sx = Math.round((W - sw) / 2), sy = Math.round((H - sh) / 2);
+        tuval.width = sw; tuval.height = sh;
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+        d.detect(tuval).then(function (s) {
+          var k = ilkKod(s);
+          if (k) bitir(k); else dongu = setTimeout(tara, 60);
+        }, function () { dongu = setTimeout(tara, 200); });
+      }
+      tara();
+    });
+  }
+
+  // Yeni motor yüklenemezse eski kütüphaneyle canlı tarama.
+  function eskiCanli(durum, bitir) {
+    var F = kok.Html5QrcodeSupportedFormats;
+    eskiOkuyucu = new kok.Html5Qrcode('kamera-alani', {
+      verbose: false,
+      formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.QR_CODE],
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+    });
+    return eskiOkuyucu.start(
+      { facingMode: 'environment' },
+      { fps: 15, qrbox: function (g, y) { return { width: Math.floor(g * 0.85), height: Math.floor(Math.min(y, g) * 0.5) }; } },
+      bitir, function () {}
+    ).then(function () {
+      if (perde) durum.textContent = 'Barkodu 20–30 cm uzaktan çerçeveye getirin; kendiliğinden okunur.';
+    });
   }
 
   function ac(okununca) {
@@ -134,6 +238,7 @@
       '</div>';
     document.body.appendChild(perde);
     var durum = perde.querySelector('#kamera-durum');
+    var alan = perde.querySelector('#kamera-alani');
     var okundu = false;
     function bitir(metin) {
       if (okundu) return;
@@ -142,18 +247,16 @@
       kapat().then(function () { okununca(String(metin).trim()); });
     }
 
-    // Canlı kamerada net görüntü alınamazsa: barkodun fotoğrafını çek, fotoğraftan oku.
+    // Canlı kamerada okunmazsa: barkodun fotoğrafını çek, fotoğraftan oku.
     perde.querySelector('#kamera-foto').addEventListener('change', function (e) {
       var dosya = e.target.files[0];
       e.target.value = '';
-      if (!dosya || !kok.Html5Qrcode) return;
+      if (!dosya) return;
       durum.textContent = 'Fotoğraf okunuyor…';
-      var dur = okuyucu && okuyucu.isScanning ? okuyucu.stop().catch(function () {}) : Promise.resolve();
-      dur.then(function () {
-        return fotoOku(dosya, function (i, n) { if (i > 1) durum.textContent = 'Fotoğraf taranıyor… (' + Math.round(i / n * 100) + '%)'; });
-      }).then(bitir).catch(function () {
-        if (perde) durum.textContent = 'Barkod okunamadı. Barkodun net çıktığından emin olup tekrar deneyin (çok yaklaşmayın, 20–30 cm yeterli).';
-      });
+      fotoOku(dosya, function (i, n) { if (i > 1 && perde) durum.textContent = 'Fotoğraf taranıyor… (' + Math.round(i / n * 100) + '%)'; })
+        .then(bitir).catch(function () {
+          if (perde) durum.textContent = 'Barkod okunamadı. Barkodun net çıktığından emin olup tekrar deneyin (çok yaklaşmayın, 20–30 cm yeterli).';
+        });
     });
     perde.querySelector('#kamera-kapat').addEventListener('click', kapat);
     perde.addEventListener('click', function (e) { if (e.target === perde) kapat(); });
@@ -161,36 +264,20 @@
       if (e.key === 'Escape') { document.removeEventListener('keydown', esc); kapat(); }
     });
 
-    if (!kok.Html5Qrcode) { durum.textContent = 'Kamera okuyucu yüklenemedi. İnternet bağlantısını kontrol edip sayfayı yenileyin.'; return; }
-    if (!kok.isSecureContext || !navigator.mediaDevices) { durum.textContent = 'Canlı kamera burada açılamıyor. “Fotoğraf çekerek okut” düğmesini kullanın.'; return; }
-
-    okuyucu = new kok.Html5Qrcode('kamera-alani', {
-      verbose: false,
-      formatsToSupport: bicimler(),
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    });
-    okuyucu.start(
-      { facingMode: 'environment' },
-      {
-        fps: 15,
-        // Yüksek çözünürlük: ince barkod çizgileri ancak böyle ayrışır (varsayılan 640×480 yetmiyor).
-        videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-        qrbox: function (g, y) { return { width: Math.floor(g * 0.85), height: Math.floor(Math.min(y, g) * 0.5) }; }
-      },
-      bitir,
-      function () {}
-    ).then(function () {
-      return yakinlastir();
-    }).then(function (yakin) {
-      if (durum && !okundu) {
-        durum.textContent = yakin
-          ? 'Barkodu çerçeveye getirin; kendiliğinden okunur. Görüntü bulanıksa telefonu biraz uzaklaştırın.'
-          : 'Barkodu 20–30 cm uzaktan çerçeveye getirin; kendiliğinden okunur. Çok yaklaşırsanız görüntü bulanıklaşır.';
-      }
-    }).catch(function () {
-      if (durum) durum.textContent = 'Canlı kamera açılamadı. “Fotoğraf çekerek okut” düğmesini kullanın ya da kamera iznini verin.';
-    });
+    if (!kok.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      durum.textContent = 'Canlı kamera burada açılamıyor. “Fotoğraf çekerek okut” düğmesini kullanın.';
+      return;
+    }
+    var hataMetni = 'Canlı kamera açılamadı. “Fotoğraf çekerek okut” düğmesini kullanın ya da kamera iznini verin.';
+    dedektor().then(function (d) {
+      if (!perde) return;
+      return canliBaslat(alan, durum, d, bitir);
+    }, function () {
+      if (!perde) return;
+      if (!kok.Html5Qrcode) { durum.textContent = 'Kamera okuyucu yüklenemedi. İnternet bağlantısını kontrol edip sayfayı yenileyin.'; return; }
+      return eskiCanli(durum, bitir);
+    }).catch(function () { if (perde) durum.textContent = hataMetni; });
   }
 
-  kok.Tarayici = { ac: ac, kapat: kapat, fotoOku: fotoOku, pencereler: pencereler };
+  kok.Tarayici = { ac: ac, kapat: kapat, fotoOku: fotoOku, pencereler: pencereler, dedektor: dedektor };
 })(window);

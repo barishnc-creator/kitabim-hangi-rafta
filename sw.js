@@ -1,13 +1,13 @@
 // Çevrimdışı çalışma: uygulama dosyalarını önbellekte tutar.
 // Strateji: önce ağ (güncel sürüm), ağ yoksa önbellek. Supabase ve Google istekleri önbelleğe alınmaz.
-var SURUM = 'khr-v4';
+var SURUM = 'khr-v5';
 var DOSYALAR = [
   './', 'index.html', 'yonetim.html',
   'css/stil.css', 'css/kiosk.css', 'css/panel.css',
   'js/ayar.js', 'js/arama.js', 'js/depo.js', 'js/veri.js', 'js/ortak.js', 'js/tarayici.js', 'js/klavye.js', 'js/tema.js',
   'js/harita.js', 'js/musteri.js', 'js/kitapbilgi.js', 'js/csv.js', 'js/gecmis.js', 'js/yonetim.js',
   'js/panel-okul.js', 'js/panel-talep.js', 'js/xlsx.js', 'js/sube.js', 'js/panel-sube.js', 'js/panel-gorunum.js', 'js/panel-harita.js', 'js/panel-gecmis.js', 'js/kur.js',
-  'vendor/supabase.js', 'vendor/html5-qrcode.min.js', 'vendor/qrcode.js',
+  'vendor/supabase.js', 'vendor/html5-qrcode.min.js', 'vendor/qrcode.js', 'vendor/barcode-detector.js', 'vendor/zxing_reader.wasm',
   'kiosk.webmanifest', 'yonetim.webmanifest',
   'simge/kiosk-32.png', 'simge/kiosk-180.png', 'simge/kiosk-192.png', 'simge/kiosk-512.png',
   'simge/panel-32.png', 'simge/panel-180.png', 'simge/panel-192.png', 'simge/panel-512.png'
