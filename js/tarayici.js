@@ -11,6 +11,20 @@
   var dongu = null;      // tarama zamanlayıcısı
   var eskiOkuyucu = null; // html5-qrcode (yedek)
   var dedektorSozu = null;
+  // Tanı bilgisi: barkod penceresinin altında küçük yazıyla gösterilir; sorun bildirilirken ekran görüntüsüne girer.
+  var SURUM = '18.11-c';
+  var tani = { motor: '', motorHata: '', foto: '', deneme: 0, okunan: {}, hata: '', kare: 0, video: '' };
+  function taniMetni(foto) {
+    var p = ['sürüm ' + SURUM, 'motor: ' + (tani.motor || '?') + (tani.motorHata ? ' (' + tani.motorHata + ')' : '')];
+    if (foto) {
+      p.push('foto: ' + (tani.foto || '?'), 'deneme: ' + tani.deneme);
+      var o = Object.keys(tani.okunan).map(function (k) { return k + '×' + tani.okunan[k]; });
+      if (o.length) p.push('okunan: ' + o.join(', '));
+      if (tani.hata) p.push('hata: ' + tani.hata);
+    } else if (tani.video) p.push('kamera: ' + tani.video, 'kare: ' + tani.kare);
+    return p.join(' · ');
+  }
+  function hataAdi(e) { return String((e && (e.name && e.name !== 'Error' ? e.name + ': ' : '') + (e.message || e)) || 'bilinmiyor').slice(0, 120); }
 
   // ---- Motor seçimi ----
   function dedektor() {
@@ -19,7 +33,7 @@
       var Yerli = kok.BarcodeDetector;
       if (Yerli && Yerli.getSupportedFormats) {
         return Yerli.getSupportedFormats().then(function (b) {
-          if (b.indexOf('ean_13') >= 0) return new Yerli({ formats: BICIMLER.filter(function (x) { return b.indexOf(x) >= 0; }) });
+          if (b.indexOf('ean_13') >= 0) { tani.motor = 'yerleşik'; return new Yerli({ formats: BICIMLER.filter(function (x) { return b.indexOf(x) >= 0; }) }); }
           throw new Error('yerleşik okuyucu EAN desteklemiyor');
         });
       }
@@ -33,7 +47,7 @@
       var d = new API.BarcodeDetector({ formats: BICIMLER });
       // Motoru önceden yükle: ilk okuma beklemesin. Yüklenemezse yedeğe geçilir.
       var bos = document.createElement('canvas'); bos.width = bos.height = 8;
-      return d.detect(bos).then(function () { return d; });
+      return d.detect(bos).then(function () { tani.motor = 'zxing'; tani.motorHata = ''; return d; }, function (e) { tani.motor = 'yok'; tani.motorHata = hataAdi(e); throw e; });
     });
     dedektorSozu.catch(function () { dedektorSozu = null; });
     return dedektorSozu;
@@ -138,8 +152,10 @@
       else i++;
       if (ilerleme) ilerleme(i, liste.length);
       var veri;
-      try { veri = kesit(img, d.p, d.hedef, d.donuk); } catch (e) { return sonraki(); }
-      return Promise.resolve(veri).then(coz).catch(function () { return null; }).then(function (s) {
+      try { veri = kesit(img, d.p, d.hedef, d.donuk); } catch (e) { tani.hata = 'çizim: ' + hataAdi(e); return sonraki(); }
+      tani.deneme++;
+      return Promise.resolve(veri).then(coz).catch(function (e) { tani.hata = hataAdi(e); return null; }).then(function (s) {
+        if (s) tani.okunan[s.deger] = (tani.okunan[s.deger] || 0) + 1;
         var kabul = s ? onay.ekle(s.deger, s.bicim) : '';
         if (kabul) return kabul;
         if (s && bulunan === -1) bulunan = i - 1;
@@ -168,12 +184,15 @@
   }
 
   function fotoOku(dosya, ilerleme) {
+    tani.foto = (dosya.type || '?') + ' ' + Math.round((dosya.size || 0) / 1024) + ' KB'; tani.deneme = 0; tani.okunan = {}; tani.hata = '';
     return resimYukle(dosya).then(function (img) {
+      tani.foto = (img.naturalWidth || img.width) + '×' + (img.naturalHeight || img.height) + ' ' + tani.foto;
       return dedektor().then(function (d) {
         var coz = function (veri) { return d.detect(veri).then(ilkSonuc); };
         return parcaParca(img, coz, ilerleme);
       }, function () {
         if (!kok.Html5Qrcode) throw new Error('okuyucu yok');
+        tani.motor = 'yedek';
         var e = eskiCozucu();
         return parcaParca(img, e.coz, ilerleme).then(function (k) { e.bitir(); return k; }, function (x) { e.bitir(); throw x; });
       });
@@ -205,6 +224,7 @@
     return Promise.resolve(false);
   }
 
+  var taniYaz = null;
   function canliBaslat(alan, durum, d, bitir) {
     var video = document.createElement('video');
     video.setAttribute('playsinline', ''); video.setAttribute('muted', ''); video.muted = true; video.autoplay = true;
@@ -219,6 +239,7 @@
       if (!perde) { s.getTracks().forEach(function (t) { t.stop(); }); return false; }
       akis = s;
       video.srcObject = s;
+      tani.kare = 0;
       return video.play().catch(function () {}).then(function () { return iyilestir(s.getVideoTracks()[0]); });
     }).then(function (yakin) {
       if (!perde) return;
@@ -233,6 +254,8 @@
         var butun = (tur++ % 4) === 3;
         var sw = butun ? W : Math.round(W * 0.9), sh = butun ? H : Math.round(H * 0.6);
         var sx = Math.round((W - sw) / 2), sy = Math.round((H - sh) / 2);
+        tani.video = W + '×' + H; tani.kare++;
+        if (tani.kare % 10 === 1 && taniYaz) taniYaz(false);
         var veri;
         try { veri = cizim(video, sx, sy, sw, sh, sw, sh); } catch (e) { dongu = setTimeout(tara, 200); return; }
         d.detect(veri).then(function (s) {
@@ -271,6 +294,7 @@
       '<h2 id="kamera-baslik" style="font-size:18px">Barkodu ya da QR kodu kameraya tutun</h2>' +
       '<div id="kamera-alani"></div>' +
       '<p id="kamera-durum">Kamera açılıyor…</p>' +
+      '<p id="kamera-tani" style="font-size:11px;line-height:1.4;opacity:.6;margin:-4px 0 0;word-break:break-word"></p>' +
       '<label class="dugme cerceve" for="kamera-foto" style="cursor:pointer;background:#fff">Fotoğraf çekerek okut</label>' +
       '<input type="file" id="kamera-foto" accept="image/*" capture="environment" class="gizli-etiket">' +
       '<button type="button" class="dugme" id="kamera-kapat">Kapat</button>' +
@@ -278,6 +302,9 @@
     document.body.appendChild(perde);
     var durum = perde.querySelector('#kamera-durum');
     var alan = perde.querySelector('#kamera-alani');
+    var taniAlan = perde.querySelector('#kamera-tani');
+    taniYaz = function (foto) { if (perde && taniAlan) taniAlan.textContent = taniMetni(foto); };
+    taniYaz(false);
     var okundu = false;
     function bitir(metin) {
       if (okundu) return;
@@ -293,7 +320,9 @@
       if (!dosya) return;
       durum.textContent = 'Fotoğraf okunuyor…';
       fotoOku(dosya, function (i, n) { if (i > 1 && perde) durum.textContent = 'Fotoğraf taranıyor… (' + Math.round(i / n * 100) + '%)'; })
-        .then(bitir).catch(function () {
+        .then(bitir).catch(function (e) {
+          if (!tani.hata) tani.hata = hataAdi(e);
+          taniYaz(true);
           if (perde) durum.textContent = 'Barkod okunamadı. Barkodun net çıktığından emin olup tekrar deneyin (çok yaklaşmayın, 20–30 cm yeterli).';
         });
     });
@@ -310,13 +339,15 @@
     var hataMetni = 'Canlı kamera açılamadı. “Fotoğraf çekerek okut” düğmesini kullanın ya da kamera iznini verin.';
     dedektor().then(function (d) {
       if (!perde) return;
+      taniYaz(false);
       return canliBaslat(alan, durum, d, bitir);
     }, function () {
       if (!perde) return;
+      taniYaz(false);
       if (!kok.Html5Qrcode) { durum.textContent = 'Kamera okuyucu yüklenemedi. İnternet bağlantısını kontrol edip sayfayı yenileyin.'; return; }
       return eskiCanli(durum, bitir);
-    }).catch(function () { if (perde) durum.textContent = hataMetni; });
+    }).catch(function (e) { tani.hata = hataAdi(e); if (perde) { durum.textContent = hataMetni; taniAlan.textContent = taniMetni(false) + ' · hata: ' + tani.hata; } });
   }
 
-  kok.Tarayici = { ac: ac, kapat: kapat, fotoOku: fotoOku, pencereler: pencereler, dedektor: dedektor };
+  kok.Tarayici = { SURUM: SURUM, tani: function () { return taniMetni(true); }, ac: ac, kapat: kapat, fotoOku: fotoOku, pencereler: pencereler, dedektor: dedektor };
 })(window);
