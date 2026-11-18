@@ -41,7 +41,8 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
-0. Kullanıcı iPhone'da "Fotoğraf çekerek okut"u yeniden denesin (service worker sürümü khr-v6; sayfa bir kez yenilenmeli).
+0. Kullanıcının arkadaşı düzeltmeden sonra da "çalışmıyor" dedi (hangi adımda olduğu belirsiz). Barkod penceresine tanı satırı eklendi (`sürüm 18.11-c · motor · foto boyutu · deneme · okunan · hata`; sw khr-v7). Ekran görüntüsü bekleniyor; gelince tanı satırına göre kök nedeni bul. Tanı satırında sürüm 18.11-c yoksa telefon eski sürümü açıyordur (önbellek).
+0b. Kapaktan bilgi okuma (barkod internette bulunamayınca): kullanıcı kapak fotoğrafının kapak resmi olarak kaydedilmesini istedi (Supabase Storage). Yöntem için yapay zekâ (Gemini, Supabase Edge Function, anahtar Supabase secret'ta, model adı ayarda) önerildi; kullanıcı sürekliliği sordu, cevaplandı, **onay bekleniyor**.
 1. Kullanıcı canlı sistemi deneyip revize verecek; revizeleri bu depoda yap, test et, push et (Pages otomatik güncellenir).
 2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (16 slayt, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak.
 3. Sunuma "tablete uygulama olarak kurulur" bilgisi eklenebilir (PDF'te var).
