@@ -5,7 +5,7 @@
   function depo() { return kok.Depo || (typeof require === 'function' ? require('./depo.js') : null); }
   var ALANLAR = { ad: 'ad', yazar: 'yazar', yayinevi: 'yayınevi', barkod: 'barkod', fiyat: 'fiyat', stok: 'stok', kapak: 'kapak' };
 
-  function kod(d, bolmeId) { var y = depo().konum(d, bolmeId); return y ? y.kod : '?'; }
+  function kod(d, bolmeId) { if (!bolmeId) return 'rafsız'; var y = depo().konum(d, bolmeId); return y ? y.kod : '?'; }
 
   // onceki: değişiklikten önceki kitap (yoksa null), yeni: kaydedilen kitap (silindiyse null).
   function kitapOlayi(d, onceki, yeni) {

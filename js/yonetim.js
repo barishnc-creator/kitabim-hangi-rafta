@@ -62,6 +62,11 @@
     var y = dugme.getAttribute('data-yetki');
     return !y || yetkili.apply(null, y.split(' '));
   }
+  // Sekmeler arası kısayol düğmeleri: <button data-sekme-git="giris">
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-sekme-git]');
+    if (b) sekmeAc(b.getAttribute('data-sekme-git'));
+  });
   function sekmeAc(ad) {
     if (!sekmeIzinli(ad)) ad = 'genel';
     sekmeler.forEach(function (s) {
@@ -149,6 +154,13 @@
       (kitaplar.length ? '<ul class="kitap-liste">' + kitaplar.map(kitapSatiri).join('') + '</ul>' : '<p class="soluk">Bu bölmede kitap yok.</p>') +
       (duzenleyici() ? '<button type="button" class="dugme tehlike" data-is="bolme-sil">' + O.ikon.cop + 'Bölmeyi sil</button>' : '') +
       '</div>';
+  }
+
+  // Kitabın raf/bölme rozeti; Excel ile girilmiş, henüz rafa yerleştirilmemiş kitapta "Rafsız"
+  function yerRozeti(k, sinif) {
+    var yer = Depo.konum(d, k.bolmeId);
+    if (yer) return '<span class="' + (sinif || 'kod-rozet') + '">' + yer.kod + '</span>';
+    return '<span class="' + (sinif || 'kod-rozet') + ' rafsiz" title="Rafa yerleştirilecek">' + (k.bolmeId ? '?' : 'Rafsız') + '</span>';
   }
 
   function kitapSatiri(k) {
@@ -455,9 +467,12 @@
   var gosterilen = 100;
   function rafFiltresi() {
     var secili = $('liste-raf').value;
-    $('liste-raf').innerHTML = '<option value="">Tüm raflar</option>' + O.sirali(d.raflar).map(function (r) {
-      return '<option value="' + r.id + '"' + (r.id === secili ? ' selected' : '') + '>' + r.no + '. Raf' + (r.etiket ? ' · ' + O.kacis(r.etiket) : '') + '</option>';
-    }).join('');
+    var rafsiz = Depo.rafsizKitaplar(d).length;
+    $('liste-raf').innerHTML = '<option value="">Tüm raflar</option>' +
+      (rafsiz || secili === 'rafsiz' ? '<option value="rafsiz"' + (secili === 'rafsiz' ? ' selected' : '') + '>Rafa yerleştirilecek (' + rafsiz + ')</option>' : '') +
+      O.sirali(d.raflar).map(function (r) {
+        return '<option value="' + r.id + '"' + (r.id === secili ? ' selected' : '') + '>' + r.no + '. Raf' + (r.etiket ? ' · ' + O.kacis(r.etiket) : '') + '</option>';
+      }).join('');
   }
   function kapakHucre(k) {
     return k.kapak
@@ -468,17 +483,17 @@
     var s = $('liste-ara').value;
     var rafId = $('liste-raf').value;
     var liste = s.trim() ? Arama.ara(d.kitaplar, s) : d.kitaplar.slice().sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
-    if (rafId) liste = liste.filter(function (k) { var y = Depo.konum(d, k.bolmeId); return y && y.raf.id === rafId; });
+    if (rafId === 'rafsiz') liste = liste.filter(function (k) { return !k.bolmeId; });
+    else if (rafId) liste = liste.filter(function (k) { var y = Depo.konum(d, k.bolmeId); return y && y.raf.id === rafId; });
     $('kitap-sayi').textContent = d.kitaplar.length + ' kitap' + (liste.length !== d.kitaplar.length ? ' · ' + liste.length + ' gösteriliyor' : '');
     document.querySelectorAll('[data-alan=fiyat]').forEach(function (el) { el.hidden = !d.ayarlar.fiyat; });
     document.querySelectorAll('[data-alan=stok]').forEach(function (el) { el.hidden = !d.ayarlar.stok; });
     var yetki = kitapYetkisi();
     $('tum-kitaplar').innerHTML = liste.length ? liste.slice(0, gosterilen).map(function (k) {
-      var yer = Depo.konum(d, k.bolmeId);
       return '<tr><td>' + kapakHucre(k) + '</td>' +
         '<td><b>' + O.kacis(k.ad) + '</b><div class="soluk">' + O.kacis(k.yazar || '—') + (k.barkod ? ' · ' + O.kacis(k.barkod) : '') + '</div></td>' +
         '<td>' + O.kacis(k.yayinevi || '—') + '</td>' +
-        '<td><span class="kod-rozet">' + (yer ? yer.kod : '?') + '</span></td>' +
+        '<td>' + yerRozeti(k) + '</td>' +
         (d.ayarlar.fiyat ? '<td class="sayi">' + (k.fiyat == null ? '—' : O.para(k.fiyat)) + '</td>' : '') +
         (d.ayarlar.stok ? '<td class="sayi' + (k.stok === 0 ? ' stok-yok' : '') + '">' + (k.stok == null ? '—' : k.stok) + '</td>' : '') +
         '<td class="islem">' + (yetki
@@ -503,6 +518,9 @@
     function kpi(renk, ikon, etiket, deger, alt) {
       return '<div class="kart kpi"><div class="kpi-ikon ' + renk + '">' + O.ikon[ikon] + '</div><div><span>' + etiket + '</span><b>' + deger + '</b>' + (alt ? '<small>' + alt + '</small>' : '') + '</div></div>';
     }
+    var rafsiz = Depo.rafsizKitaplar(d).length;
+    $('pano-rafsiz').hidden = !rafsiz;
+    $('pano-rafsiz-sayi').textContent = rafsiz.toLocaleString('tr-TR');
     $('kpiler').innerHTML =
       kpi('mavi', 'kitap18', 'Toplam kitap', d.kitaplar.length.toLocaleString('tr-TR'), yeni ? '+' + yeni + ' bu hafta' : 'Bu hafta yeni yok') +
       kpi('yesil', 'raf', 'Raf / bölme', d.raflar.length + ' / ' + bolmeSayisi, bosBolme ? bosBolme + ' bölme boş' : 'Tüm bölmeler dolu') +
@@ -511,8 +529,7 @@
 
     var son = d.kitaplar.slice().sort(function (a, b) { return String(b.eklendi || '').localeCompare(String(a.eklendi || '')); }).slice(0, 6);
     $('pano-son').innerHTML = son.length ? son.map(function (k) {
-      var yer = Depo.konum(d, k.bolmeId);
-      return '<li>' + kapakHucre(k) + '<div class="metin"><b>' + O.kacis(k.ad) + '</b><span>' + O.kacis(k.yazar || k.yayinevi || '') + (k.eklendi ? ' · ' + O.tarihKisa(k.eklendi) : '') + '</span></div><span class="kod-rozet">' + (yer ? yer.kod : '?') + '</span></li>';
+      return '<li>' + kapakHucre(k) + '<div class="metin"><b>' + O.kacis(k.ad) + '</b><span>' + O.kacis(k.yazar || k.yayinevi || '') + (k.eklendi ? ' · ' + O.tarihKisa(k.eklendi) : '') + '</span></div>' + yerRozeti(k) + '</li>';
     }).join('') : '<li class="bos-not">Henüz kitap yok.</li>';
 
     var raflar = O.sirali(d.raflar);

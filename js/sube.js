@@ -125,9 +125,10 @@
     return { kalemler: kalemler, atlanan: atlanan, ozet: ozet(kalemler) };
   }
 
-  // Raf → bölme → kitap adı; mağazada kaydı olmayanlar en sonda.
+  // Raf → bölme → kitap adı; ardından mağazada olup rafa yerleştirilmemişler, en sonda kaydı olmayanlar.
+  function sinif(k) { return k.yer ? 0 : k.kitap ? 1 : 2; }
   function toplamaSirasi(a, b) {
-    if (!a.yer !== !b.yer) return a.yer ? -1 : 1;
+    if (sinif(a) !== sinif(b)) return sinif(a) - sinif(b);
     if (a.yer && b.yer) {
       if (a.yer.raf.no !== b.yer.raf.no) return a.yer.raf.no - b.yer.raf.no;
       if (a.yer.bolme.no !== b.yer.bolme.no) return a.yer.bolme.no - b.yer.bolme.no;

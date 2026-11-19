@@ -186,3 +186,5 @@ table.tablo { width: 100%; border-collapse: collapse; font-size: 14px; min-width
 }
 #sube-filtre { max-width: 100%; min-width: 0; }
 .mesgul { opacity: .6; pointer-events: none; }
+.kod-rozet.rafsiz { color: #fff; background: #C2410C; }
+.pano-rafsiz { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }

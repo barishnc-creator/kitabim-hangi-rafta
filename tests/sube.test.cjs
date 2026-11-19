@@ -113,3 +113,15 @@ test('sütunlar: muhasebe programlarının büyük harfli Türkçesiz başlıkla
   assert.equal(t.adet, 2);
   assert.equal(t.ad, 1);
 });
+
+test('eşleştirme: mağazada olan ama rafa yerleştirilmemiş kitap kayıtsız sayılmaz, onlardan önce gelir', () => {
+  const d = magaza();
+  Depo.kitapKaydet(d, { ad: 'Yeni Gelen', barkod: '9789750701689', stok: 2 }, { rafsizOlabilir: true });
+  const satirlar = [['Barkod', 'Adet'], ['9780000000002', '1'], ['9789750701689', '1'], ['9789750719387', '1']];
+  const s = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
+  assert.deepEqual(s.kalemler.map((k) => [k.barkod, k.durum, !!k.yer, !!k.kitap]), [
+    ['9789750719387', 'var', true, true],
+    ['9789750701689', 'var', false, true], // rafsız ama mağazada
+    ['9780000000002', 'kayitsiz', false, false],
+  ]);
+});

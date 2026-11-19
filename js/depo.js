@@ -115,7 +115,8 @@
     secenekler = secenekler || {};
     var ad = String(giris.ad || '').trim();
     if (!ad) throw hata('EKSIK', 'Kitap adı boş olamaz.');
-    if (!giris.bolmeId || !konum(d, giris.bolmeId)) throw hata('EKSIK', 'Raf ve bölme seçin.');
+    // Excel ile girilen kitap rafsız olabilir (bolmeId null: "Rafa yerleştirilecek"); formdan eklenen kitapta raf zorunlu.
+    if (giris.bolmeId ? !konum(d, giris.bolmeId) : !secenekler.rafsizOlabilir) throw hata('EKSIK', 'Raf ve bölme seçin.');
     var fiyat = sayiYap(giris.fiyat, false);
     var stok = sayiYap(giris.stok, true);
     if (Number.isNaN(fiyat)) throw hata('GECERSIZ', 'Fiyat geçerli bir sayı olmalı.');
@@ -135,7 +136,7 @@
       yazar: String(giris.yazar || '').trim(),
       yayinevi: String(giris.yayinevi || '').trim(),
       barkod: barkod,
-      bolmeId: giris.bolmeId,
+      bolmeId: giris.bolmeId || null,
       fiyat: fiyat,
       stok: stok,
       kapak: kapakAdresi(giris.kapak),
@@ -144,6 +145,29 @@
     var i = d.kitaplar.findIndex(function (k) { return k.id === kayit.id; });
     if (i >= 0) d.kitaplar[i] = kayit; else d.kitaplar.push(kayit);
     return kayit;
+  }
+
+  // Rafa yerleştirilmeyi bekleyen kitaplar (Excel ile girilmiş, bölmesi yok), ada göre sıralı.
+  function rafsizKitaplar(d) {
+    return d.kitaplar.filter(function (k) { return !k.bolmeId; }).sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
+  }
+
+  // Ürün girişi planını (Giris.planla) uygular: yeni kitapları ekler, kayıtlı kitapların stoğunu artırır.
+  // Döner: { eklenen: [kitap], guncellenen: [kitap] }
+  function urunGirisiUygula(d, plan) {
+    var sonuc = { eklenen: [], guncellenen: [] };
+    plan.yeni.forEach(function (y) {
+      sonuc.eklenen.push(kitapKaydet(d, { ad: y.ad, yazar: y.yazar, yayinevi: y.yayinevi, barkod: y.barkod, bolmeId: y.bolmeId,
+        fiyat: y.fiyat, stok: y.stok }, { rafsizOlabilir: true, ayniBarkodaIzin: true }));
+    });
+    plan.artis.forEach(function (a) {
+      var k = d.kitaplar.find(function (x) { return x.id === a.kitapId; });
+      if (!k) return;
+      k.stok = (k.stok == null ? 0 : k.stok) + a.ek; // plan hazırlandıktan sonra stok değişmiş olabilir: güncel değere ekle
+      if (a.fiyat != null) k.fiyat = a.fiyat;
+      sonuc.guncellenen.push(k);
+    });
+    return sonuc;
   }
 
   function kitapSil(d, kitapId) {
@@ -263,7 +287,7 @@
   var api = {
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
-    kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap,
+    kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap, rafsizKitaplar: rafsizKitaplar, urunGirisiUygula: urunGirisiUygula,
     planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };

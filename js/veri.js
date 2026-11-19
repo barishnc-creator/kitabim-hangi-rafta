@@ -102,6 +102,14 @@
         return degistir(function (d) { var l = d.okulListeleri.find(function (x) { return x.id === id; }); Depo.okulListesiSil(d, id); gecmisYaz({ islem: 'sildi', konu: 'liste', ayrinti: l ? l.okul + ' · ' + l.sinif : '' }); });
       },
       gecmis: function () { try { return Promise.resolve(JSON.parse(kok.localStorage.getItem(GECMIS) || '[]')); } catch (e) { return Promise.resolve([]); } },
+      // Excel ile ürün girişi (Giris.planla planı): yeni kitaplar rafsız eklenebilir, kayıtlı kitapların stoğu artar.
+      urunGirisi: function (plan) {
+        return degistir(function (d) {
+          var s = Depo.urunGirisiUygula(d, plan);
+          gecmisYaz({ islem: 'yukledi', konu: 'kitap', ayrinti: 'Ürün girişi: ' + s.eklenen.length + ' yeni kitap, ' + s.guncellenen.length + ' kitapta stok arttı' });
+          return s;
+        });
+      },
       topluKitapEkle: function (liste) {
         return degistir(function (d) {
           liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); });
@@ -312,6 +320,27 @@
       },
       okulListesiSil: function (id) {
         return sb.from('kirtasiye_okul_listeleri').delete().eq('id', id).then(kontrol).then(function () { return yenile(); });
+      },
+      urunGirisi: function (plan) {
+        var d = kopya(son);
+        var s = Depo.urunGirisiUygula(d, plan);
+        var yeniler = s.eklenen.map(satirYap);
+        var parcalar = [];
+        for (var i = 0; i < yeniler.length; i += 500) parcalar.push(yeniler.slice(i, i + 500));
+        var ekle = parcalar.reduce(function (p, parca) {
+          return p.then(function () { return sb.from('kirtasiye_kitaplar').insert(parca).then(kontrol); });
+        }, Promise.resolve());
+        // Stok artışları: onar onar güncellenir (yüzlerce satırda istek yığılmasın)
+        var guncel = s.guncellenen.map(function (k) { return { id: k.id, stok: k.stok, fiyat: k.fiyat }; });
+        var grup = [];
+        for (var j = 0; j < guncel.length; j += 10) grup.push(guncel.slice(j, j + 10));
+        return grup.reduce(function (p, g) {
+          return p.then(function () {
+            return Promise.all(g.map(function (k) {
+              return sb.from('kirtasiye_kitaplar').update({ stok: k.stok, fiyat: k.fiyat, guncellendi: new Date().toISOString() }).eq('id', k.id).then(kontrol);
+            }));
+          });
+        }, ekle).then(function () { return yenile({ eklenen: s.eklenen, guncellenen: s.guncellenen }); });
       },
       topluKitapEkle: function (liste) {
         var satirlar = liste.map(function (g) { return satirYap(Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: true })); });

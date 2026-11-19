@@ -64,6 +64,7 @@ a { color: var(--mavi); }
 
 .mesaj { border-radius: 12px; padding: 12px 14px; font-size: 15px; }
 .mesaj.hata { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+.mesaj.uyari { background: #FFF7ED; border: 1px solid #FDBA74; color: #9A3412; }
 .mesaj.basari { background: #F0FDF4; color: var(--yesil); border: 1px solid #BBF7D0; }
 
 /* Raf şeması (iki ekranda ortak) */

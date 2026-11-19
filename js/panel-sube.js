@@ -94,17 +94,17 @@
     var ekleyebilir = P.yetkili('duzenleyici', 'calisan'), sonRaf = null, html = '';
     var sutunSayisi = stok ? 7 : 6;
     kalemler.forEach(function (k) {
-      var rafId = k.yer ? k.yer.raf.id : '-';
+      var rafId = k.yer ? k.yer.raf.id : k.kitap ? 'rafsiz' : '-';
       if (rafId !== sonRaf) {
         sonRaf = rafId;
         html += '<tr class="raf-satir"><td colspan="' + sutunSayisi + '">' + (k.yer
           ? O.kacis(k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : ''))
-          : 'Mağazada kayıtlı olmayan kitaplar') + '</td></tr>';
+          : k.kitap ? 'Mağazada var, henüz rafa yerleştirilmedi' : 'Mağazada kayıtlı olmayan kitaplar') + '</td></tr>';
       }
       var kitap = k.kitap;
       var alt = kitap ? [kitap.yazar, kitap.yayinevi].filter(Boolean).join(' · ') : 'Listede: ' + (k.listeAdi || 'ad yok');
       html += '<tr>' +
-        '<td>' + (k.yer ? '<span class="kod-rozet">' + k.yer.kod + '</span>' : '—') + '</td>' +
+        '<td>' + (k.yer ? '<span class="kod-rozet">' + k.yer.kod + '</span>' : k.kitap ? '<span class="kod-rozet rafsiz">Rafsız</span>' : '—') + '</td>' +
         '<td><b>' + O.kacis(kitap ? kitap.ad : (k.listeAdi || 'Bilinmeyen kitap')) + '</b><div class="soluk">' + O.kacis(alt) + '</div></td>' +
         '<td style="font-variant-numeric:tabular-nums;white-space:nowrap">' + O.kacis(k.barkod) + '</td>' +
         '<td class="sayi"><b>' + k.adet + '</b></td>' +

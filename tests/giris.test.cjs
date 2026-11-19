@@ -120,3 +120,22 @@ test('plan: Excel\'de raf ve fiyat varsa kullanılır; olmayan bölme uyarıyla 
   assert.equal(p.artis[0].fiyat, 120); // fiyat değiştiyse güncellenir
   assert.equal(p.rafsiz, 1);
 });
+
+test('Depo: plan uygulanır; yeni kitap rafsız, stok güncel değere eklenir; formda raf yine zorunlu', () => {
+  const { d, r } = magaza();
+  const satirlar = [BASLIK, ['9789754370430', 'BEYAZ GEMİ', 'ÖTÜKEN', '5'], ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CAN', '4']];
+  const plan = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
+  d.kitaplar.find((k) => k.barkod === '9789754370430').stok = 4; // plan hazırlandıktan sonra biri 1 adet daha eklemiş
+  const s = Depo.urunGirisiUygula(d, plan);
+  assert.equal(s.eklenen.length, 1);
+  assert.equal(s.eklenen[0].bolmeId, null);
+  assert.equal(s.guncellenen[0].stok, 9); // 4 + 5
+  assert.deepEqual(Depo.rafsizKitaplar(d).map((k) => k.ad), ['Vanilya Kokulu Mektuplar']);
+  // Rafa yerleştirme: bölme verilince rafsız listeden çıkar
+  const k = s.eklenen[0];
+  Depo.kitapKaydet(d, Object.assign({}, k, { bolmeId: r.bolmeler[2].id }));
+  assert.equal(Depo.rafsizKitaplar(d).length, 0);
+  // Formdan rafsız kitap eklenemez
+  assert.throws(() => Depo.kitapKaydet(d, { ad: 'Raf seçilmemiş' }), /Raf ve bölme seçin/);
+  assert.throws(() => Depo.kitapKaydet(d, { ad: 'Olmayan bölme', bolmeId: 'yok' }, { rafsizOlabilir: true }), /Raf ve bölme seçin/);
+});

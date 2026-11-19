@@ -31,11 +31,13 @@ create table if not exists public.kirtasiye_kitaplar (
   yazar text not null default '',
   yayinevi text not null default '',
   barkod text not null default '',
-  bolme_id uuid not null references public.kirtasiye_bolmeler (id) on delete restrict, -- dolu bölme/raf silinemez
+  bolme_id uuid references public.kirtasiye_bolmeler (id) on delete restrict, -- dolu bölme/raf silinemez; null: rafa yerleştirilecek
   fiyat numeric(12, 2) check (fiyat is null or fiyat >= 0),
   stok int check (stok is null or stok >= 0),
   guncellendi timestamptz not null default now()
 );
+-- Excel ile girilen kitap önce rafsız kaydedilir ("Rafa yerleştirilecek"); eski kurulumlarda zorunluluğu kaldır.
+alter table public.kirtasiye_kitaplar alter column bolme_id drop not null;
 alter table public.kirtasiye_kitaplar add column if not exists kapak text not null default '' check (kapak = '' or kapak like 'https://%');
 alter table public.kirtasiye_kitaplar add column if not exists eklendi timestamptz not null default now();
 create index if not exists kirtasiye_kitaplar_bolme on public.kirtasiye_kitaplar (bolme_id);
@@ -231,18 +233,18 @@ begin
   if tg_table_name = 'kirtasiye_kitaplar' then
     v_konu := 'kitap';
     if tg_op = 'INSERT' then
-      v_islem := 'ekledi'; v_ayrinti := '“' || new.ad || '” → ' || coalesce(public.kirtasiye_bolme_kodu(new.bolme_id), '?');
+      v_islem := 'ekledi'; v_ayrinti := '“' || new.ad || '” → ' || coalesce(public.kirtasiye_bolme_kodu(new.bolme_id), 'rafsız');
     elsif tg_op = 'UPDATE' then
       if new.bolme_id is distinct from old.bolme_id then
         v_islem := 'tasidi';
-        v_ayrinti := '“' || new.ad || '” ' || coalesce(public.kirtasiye_bolme_kodu(old.bolme_id), '?') || ' → ' || coalesce(public.kirtasiye_bolme_kodu(new.bolme_id), '?');
+        v_ayrinti := '“' || new.ad || '” ' || coalesce(public.kirtasiye_bolme_kodu(old.bolme_id), 'rafsız') || ' → ' || coalesce(public.kirtasiye_bolme_kodu(new.bolme_id), 'rafsız');
       elsif (new.ad, new.yazar, new.yayinevi, new.barkod, new.fiyat, new.stok, new.kapak) is not distinct from (old.ad, old.yazar, old.yayinevi, old.barkod, old.fiyat, old.stok, old.kapak) then
         return null;
       else
         v_islem := 'guncelledi'; v_ayrinti := '“' || new.ad || '”';
       end if;
     else
-      v_islem := 'sildi'; v_ayrinti := '“' || old.ad || '” (' || coalesce(public.kirtasiye_bolme_kodu(old.bolme_id), '?') || ')';
+      v_islem := 'sildi'; v_ayrinti := '“' || old.ad || '” (' || coalesce(public.kirtasiye_bolme_kodu(old.bolme_id), 'rafsız') || ')';
     end if;
   elsif tg_table_name = 'kirtasiye_raflar' then
     v_konu := 'raf';

@@ -41,7 +41,7 @@
     return '<button type="button" class="k-kart" data-kitap="' + O.kacis(k.id) + '"' + (secili ? ' aria-current="true"' : '') + '>' +
       kapak(k) + '<span class="k-ad">' + O.kacis(k.ad) + '</span>' +
       '<span class="k-yazar">' + O.kacis(k.yazar || k.yayinevi || '') + '</span>' +
-      '<span class="k-kod">' + (yer ? yer.kod : '?') + '</span></button>';
+      '<span class="k-kod">' + (yer ? yer.kod : (k.bolmeId ? '?' : 'Yeni')) + '</span></button>';
   }
   function stokRozeti(k) {
     if (!d.ayarlar.stok || k.stok == null) return '';
@@ -135,7 +135,9 @@
       (yer
         ? '<div class="k-yer">' + O.ikon.konum + '<div><p>Bu kitap burada</p><strong>' + yer.raf.no + '. Raf · Bölme ' + yer.kod + '</strong>' +
           (tarif(yer.raf) || yer.raf.etiket ? '<p style="font-weight:500;margin-top:4px">' + O.kacis(tarif(yer.raf) || yer.raf.etiket + ' rafı') + '</p>' : '') + '</div></div>'
-        : '<div class="mesaj hata">Bu kitabın rafı kayıtlı değil. Lütfen görevliye sorun.</div>') +
+        : k.bolmeId
+          ? '<div class="mesaj hata">Bu kitabın rafı kayıtlı değil. Lütfen görevliye sorun.</div>'
+          : '<div class="mesaj uyari">Bu kitap mağazaya yeni geldi, henüz rafına yerleştirilmedi. Lütfen görevliye sorun.</div>') +
       (rozetler ? '<div class="k-rozetler">' + rozetler + '</div>' : '') +
       (k.stok === 0 && d.ayarlar.stok ? '<button type="button" class="dugme ana" data-talep-kitap="' + O.kacis(k.ad) + '" data-talep-id="' + O.kacis(k.id) + '" style="min-height:56px;font-size:17px">Gelince haber verilsin</button>' : '') +
       telefonQr(k) + '</div>';
@@ -152,7 +154,8 @@
     var baslik, digerleri;
     if (liste && liste.length > 1) { digerleri = liste.slice(0, 24); baslik = liste.length + ' kitap bulundu'; }
     else {
-      digerleri = Depo.bolmeKitaplari(d, k.bolmeId).filter(function (x) { return x.id !== k.id; }).slice(0, 12);
+      // Rafsız kitapta "aynı bölme" yoktur: diğer rafsız kitaplar listelenmez
+      digerleri = k.bolmeId ? Depo.bolmeKitaplari(d, k.bolmeId).filter(function (x) { return x.id !== k.id; }).slice(0, 12) : [];
       baslik = 'Aynı bölmedeki diğer kitaplar';
     }
     sonucGoster(detayCiz(k, digerleri, baslik));
