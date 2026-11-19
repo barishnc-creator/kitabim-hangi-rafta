@@ -263,7 +263,7 @@
   var api = {
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
-    kitapKaydet: kitapKaydet, kitapSil: kitapSil,
+    kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap,
     planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };
