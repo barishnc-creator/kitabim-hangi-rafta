@@ -47,7 +47,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Excel sütunları bilinmiyor: **kullanıcı örnek Excel gönderecek**; gelmeden içe aktarmayı yazma.
 - Kitap bilgisi (ad/yazar/yayınevi/kapak) toplu olarak internetten tamamlanmalı (Excel'de ad yoksa zorunlu). Ücretsiz planda: Google Kitaplar (kendi anahtarı, Books API etkin olmalı) + Open Library; Google araması faturalandırma ister (kullanıcı kart istemiyor gibi; "ücret ödemeden" yol sordu). Kapaktan doldur tek tek iş olduğu için bu akışta ikincil.
 - Bugünkü Excel yüklemesi (`js/csv.js` iceAktarHazirla): yalnız CSV, "Kitap adı" ve "Raf/Bölme" zorunlu, aynı barkodu atlıyor → yeni akışa göre değişecek (.xlsx için `js/xlsx.js` hazır).
-- Kullanıcı Supabase kurulumunu (GOOGLE_API_KEY, kitap-bilgi, kapak-depo.sql) henüz yapmadı/bildirmedi.
+- **Supabase kurulumu TAMAM (19 Kasım):** secret GOOGLE_API_KEY, fonksiyon `kitap-bilgi` adıyla (JWT kapalı; curl POST → 401 "Giriş yapın."), `kapaklar` deposu var. Sırada: kullanıcı anahtarın Google Cloud projesinde Books API'yi etkinleştirecek, sonra telefonda 9786259506586 ile deneyecek.
 
 
 0. **Kitap bilgisi sunucusu yazıldı, kullanıcının kurulumu bekleniyor** (18 Kasım). Kök neden: anahtarsız Google Kitaplar isteği Google'ın ortak projesinden (624717413613) düşüyor, günlük kota doluyor → 429 → "internette bulunamadı". Kullanıcı "Google'da normal aramada çıkıyor" dedi (örnek 9786259506586 Kınalı Serçe, Kronik Kitap) ve onay verdi.
