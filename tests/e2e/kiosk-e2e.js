@@ -46,7 +46,7 @@ const OUT = process.argv[2] || require('os').tmpdir();
   console.log('yazılan:', await k.inputValue('#sorgu'), '| yer:', await k.textContent('.k-yer strong'));
   await k.click('.klavye [data-islem=ara]');
   await k.waitForTimeout(300);
-  console.log('stok rozeti:', await k.textContent('.k-rozetler'), '| telefon QR:', await k.isVisible('.k-telefon svg'));
+  console.log('fiyat rozeti:', await k.textContent('.k-rozetler'), '| telefon QR:', await k.isVisible('.k-telefon svg'));
   await k.waitForTimeout(3700);
   await k.screenshot({ path: OUT + '/k-sonuc.png', fullPage: true });
   // çok sonuçlu

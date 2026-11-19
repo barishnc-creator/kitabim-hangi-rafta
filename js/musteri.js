@@ -43,12 +43,6 @@
       '<span class="k-yazar">' + O.kacis(k.yazar || k.yayinevi || '') + '</span>' +
       '<span class="k-kod">' + (yer ? yer.kod : (k.bolmeId ? '?' : 'Yeni')) + '</span></button>';
   }
-  function stokRozeti(k) {
-    if (!d.ayarlar.stok || k.stok == null) return '';
-    if (k.stok === 0) return '<span class="k-rozet yok">Tükendi</span>';
-    if (k.stok <= 2) return '<span class="k-rozet az">Son ' + k.stok + ' adet</span>';
-    return '<span class="k-rozet var">Rafta var</span>';
-  }
   // Mağaza haritası varsa haritayı ve yolu, yoksa raf şemasını gösterir.
   function sema(hedefBolmeId, hedefRafId) {
     var raflar = O.sirali(d.raflar);
@@ -126,7 +120,7 @@
 
   function detayCiz(k, digerleri, digerBaslik) {
     var yer = Depo.konum(d, k.bolmeId);
-    var rozetler = (d.ayarlar.fiyat && k.fiyat != null ? '<span class="k-rozet">' + O.para(k.fiyat) + '</span>' : '') + stokRozeti(k);
+    var rozetler = (d.ayarlar.fiyat && k.fiyat != null ? '<span class="k-rozet">' + O.para(k.fiyat) + '</span>' : '');
     var sol = '<div class="kart k-detay">' +
       '<div class="k-detay-ust">' + kapak(k) + '<div style="min-width:0"><h2>' + O.kacis(k.ad) + '</h2>' +
       (k.yazar ? '<p class="bilgi">Yazar: <strong>' + O.kacis(k.yazar) + '</strong></p>' : '') +
@@ -139,7 +133,6 @@
           ? '<div class="mesaj hata">Bu kitabın rafı kayıtlı değil. Lütfen görevliye sorun.</div>'
           : '<div class="mesaj uyari">Bu kitap mağazaya yeni geldi, henüz rafına yerleştirilmedi. Lütfen görevliye sorun.</div>') +
       (rozetler ? '<div class="k-rozetler">' + rozetler + '</div>' : '') +
-      (k.stok === 0 && d.ayarlar.stok ? '<button type="button" class="dugme ana" data-talep-kitap="' + O.kacis(k.ad) + '" data-talep-id="' + O.kacis(k.id) + '" style="min-height:56px;font-size:17px">Gelince haber verilsin</button>' : '') +
       telefonQr(k) + '</div>';
     var sag = sema(k.bolmeId) +
       (digerleri.length ? '<div><h3 class="k-liste-baslik">' + digerBaslik + '</h3><div class="k-izgara">' +
@@ -260,8 +253,6 @@
       html += '<div class="k-sonuc"><div class="kart"><div class="k-bolum-baslik"><h2 style="font-size:22px">' + O.kacis(liste.okul + ' · ' + liste.sinif) + '</h2><span class="soluk">' + du.toplam + ' kitap</span></div>' +
         du.kalemler.map(function (k, i) {
           var rozet = !k.kitap || !k.yer ? '<span class="k-rozet yok">Mağazada yok</span>'
-            : k.kitap.stok === 0 ? '<span class="k-rozet yok">Tükendi</span>'
-            : d.ayarlar.stok && k.kitap.stok != null && k.kitap.stok <= 2 ? '<span class="k-rozet az">Son ' + k.kitap.stok + ' adet</span>'
             : '<span class="k-rozet var">Rafta var</span>';
           var ic = '<span class="no">' + (i + 1) + '</span><span style="min-width:0"><b>' + O.kacis(k.kitap ? k.kitap.ad : Arama.satirCoz(k.metin).ad) + '</b><span class="alt">' +
             O.kacis(k.kitap ? (k.kitap.yazar || k.kitap.yayinevi || '') : 'Görevliye sorabilirsiniz') + '</span></span>' + rozet + (k.yer ? '<span class="k-kod">' + k.yer.kod + '</span>' : '<span></span>');

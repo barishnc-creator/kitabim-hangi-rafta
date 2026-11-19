@@ -3,7 +3,7 @@
 (function (kok) {
   // Depo, çağrı anında bulunur (dosya sırasına bağımlı kalmasın).
   function depo() { return kok.Depo || (typeof require === 'function' ? require('./depo.js') : null); }
-  var ALANLAR = { ad: 'ad', yazar: 'yazar', yayinevi: 'yayınevi', barkod: 'barkod', fiyat: 'fiyat', stok: 'stok', kapak: 'kapak' };
+  var ALANLAR = { ad: 'ad', yazar: 'yazar', yayinevi: 'yayınevi', barkod: 'barkod', fiyat: 'fiyat', kapak: 'kapak' };
 
   function kod(d, bolmeId) { if (!bolmeId) return 'rafsız'; var y = depo().konum(d, bolmeId); return y ? y.kod : '?'; }
 

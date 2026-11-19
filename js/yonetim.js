@@ -264,7 +264,7 @@
   function formuTemizle(bolmeId) {
     duzenlenenId = null;
     aranan = '';
-    ['f-barkod', 'f-ad', 'f-yazar', 'f-yayinevi', 'f-fiyat', 'f-stok'].forEach(function (i) { $(i).value = ''; });
+    ['f-barkod', 'f-ad', 'f-yazar', 'f-yayinevi', 'f-fiyat'].forEach(function (i) { $(i).value = ''; });
     kapakGoster('');
     $('form-baslik').textContent = 'Kitap ekle';
     bildir($('barkod-uyari'), '', '');
@@ -281,7 +281,6 @@
     $('f-yazar').value = k.yazar || '';
     $('f-yayinevi').value = k.yayinevi || '';
     $('f-fiyat').value = k.fiyat == null ? '' : String(k.fiyat).replace('.', ',');
-    $('f-stok').value = k.stok == null ? '' : k.stok;
     kapakGoster(k.kapak);
     bildir($('form-mesaj'), '', '');
     bildir($('barkod-uyari'), '', '');
@@ -436,7 +435,6 @@
     var eski = duzenlenenId && d.kitaplar.find(function (k) { return k.id === duzenlenenId; });
     // Kapalı alanlar formda görünmez; düzenlemede eski değer korunur.
     giris.fiyat = d.ayarlar.fiyat ? $('f-fiyat').value : (eski ? eski.fiyat : null);
-    giris.stok = d.ayarlar.stok ? $('f-stok').value : (eski ? eski.stok : null);
 
     function kaydet(izin) {
       try { return Veri.kitapKaydet(giris, izin); } catch (err) { return Promise.reject(err); }
@@ -487,7 +485,6 @@
     else if (rafId) liste = liste.filter(function (k) { var y = Depo.konum(d, k.bolmeId); return y && y.raf.id === rafId; });
     $('kitap-sayi').textContent = d.kitaplar.length + ' kitap' + (liste.length !== d.kitaplar.length ? ' · ' + liste.length + ' gösteriliyor' : '');
     document.querySelectorAll('[data-alan=fiyat]').forEach(function (el) { el.hidden = !d.ayarlar.fiyat; });
-    document.querySelectorAll('[data-alan=stok]').forEach(function (el) { el.hidden = !d.ayarlar.stok; });
     var yetki = kitapYetkisi();
     $('tum-kitaplar').innerHTML = liste.length ? liste.slice(0, gosterilen).map(function (k) {
       return '<tr><td>' + kapakHucre(k) + '</td>' +
@@ -495,12 +492,11 @@
         '<td>' + O.kacis(k.yayinevi || '—') + '</td>' +
         '<td>' + yerRozeti(k) + '</td>' +
         (d.ayarlar.fiyat ? '<td class="sayi">' + (k.fiyat == null ? '—' : O.para(k.fiyat)) + '</td>' : '') +
-        (d.ayarlar.stok ? '<td class="sayi' + (k.stok === 0 ? ' stok-yok' : '') + '">' + (k.stok == null ? '—' : k.stok) + '</td>' : '') +
         '<td class="islem">' + (yetki
           ? '<button type="button" class="dugme kare" data-is="kitap-duzenle" data-id="' + k.id + '" aria-label="' + O.kacis(k.ad) + ' kitabını düzenle">' + O.ikon.kalem + '</button> ' +
             '<button type="button" class="dugme kare tehlike" data-is="kitap-sil" data-id="' + k.id + '" aria-label="' + O.kacis(k.ad) + ' kitabını sil">' + O.ikon.cop + '</button>'
           : '') + '</td></tr>';
-    }).join('') : '<tr><td colspan="7" class="bos-not" style="text-align:center;padding:32px">' +
+    }).join('') : '<tr><td colspan="6" class="bos-not" style="text-align:center;padding:32px">' +
       (d.kitaplar.length ? 'Eşleşen kitap yok.' : 'Henüz kitap eklenmedi. Sağ üstteki “Kitap ekle” ile başlayın ya da Excel\'den yükleyin.') + '</td></tr>';
     $('daha-fazla').hidden = liste.length <= gosterilen;
   }
@@ -514,7 +510,6 @@
     d.raflar.forEach(function (r) { r.bolmeler.forEach(function (b) { bolmeSayisi++; if (!Depo.bolmeKitaplari(d, b.id).length) bosBolme++; }); });
     var hafta = new Date(Date.now() - 7 * 864e5).toISOString();
     var yeni = d.kitaplar.filter(function (k) { return (k.eklendi || '') >= hafta; }).length;
-    var tukenen = d.kitaplar.filter(function (k) { return k.stok === 0; }).length;
     function kpi(renk, ikon, etiket, deger, alt) {
       return '<div class="kart kpi"><div class="kpi-ikon ' + renk + '">' + O.ikon[ikon] + '</div><div><span>' + etiket + '</span><b>' + deger + '</b>' + (alt ? '<small>' + alt + '</small>' : '') + '</div></div>';
     }
@@ -525,7 +520,7 @@
       kpi('mavi', 'kitap18', 'Toplam kitap', d.kitaplar.length.toLocaleString('tr-TR'), yeni ? '+' + yeni + ' bu hafta' : 'Bu hafta yeni yok') +
       kpi('yesil', 'raf', 'Raf / bölme', d.raflar.length + ' / ' + bolmeSayisi, bosBolme ? bosBolme + ' bölme boş' : 'Tüm bölmeler dolu') +
       kpi('turuncu', 'ara', 'Müşteri araması', '…', 'Son 30 gün') +
-      kpi('mor', 'etiket', d.ayarlar.stok ? 'Tükenen kitap' : 'Bölme başına kitap', d.ayarlar.stok ? tukenen : (bolmeSayisi ? (d.kitaplar.length / bolmeSayisi).toFixed(1).replace('.', ',') : '0'), d.ayarlar.stok ? 'Stok 0 olanlar' : 'Ortalama');
+      kpi('mor', 'etiket', 'Bölme başına kitap', bolmeSayisi ? (d.kitaplar.length / bolmeSayisi).toFixed(1).replace('.', ',') : '0', 'Ortalama');
 
     var son = d.kitaplar.slice().sort(function (a, b) { return String(b.eklendi || '').localeCompare(String(a.eklendi || '')); }).slice(0, 6);
     $('pano-son').innerHTML = son.length ? son.map(function (k) {
@@ -694,19 +689,15 @@
   function ayarlariCiz() {
     if (document.activeElement !== $('ayar-magaza')) $('ayar-magaza').value = d.ayarlar.magazaAdi || '';
     $('ayar-fiyat').checked = d.ayarlar.fiyat;
-    $('ayar-stok').checked = d.ayarlar.stok;
     $('alan-fiyat').hidden = !d.ayarlar.fiyat;
-    $('alan-stok').hidden = !d.ayarlar.stok;
     $('mod-bilgi').textContent = Veri.mod === 'yerel'
       ? 'Deneme modu: veriler yalnız bu cihazın tarayıcısında saklanıyor. Düzenli olarak yedek indirin.'
       : 'Veriler bulutta saklanıyor. İsterseniz kayıt için yedek indirebilirsiniz.';
     $('yedek-yukle-etiket').hidden = Veri.mod !== 'yerel';
   }
-  ['fiyat', 'stok'].forEach(function (alan) {
-    $('ayar-' + alan).addEventListener('change', function (e) {
-      var acik = e.target.checked;
-      yap(function () { return Veri.ayarKaydet(alan, acik); }, (alan === 'fiyat' ? 'Fiyat' : 'Stok') + (acik ? ' açıldı.' : ' kapatıldı.')).catch(function () { ayarlariCiz(); });
-    });
+  $('ayar-fiyat').addEventListener('change', function (e) {
+    var acik = e.target.checked;
+    yap(function () { return Veri.ayarKaydet('fiyat', acik); }, 'Fiyat' + (acik ? ' açıldı.' : ' kapatıldı.')).catch(function () { ayarlariCiz(); });
   });
 
   $('yedek-indir').addEventListener('click', function () {

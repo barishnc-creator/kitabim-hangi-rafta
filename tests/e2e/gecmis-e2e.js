@@ -24,7 +24,7 @@ const OUT = process.argv[2] || require('os').tmpdir(), K = 'http://localhost:876
   console.log('çalışan geçmiş sekmesini görüyor mu:', await c.isVisible('#sek-gecmis'));
   // ayar
   await p.reload(); await p.waitForTimeout(300);
-  await p.click('#sek-ayarlar'); await p.uncheck('#ayar-stok'); await p.waitForTimeout(150);
+  await p.click('#sek-ayarlar'); await p.uncheck('#ayar-fiyat'); await p.waitForTimeout(150);
   await p.click('#sek-gecmis'); await p.waitForTimeout(200);
   const satirlar = await p.$$eval('#gecmis-liste li:not(.gun)', (x) => x.map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
   console.log(satirlar.join('\n'));

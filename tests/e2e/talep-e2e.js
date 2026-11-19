@@ -36,11 +36,9 @@ const OUT = process.argv[2] || require('os').tmpdir(), K = 'http://localhost:876
   await k.waitForTimeout(200);
   console.log('başarı:', (await k.textContent('.talep-perde')).replace(/\s+/g, ' ').slice(0, 110));
   await k.click('#t-tamam');
-  // 2) tükenen kitap
+  // 2) stok takibi yok: kitap sayfasında "gelince haber ver" düğmesi çıkmaz
   await k.fill('#sorgu', 'ingilizce workbook'); await k.press('#sorgu', 'Enter');
-  await k.click('.k-detay [data-talep-kitap]');
-  await k.fill('#t-ad', 'Mehmet'); await k.fill('#t-tel', '5551234567'); await k.check('#t-onay');
-  await k.click('.talep-perde button[type=submit]'); await k.waitForTimeout(100); await k.click('#t-tamam');
+  console.log('kitap sayfasında talep düğmesi:', await k.$('.k-detay [data-talep-kitap]') ? 'VAR (hata)' : 'yok');
   // 3) okul listesi eksikleri
   await k.click('#ana-sayfa'); await k.click('#okul-gezin [data-okul-ad]'); await k.click('[data-liste="l1"]');
   await k.click('[data-talep-liste]');

@@ -35,19 +35,17 @@ test('içinde kitap olan raf ve bölme silinemez', () => {
   assert.equal(r1.bolmeler.length, 2);
 });
 
-test('kitap adı ve bölme zorunlu, fiyat/stok sayı olmalı', () => {
+test('kitap adı ve bölme zorunlu, fiyat sayı olmalı; stok alanı tutulmaz', () => {
   const { d, r1 } = ornek();
   const b = r1.bolmeler[0].id;
   assert.throws(() => Depo.kitapKaydet(d, { ad: '  ', bolmeId: b }), { kod: 'EKSIK' });
   assert.throws(() => Depo.kitapKaydet(d, { ad: 'X' }), { kod: 'EKSIK' });
   assert.throws(() => Depo.kitapKaydet(d, { ad: 'X', bolmeId: b, fiyat: 'abc' }), { kod: 'GECERSIZ' });
-  assert.throws(() => Depo.kitapKaydet(d, { ad: 'X', bolmeId: b, stok: '-1' }), { kod: 'GECERSIZ' });
   const k = Depo.kitapKaydet(d, { ad: 'X', bolmeId: b, fiyat: '249,90', stok: '12' });
   assert.equal(k.fiyat, 249.9);
-  assert.equal(k.stok, 12);
+  assert.equal('stok' in k, false);
   const bosAlan = Depo.kitapKaydet(d, { ad: 'Y', bolmeId: b, fiyat: '', stok: '' });
   assert.equal(bosAlan.fiyat, null);
-  assert.equal(bosAlan.stok, null);
 });
 
 test('aynı barkod uyarı verir, izinle kaydedilir; güncelleme kendi barkoduna takılmaz', () => {
@@ -80,18 +78,18 @@ test('arama Türkçe harf ve büyük/küçük harf duyarsız', () => {
 
 test('bozuk yedek dosyası güvenli şekilde düzeltilir', () => {
   assert.deepEqual(Depo.duzelt(null), Depo.bos());
-  const d = Depo.duzelt({ raflar: [{ id: 'r', no: '2', bolmeler: [{ id: 'b', no: 1 }, null] }], kitaplar: [{ id: 'k' }], ayarlar: { fiyat: false } });
+  const d = Depo.duzelt({ raflar: [{ id: 'r', no: '2', bolmeler: [{ id: 'b', no: 1 }, null] }], kitaplar: [{ id: 'k' }, { id: 'k2', ad: 'Eski', stok: 4 }], ayarlar: { fiyat: false, stok: true } });
   assert.equal(d.raflar[0].no, 2);
   assert.equal(d.raflar[0].bolmeler.length, 1);
-  assert.equal(d.kitaplar.length, 0);
+  assert.deepEqual(d.kitaplar, [{ id: 'k2', ad: 'Eski' }]); // eski yedekteki stok atılır
   assert.equal(d.ayarlar.fiyat, false);
-  assert.equal(d.ayarlar.stok, true);
+  assert.equal('stok' in d.ayarlar, false);
 });
 
 test('okul listesi: zorunlu alanlar, aynı okul+sınıf engeli, durum hesabı', () => {
   const { d, r1, r2 } = ornek();
-  const a = Depo.kitapKaydet(d, { ad: 'A', bolmeId: r1.bolmeler[0].id, stok: 3 });
-  const b = Depo.kitapKaydet(d, { ad: 'B', bolmeId: r2.bolmeler[1].id, stok: 0 });
+  const a = Depo.kitapKaydet(d, { ad: 'A', bolmeId: r1.bolmeler[0].id });
+  const b = Depo.kitapKaydet(d, { ad: 'B', bolmeId: r2.bolmeler[1].id });
   assert.throws(() => Depo.okulListesiKaydet(d, { okul: '', sinif: '7-A' }), { kod: 'EKSIK' });
   assert.throws(() => Depo.okulListesiKaydet(d, { okul: 'X', sinif: ' ' }), { kod: 'EKSIK' });
   const l = Depo.okulListesiKaydet(d, { okul: 'Örnek Ortaokulu', sinif: '7-A', kalemler: [{ metin: 'A', kitapId: a.id }, { metin: 'B', kitapId: b.id }, { metin: 'Yok', kitapId: null }, { metin: '  ' }] });
@@ -102,10 +100,10 @@ test('okul listesi: zorunlu alanlar, aynı okul+sınıf engeli, durum hesabı', 
   Depo.okulListesiSil(d, d.okulListeleri[1].id);
   const durum = Depo.listeDurumu(d, d.okulListeleri[0]);
   assert.equal(durum.toplam, 3);
-  assert.equal(durum.hazir, 1); // B tükendi, üçüncü mağazada yok
-  assert.deepEqual(durum.raflar, { 1: 1 });
+  assert.equal(durum.hazir, 2); // üçüncü mağazada yok
+  assert.deepEqual(durum.raflar, { 1: 1, 2: 1 });
   Depo.kitapSil(d, a.id);
-  assert.equal(Depo.listeDurumu(d, d.okulListeleri[0]).hazir, 0, 'silinen kitap eksik sayılır');
+  assert.equal(Depo.listeDurumu(d, d.okulListeleri[0]).hazir, 1, 'silinen kitap eksik sayılır');
   Depo.okulListesiSil(d, l.id);
   assert.equal(d.okulListeleri.length, 0);
 });

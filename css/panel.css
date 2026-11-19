@@ -92,7 +92,6 @@ table.tablo { width: 100%; border-collapse: collapse; font-size: 14px; min-width
 .kod-rozet { display: inline-block; font-family: var(--baslik); font-weight: 700; color: var(--turuncu-koyu); background: var(--turuncu-acik); border-radius: 8px; padding: 3px 10px; white-space: nowrap; }
 .kapak-kucuk { width: 36px; height: 52px; border-radius: 4px; object-fit: cover; background: #E2E8F0; display: block; }
 .kapak-yok { width: 36px; height: 52px; border-radius: 4px; background: linear-gradient(180deg, #E2E8F0, #CBD5E1); display: flex; align-items: center; justify-content: center; color: #64748B; }
-.stok-yok { color: var(--kirmizi); font-weight: 600; }
 
 /* Çekmece (kitap formu) */
 .cekmece-perde { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); z-index: 40; }
@@ -171,7 +170,6 @@ table.tablo { width: 100%; border-collapse: collapse; font-size: 14px; min-width
 .rozet { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; background: #F1F5F9; color: #334155; }
 .rozet.r-var { background: #DCFCE7; color: #166534; }
 .rozet.r-az { background: #FEF3C7; color: #92400E; }
-.rozet.r-tukendi { background: #FFEDD5; color: #9A3412; }
 .rozet.r-kayitsiz { background: #FEE2E2; color: #991B1B; }
 .sube-tablo tr.raf-satir td { background: #F1F5F9; font-family: var(--baslik); font-weight: 700; font-size: 15px; }
 .kutucuk { display: inline-block; width: 18px; height: 18px; border: 1.5px solid #334155; border-radius: 3px; }

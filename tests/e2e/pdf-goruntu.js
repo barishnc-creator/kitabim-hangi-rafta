@@ -25,7 +25,7 @@ function zenginlestir() {
   localStorage.setItem('kitabim-hangi-rafta:gecmis', JSON.stringify([
     { zaman: g(0, 5), kim_ad: 'Ayşe K. · Çalışan', islem: 'ekledi', konu: 'kitap', ayrinti: '“7. Sınıf Fen Bilimleri Konu Anlatımı” → 1.2' },
     { zaman: g(0, 40), kim_ad: 'Mehmet · Çalışan', islem: 'tasidi', konu: 'kitap', ayrinti: '“Simyacı” 3.1 → 3.2' },
-    { zaman: g(0, 70), kim_ad: 'Mehmet · Çalışan', islem: 'guncelledi', konu: 'kitap', ayrinti: '“Türkçe Sözlük” (fiyat, stok)' },
+    { zaman: g(0, 70), kim_ad: 'Mehmet · Çalışan', islem: 'guncelledi', konu: 'kitap', ayrinti: '“Türkçe Sözlük” (fiyat)' },
     { zaman: g(1, 10), kim_ad: 'Yönetici · Düzenleyici', islem: 'guncelledi', konu: 'ayar', ayrinti: 'mağaza haritası' },
     { zaman: g(1, 80), kim_ad: 'Yönetici · Düzenleyici', islem: 'ekledi', konu: 'liste', ayrinti: 'Örnek Ortaokulu · 7-A (7 kitap)' },
     { zaman: g(2, 15), kim_ad: 'Ayşe K. · Çalışan', islem: 'yukledi', konu: 'kitap', ayrinti: 'Excel\'den 120 kitap' },

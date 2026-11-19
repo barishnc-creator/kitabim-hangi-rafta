@@ -1,6 +1,6 @@
 // Ürün girişi ve rafa yerleştirme, BULUT modunda (sahte Supabase).
 // Programın Supabase'e gönderdiği istekler yakalanır: yeni kitap rafsız (bolme_id null) eklenmeli,
-// kayıtlı kitabın stoğu güncellenmeli, rafa yerleştirme bölmeyi yazmalı. ESKI_SEMA=1: veritabanı güncellenmemişken (bolme_id zorunlu) anlaşılır mesaj.
+// kayıtlı kitaba dokunulmamalı (PATCH yok), stok gönderilmemeli, rafa yerleştirme bölmeyi yazmalı. ESKI_SEMA=1: veritabanı güncellenmemişken (bolme_id zorunlu) anlaşılır mesaj.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -73,21 +73,21 @@ function b64(o) { return Buffer.from(JSON.stringify(o)).toString('base64url'); }
 
   const post = istekler.find((x) => x.yontem === 'POST');
   const patch = istekler.find((x) => x.yontem === 'PATCH' && x.id === 'k1');
-  console.log('POST:', JSON.stringify(post && post.satirlar.map((s) => [s.ad, s.barkod, s.stok, s.bolme_id, s.yayinevi])));
-  console.log('PATCH k1:', JSON.stringify(patch && patch.govde));
-  bekle(post && post.satirlar.length === 1, 'tek yeni kitap eklenmeli');
-  bekle(post && post.satirlar[0].bolme_id === null && post.satirlar[0].ad === 'Ahmet Haşim / Bize Göre' && post.satirlar[0].stok === 10, 'yeni kitap rafsız, normal yazımla, 10 adet');
-  bekle(patch && patch.govde.stok === 8, 'kayıtlı kitabın stoğu 3 + 5 = 8');
+  console.log('POST:', JSON.stringify(post && post.satirlar.map((s) => [s.ad, s.barkod, s.bolme_id, s.yayinevi, 'stok' in s])));
+  bekle(post && post.satirlar.length === 2, 'iki yeni kitap eklenmeli');
+  bekle(post && post.satirlar[0].bolme_id === null && post.satirlar[0].ad === 'Ahmet Haşim / Bize Göre', 'yeni kitap rafsız, normal yazımla');
+  bekle(post && post.satirlar.every((s) => !('stok' in s)), 'stok gönderilmemeli');
+  bekle(!patch, 'kayıtlı kitaba dokunulmamalı');
 
   // Rafa yerleştir
-  await p.waitForFunction(() => document.getElementById('rafsiz-sayac').textContent === '1');
+  await p.waitForFunction(() => document.getElementById('rafsiz-sayac').textContent === '2');
   await p.selectOption('#yer-bolme', 'b12');
   await p.fill('#yer-barkod', '9786051000145'); await p.press('#yer-barkod', 'Enter');
   await p.waitForFunction(() => /Bölme 1\.2|Kaydedilemedi|hata/i.test(document.getElementById('yer-durum').textContent));
   console.log('yerleştir:', await p.textContent('#yer-durum'));
   const yer = istekler.filter((x) => x.yontem === 'PATCH' && x.id !== 'k1').pop();
-  console.log('PATCH yerleştir:', JSON.stringify(yer && { id: yer.id, bolme_id: yer.govde.bolme_id, stok: yer.govde.stok }));
-  bekle(yer && yer.govde.bolme_id === 'b12' && yer.govde.stok === 10, 'yerleştirme bölmeyi yazmalı, stok değişmemeli');
+  console.log('PATCH yerleştir:', JSON.stringify(yer && yer.govde));
+  bekle(yer && yer.govde.bolme_id === 'b12' && !('stok' in yer.govde), 'yerleştirme bölmeyi yazmalı, stok göndermemeli');
 
   console.log(tamam && !hatalar.length ? 'SONUÇ: geçti' : 'SONUÇ: BAŞARISIZ');
   console.log('hatalar:', hatalar);

@@ -38,56 +38,44 @@ test('ad yazımı: büyük harfli adlar normal yazıma, kısaltmalar korunur', (
   assert.equal(Giris.adYazimi('  '), '');
 });
 
-test('sütunlar: mağaza programı başlıkları (BARCODE, MALINCINSI, KOD3, MIKTAR)', () => {
+test('sütunlar: mağaza programı başlıkları (BARCODE, MALINCINSI, KOD3); adet/stok sütunu okunmaz', () => {
   const s = Giris.sutunlariBul([['BARCODE', 'MALINCINSI', 'KOD3', 'MIKTAR', 'SATIŞ FİYATI']]);
-  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.yayinevi, s.adet, s.fiyat, s.yazar, s.konum], [0, 0, 1, 2, 3, 4, -1, -1]);
+  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.yayinevi, s.fiyat, s.yazar, s.konum], [0, 0, 1, 2, 4, -1, -1]);
+  assert.equal(s.adet, undefined);
   const t = Giris.sutunlariBul([['Giriş listesi'], [], ['Sıra', 'Barkod', 'Kitap Adı', 'Yazar', 'Yayınevi', 'Adet', 'Raf']]);
-  assert.deepEqual([t.baslikSatiri, t.barkod, t.ad, t.yazar, t.yayinevi, t.adet, t.konum], [2, 1, 2, 3, 4, 5, 6]);
+  assert.deepEqual([t.baslikSatiri, t.barkod, t.ad, t.yazar, t.yayinevi, t.konum], [2, 1, 2, 3, 4, 6]);
   const u = Giris.sutunlariBul([['Kürk', '9789750719387', '2'], ['Atlas', '8690000000017', '1']]);
   assert.equal(u.baslikSatiri, -1);
   assert.equal(u.barkod, 1);
 });
 
-test('adet okuma', () => {
-  assert.deepEqual(Giris.adetOku('5'), { adet: 5 });
-  assert.deepEqual(Giris.adetOku(''), { adet: 1 });
-  assert.deepEqual(Giris.adetOku('1.000'), { adet: 1000 });
-  assert.deepEqual(Giris.adetOku('0'), { adet: 0 }); // tükenmiş kitap
-  assert.match(Giris.adetOku('-2').hata, /eksi/);
-  assert.match(Giris.adetOku('2,5').hata, /tam sayı/);
-  assert.match(Giris.adetOku('beş').hata, /geçerli bir adet değil/);
-});
-
 function magaza() {
   const d = Depo.bos();
   const r = Depo.rafEkle(d, 'Roman', 3);
-  Depo.kitapKaydet(d, { ad: 'Beyaz Gemi', barkod: '9789754370430', bolmeId: r.bolmeler[0].id, stok: 3, fiyat: 100 });
-  Depo.kitapKaydet(d, { ad: 'Şeker Portakalı', barkod: '9789750738609', bolmeId: r.bolmeler[1].id }); // stok bilinmiyor
+  Depo.kitapKaydet(d, { ad: 'Beyaz Gemi', barkod: '9789754370430', bolmeId: r.bolmeler[0].id, fiyat: 100 });
+  Depo.kitapKaydet(d, { ad: 'Şeker Portakalı', barkod: '9789750738609', bolmeId: r.bolmeler[1].id });
   return { d, r };
 }
 const BASLIK = ['BARCODE', 'MALINCINSI', 'KOD3', 'MIKTAR'];
 
-test('plan: kayıtlı barkodda adet stoğa eklenir, yeni kitap rafsız ve normal yazımla eklenir', () => {
+test('plan: tüm ürün listesi — kayıtlı ürünler atlanır, yalnız yeni kitap rafsız ve normal yazımla eklenir', () => {
   const { d } = magaza();
   const satirlar = [BASLIK,
     ['9789754370430', 'BEYAZ GEMİ', 'ÖTÜKEN', '5'],
     ['9789750738609', 'ŞEKER PORTAKALI', 'CANYAYINLARI', '2'],
     ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CANYAYINLARI', '4'],
     [],
-    ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CANYAYINLARI', '1'], // aynı barkod ikinci kez: toplanır
+    ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CANYAYINLARI', '1'], // aynı barkod ikinci kez: bir kez eklenir
   ];
   const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
-  assert.deepEqual(p.artis.map((a) => [a.ad, a.eskiStok, a.ek, a.yeniStok]), [['Beyaz Gemi', 3, 5, 8], ['Şeker Portakalı', null, 2, 2]]);
-  assert.equal(p.yeni.length, 1);
-  assert.deepEqual(p.yeni[0], { satir: 4, barkod: '9789750701689', ad: 'Vanilya Kokulu Mektuplar', yazar: '', yayinevi: 'Canyayınları', stok: 5, fiyat: null, bolmeId: null });
+  assert.equal(p.kayitli, 2);
+  assert.deepEqual(p.yeni, [{ satir: 4, barkod: '9789750701689', ad: 'Vanilya Kokulu Mektuplar', yazar: '', yayinevi: 'Canyayınları', fiyat: null, bolmeId: null }]);
   assert.equal(p.rafsiz, 1);
-  assert.equal(p.toplamAdet, 12);
   assert.equal(p.bos, 1);
   assert.deepEqual(p.hatalar, []);
-  assert.equal(p.adetSutunuYok, false);
 });
 
-test('plan: adet sütunu yoksa her satır 1 adet; sorunlu satırlar ayrılır', () => {
+test('plan: sorunlu satırlar ayrılır; barkodu boşluklu ya da ürün kodu olan satır eklenir', () => {
   const { d } = magaza();
   const satirlar = [['BARCODE', 'MALINCINSI', 'KOD3'],
     ['9789754370430', 'BEYAZ GEMİ', 'ÖTÜKEN'],
@@ -97,51 +85,56 @@ test('plan: adet sütunu yoksa her satır 1 adet; sorunlu satırlar ayrılır', 
     ['15701114048267666', 'KUTLU HAYATIN İZİNDE 2 KİTAP CİLTLİ', 'TİMAŞ'], // ISBN değil, ürün kodu: yine eklenir
   ];
   const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
-  assert.equal(p.adetSutunuYok, true);
-  assert.deepEqual(p.artis.map((a) => a.yeniStok), [4]);
-  // Barkodsuz satır adıyla yeni kitap olur; barkodu olup adı olmayan yeni kitap eklenemez
+  assert.equal(p.kayitli, 1);
   assert.deepEqual(p.yeni.map((y) => y.barkod || y.ad), ['Barkodsuz Kitap', '9786051000145', '15701114048267666']);
   assert.deepEqual(p.hatalar.map((h) => h.satir), [5]);
   assert.match(p.hatalar[0].mesaj, /kitap adı yok/);
 });
 
-test('plan: barkodsuz kitap adıyla eşleşir; aynı dosya iki kez yüklenince kitap çiftlenmez', () => {
+test('plan: barkodsuz kitap adıyla eşleşir; aynı liste ikinci kez yüklenince hiçbir şey eklenmez', () => {
   const { d, r } = magaza();
-  Depo.kitapKaydet(d, { ad: 'Türkçe Sözlük', bolmeId: r.bolmeler[0].id, stok: 2 }); // barkodsuz kayıtlı
-  const satirlar = [['Kitap adı', 'Barkod', 'Adet'], ['TÜRKÇE SÖZLÜK', '', '3'], ['Atlas', '', '1'], ['ATLAS', '', '2'], ['', '', '5']];
+  Depo.kitapKaydet(d, { ad: 'Türkçe Sözlük', bolmeId: r.bolmeler[0].id }); // barkodsuz kayıtlı
+  const satirlar = [['Kitap adı', 'Barkod'], ['TÜRKÇE SÖZLÜK', ''], ['Atlas', ''], ['ATLAS', ''], ['', ''], ['Yeni Roman', '9789750701689']];
   const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
-  assert.deepEqual(p.artis.map((a) => [a.ad, a.yeniStok]), [['Türkçe Sözlük', 5]]);
-  assert.deepEqual(p.yeni.map((y) => [y.ad, y.stok, y.barkod]), [['Atlas', 3, '']]); // aynı ad iki satırda: toplanır
-  assert.deepEqual(p.hatalar.map((h) => h.satir), [5]);
-  assert.match(p.hatalar[0].mesaj, /Barkod ve kitap adı boş/);
+  assert.equal(p.kayitli, 1);
+  assert.deepEqual(p.yeni.map((y) => [y.ad, y.barkod]), [['Atlas', ''], ['Yeni Roman', '9789750701689']]); // aynı ad iki satırda: bir kez
+  assert.equal(p.bos, 1);
+  Depo.urunGirisiUygula(d, p);
+  const ikinci = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
+  assert.deepEqual(ikinci.yeni, []);
+  assert.equal(ikinci.kayitli, 3);
 });
 
-test('plan: Excel\'de raf ve fiyat varsa kullanılır; olmayan bölme uyarıyla rafsız eklenir', () => {
+test('plan: Excel\'de raf ve fiyat varsa yeni kitapta kullanılır; kayıtlı kitaba dokunulmaz', () => {
   const { d } = magaza();
-  const satirlar = [['Barkod', 'Kitap adı', 'Adet', 'Fiyat', 'Raf'],
-    ['9789750701689', 'Vanilya Kokulu Mektuplar', '2', '185,50', '1.3'],
-    ['9786051000145', 'Bize Göre', '1', '', '9.9'],
-    ['9789754370430', 'Beyaz Gemi', '1', '120', ''],
+  const satirlar = [['Barkod', 'Kitap adı', 'Fiyat', 'Raf'],
+    ['9789750701689', 'Vanilya Kokulu Mektuplar', '185,50', '1.3'],
+    ['9786051000145', 'Bize Göre', 'abc', '9.9'],
+    ['9789754370430', 'Beyaz Gemi', '120', ''],
   ];
   const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
   assert.equal(p.yeni[0].bolmeId, Depo.bolmeBul(d, '1.3').bolme.id);
   assert.equal(p.yeni[0].fiyat, 185.5);
   assert.equal(p.yeni[1].bolmeId, null);
-  assert.equal(p.uyarilar.length, 1);
-  assert.match(p.uyarilar[0].mesaj, /9\.9.*rafsız/);
-  assert.equal(p.artis[0].fiyat, 120); // fiyat değiştiyse güncellenir
+  assert.equal(p.yeni[1].fiyat, null);
+  assert.equal(p.uyarilar.length, 2);
+  assert.match(p.uyarilar[0].mesaj, /fiyatsız/);
+  assert.match(p.uyarilar[1].mesaj, /9\.9.*rafsız/);
+  assert.equal(p.kayitli, 1);
   assert.equal(p.rafsiz, 1);
+  Depo.urunGirisiUygula(d, p);
+  assert.equal(d.kitaplar.find((k) => k.barkod === '9789754370430').fiyat, 100);
 });
 
-test('Depo: plan uygulanır; yeni kitap rafsız, stok güncel değere eklenir; formda raf yine zorunlu', () => {
+test('Depo: plan uygulanır; yeni kitap rafsız; formda raf yine zorunlu', () => {
   const { d, r } = magaza();
   const satirlar = [BASLIK, ['9789754370430', 'BEYAZ GEMİ', 'ÖTÜKEN', '5'], ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CAN', '4']];
   const plan = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
-  d.kitaplar.find((k) => k.barkod === '9789754370430').stok = 4; // plan hazırlandıktan sonra biri 1 adet daha eklemiş
   const s = Depo.urunGirisiUygula(d, plan);
   assert.equal(s.eklenen.length, 1);
   assert.equal(s.eklenen[0].bolmeId, null);
-  assert.equal(s.guncellenen[0].stok, 9); // 4 + 5
+  assert.equal('stok' in s.eklenen[0], false);
+  assert.equal(d.kitaplar.length, 3);
   assert.deepEqual(Depo.rafsizKitaplar(d).map((k) => k.ad), ['Vanilya Kokulu Mektuplar']);
   // Rafa yerleştirme: bölme verilince rafsız listeden çıkar
   const k = s.eklenen[0];
@@ -159,14 +152,5 @@ test('programın dışa aktardığı liste (CSV) ürün girişiyle geri yükleni
   const bos = Depo.bos(); Depo.rafEkle(bos, 'Roman', 3);
   const p = Giris.planla(bos, satirlar, Giris.sutunlariBul(satirlar));
   assert.deepEqual(p.hatalar, []);
-  assert.deepEqual(p.yeni.map((y) => [y.ad, y.stok, Depo.konum(bos, y.bolmeId).kod, y.fiyat]), [['Beyaz Gemi', 3, '1.1', 100], ['Şeker Portakalı', 1, '1.2', null]]);
-});
-
-test('plan: 0 adet — yeni kitap stoğu 0 eklenir, kayıtlı kitapta değişiklik olmaz', () => {
-  const { d } = magaza();
-  const satirlar = [BASLIK, ['9789754370430', 'BEYAZ GEMİ', 'ÖTÜKEN', '0'], ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CAN', '0']];
-  const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
-  assert.deepEqual(p.artis, []);
-  assert.deepEqual(p.yeni.map((y) => [y.ad, y.stok]), [['Vanilya Kokulu Mektuplar', 0]]);
-  assert.deepEqual(p.hatalar, []);
+  assert.deepEqual(p.yeni.map((y) => [y.ad, Depo.konum(bos, y.bolmeId).kod, y.fiyat]), [['Beyaz Gemi', '1.1', 100], ['Şeker Portakalı', '1.2', null]]);
 });

@@ -29,7 +29,7 @@
         kok.localStorage.setItem(GECMIS, JSON.stringify(l.slice(0, 1000)));
       } catch (e) { /* geçmiş tutulamazsa işlem yine yapılır */ }
     }
-    var AYAR_ADI = { fiyat: 'fiyat alanı', stok: 'stok alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası' };
+    var AYAR_ADI = { fiyat: 'fiyat alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası' };
     function talepOku() { try { return JSON.parse(kok.localStorage.getItem(TALEP)) || []; } catch (e) { return []; } }
     function talepYaz(l) { kok.localStorage.setItem(TALEP, JSON.stringify(l)); return Promise.resolve(); }
     function oku() {
@@ -90,9 +90,9 @@
         return degistir(function (d) {
           var g = {}; g[alan] = deger;
           var temiz = Depo.duzelt({ ayarlar: Object.assign({}, d.ayarlar, g) }).ayarlar;
-          if (alan === 'fiyat' || alan === 'stok') temiz[alan] = !!deger;
+          if (alan === 'fiyat') temiz[alan] = !!deger;
           d.ayarlar[alan] = temiz[alan];
-          gecmisYaz({ islem: 'guncelledi', konu: 'ayar', ayrinti: (AYAR_ADI[alan] || alan) + (alan === 'fiyat' || alan === 'stok' ? (deger ? ' açıldı' : ' kapatıldı') : '') });
+          gecmisYaz({ islem: 'guncelledi', konu: 'ayar', ayrinti: (AYAR_ADI[alan] || alan) + (alan === 'fiyat' ? (deger ? ' açıldı' : ' kapatıldı') : '') });
         });
       },
       okulListesiKaydet: function (g) {
@@ -102,11 +102,11 @@
         return degistir(function (d) { var l = d.okulListeleri.find(function (x) { return x.id === id; }); Depo.okulListesiSil(d, id); gecmisYaz({ islem: 'sildi', konu: 'liste', ayrinti: l ? l.okul + ' · ' + l.sinif : '' }); });
       },
       gecmis: function () { try { return Promise.resolve(JSON.parse(kok.localStorage.getItem(GECMIS) || '[]')); } catch (e) { return Promise.resolve([]); } },
-      // Excel ile ürün girişi (Giris.planla planı): yeni kitaplar rafsız eklenebilir, kayıtlı kitapların stoğu artar.
+      // Excel ile ürün girişi (Giris.planla planı): yalnız yeni kitaplar eklenir (rafsız olabilir).
       urunGirisi: function (plan) {
         return degistir(function (d) {
           var s = Depo.urunGirisiUygula(d, plan);
-          gecmisYaz({ islem: 'yukledi', konu: 'kitap', ayrinti: 'Ürün girişi: ' + s.eklenen.length + ' yeni kitap, ' + s.guncellenen.length + ' kitapta stok arttı' });
+          gecmisYaz({ islem: 'yukledi', konu: 'kitap', ayrinti: 'Ürün girişi: ' + s.eklenen.length + ' yeni kitap' });
           return s;
         });
       },
@@ -204,8 +204,8 @@
       return Promise.all([
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
-        hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,stok,kapak,eklendi', 'ad'),
-        sb.from('kirtasiye_ayarlar').select('fiyat,stok,magaza_adi,renk,logo,karsilama,plan').eq('id', 1).maybeSingle().then(kontrol),
+        hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,kapak,eklendi', 'ad'),
+        sb.from('kirtasiye_ayarlar').select('fiyat,magaza_adi,renk,logo,karsilama,plan').eq('id', 1).maybeSingle().then(kontrol),
         hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul')
       ]).then(function (s) {
         var d = Depo.bos();
@@ -214,9 +214,9 @@
         });
         d.kitaplar = s[2].map(function (k) {
           return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
-            fiyat: k.fiyat == null ? null : Number(k.fiyat), stok: k.stok, kapak: k.kapak || '', eklendi: k.eklendi };
+            fiyat: k.fiyat == null ? null : Number(k.fiyat), kapak: k.kapak || '', eklendi: k.eklendi };
         });
-        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, stok: s[3].stok, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan } }).ayarlar;
+        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan } }).ayarlar;
         d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
         return d;
@@ -243,7 +243,7 @@
     kok.addEventListener('online', function () { yukle().then(yay).catch(function () {}); });
     function yenile(sonuc) { return yukle().then(function (d) { yay(d); return sonuc; }); }
     function satirYap(k) {
-      return { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat, stok: k.stok,
+      return { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat,
         kapak: k.kapak || '', guncellendi: new Date().toISOString() };
     }
 
@@ -324,20 +324,9 @@
         var yeniler = s.eklenen.map(satirYap);
         var parcalar = [];
         for (var i = 0; i < yeniler.length; i += 500) parcalar.push(yeniler.slice(i, i + 500));
-        var ekle = parcalar.reduce(function (p, parca) {
+        return parcalar.reduce(function (p, parca) {
           return p.then(function () { return sb.from('kirtasiye_kitaplar').insert(parca).then(kontrol); });
-        }, Promise.resolve());
-        // Stok artışları: onar onar güncellenir (yüzlerce satırda istek yığılmasın)
-        var guncel = s.guncellenen.map(function (k) { return { id: k.id, stok: k.stok, fiyat: k.fiyat }; });
-        var grup = [];
-        for (var j = 0; j < guncel.length; j += 10) grup.push(guncel.slice(j, j + 10));
-        return grup.reduce(function (p, g) {
-          return p.then(function () {
-            return Promise.all(g.map(function (k) {
-              return sb.from('kirtasiye_kitaplar').update({ stok: k.stok, fiyat: k.fiyat, guncellendi: new Date().toISOString() }).eq('id', k.id).then(kontrol);
-            }));
-          });
-        }, ekle).then(function () { return yenile({ eklenen: s.eklenen, guncellenen: s.guncellenen }); });
+        }, Promise.resolve()).then(function () { return yenile({ eklenen: s.eklenen }); });
       },
       aramaKaydet: function (sorgu, sonuc) {
         return sb.from('kirtasiye_aramalar').insert({ sorgu: String(sorgu).trim().slice(0, 100), sonuc: sonuc }).then(function () {}, function () {});

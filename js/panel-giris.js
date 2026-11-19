@@ -1,13 +1,13 @@
 // Yönetim paneli: Excel ile ürün girişi ve rafa yerleştirme.
 // Ürün girişi: mağaza programından gelen liste (.xls/.xlsx/.csv) okunur, sütunlar bulunur (gerekirse elle seçilir),
-// özet ve önizleme gösterilir; onaylanınca kayıtlı kitapların stoğu artar, yeni kitaplar rafsız eklenir.
+// özet ve önizleme gösterilir; onaylanınca programda olmayan kitaplar rafsız eklenir, kayıtlı olanlar atlanır.
 // Rafa yerleştir: bölme bir kez seçilir, okutulan her barkodun kitabı o bölmeye kaydedilir.
 (function () {
   var P = window.Panel, O = Ortak;
   var $ = function (id) { return document.getElementById(id); };
   var tablo = null;  // { dosya, satirlar, sutun }
   var plan = null;   // Giris.planla sonucu
-  var SUTUNLAR = [['barkod', 'Barkod'], ['ad', 'Kitap adı'], ['yayinevi', 'Yayınevi'], ['yazar', 'Yazar'], ['adet', 'Adet'], ['fiyat', 'Fiyat'], ['konum', 'Raf/Bölme']];
+  var SUTUNLAR = [['barkod', 'Barkod'], ['ad', 'Kitap adı'], ['yayinevi', 'Yayınevi'], ['yazar', 'Yazar'], ['fiyat', 'Fiyat'], ['konum', 'Raf/Bölme']];
 
   function durum(kutu, tur, metin) { P.bildir($(kutu), tur, metin); }
   function harf(k) { var s = ''; k++; while (k > 0) { var m = (k - 1) % 26; s = String.fromCharCode(65 + m) + s; k = Math.floor((k - 1) / 26); } return s; }
@@ -65,14 +65,12 @@
   }
 
   function ciz() {
-    var p = plan, stokAcik = P.d().ayarlar.stok !== false;
-    var parca = [['Yeni kitap', p.yeni.length], ['Stoğu artacak', p.artis.length], ['Toplam adet', p.toplamAdet]];
+    var p = plan;
+    var parca = [['Yeni kitap', p.yeni.length], ['Zaten kayıtlı (atlanacak)', p.kayitli]];
     if (p.rafsiz) parca.push(['Rafa yerleştirilecek', p.rafsiz]);
     $('giris-ozet').innerHTML = parca.map(function (x) { return '<span><b>' + x[1].toLocaleString('tr-TR') + '</b> ' + x[0] + '</span>'; }).join('') +
       (p.hatalar.length ? '<span style="background:#FEF2F2;color:#991B1B"><b>' + p.hatalar.length + '</b> satır eklenemeyecek</span>' : '');
     var uyari = [];
-    if (p.adetSutunuYok) uyari.push('<div class="mesaj uyari">Listede <b>adet sütunu bulunamadı</b>; her satır 1 adet sayılacak. Adet başka bir sütundaysa aşağıdaki “Sütunlar” bölümünden seçin.</div>');
-    if (!stokAcik) uyari.push('<div class="mesaj uyari">Stok takibi Ayarlar\'da kapalı: adetler kaydedilir ama ekranlarda gösterilmez.</div>');
     var liste = function (sinif, baslik, l) {
       if (!l.length) return;
       uyari.push('<div class="mesaj ' + sinif + '"><b>' + baslik + ':</b><ul style="margin:6px 0 0 18px">' +
@@ -80,23 +78,20 @@
         (l.length > 8 ? '<li>… ' + (l.length - 8) + ' satır daha</li>' : '') + '</ul></div>');
     };
     liste('hata', 'Eklenemeyecek satırlar', p.hatalar);
-    liste('uyari', 'Uyarılar', p.uyarilar || []);
+    liste('uyari', 'Uyarılar', p.uyarilar);
     $('giris-uyari').innerHTML = uyari.join('');
-    $('giris-kaydet').disabled = !p.yeni.length && !p.artis.length;
-    $('giris-kaydet').textContent = 'Girişi kaydet (' + (p.yeni.length + p.artis.length).toLocaleString('tr-TR') + ' kitap)';
+    $('giris-kaydet').disabled = !p.yeni.length;
+    $('giris-kaydet').textContent = 'Yeni kitapları kaydet (' + p.yeni.length.toLocaleString('tr-TR') + ')';
 
-    var satirlar = p.artis.map(function (a) {
-      return '<tr><td><span class="rozet r-var">Stok +' + a.ek + '</span></td><td><b>' + O.kacis(a.ad) + '</b>' + (a.fiyat != null ? '<div class="soluk">Fiyat: ' + O.para(a.fiyat) + '</div>' : '') + '</td>' +
-        '<td>' + O.kacis(a.barkod) + '</td><td class="sayi"><b>' + a.ek + '</b></td><td class="sayi">' + (a.eskiStok == null ? '—' : a.eskiStok) + ' → <b>' + a.yeniStok + '</b></td></tr>';
-    }).concat(p.yeni.map(function (y) {
+    var satirlar = p.yeni.map(function (y) {
       var yer = y.bolmeId && Depo.konum(P.d(), y.bolmeId);
       return '<tr><td><span class="rozet r-az">Yeni</span> ' + (yer ? '<span class="kod-rozet">' + yer.kod + '</span>' : '<span class="kod-rozet rafsiz">Rafsız</span>') + '</td>' +
         '<td><b>' + O.kacis(y.ad) + '</b><div class="soluk">' + O.kacis([y.yazar, y.yayinevi].filter(Boolean).join(' · ') || '—') + '</div></td>' +
-        '<td>' + O.kacis(y.barkod) + '</td><td class="sayi"><b>' + y.stok + '</b></td><td class="sayi">' + y.stok + '</td></tr>';
-    }));
+        '<td>' + O.kacis(y.barkod) + '</td></tr>';
+    });
     $('giris-satirlar').innerHTML = satirlar.length
-      ? satirlar.slice(0, 300).join('') + (satirlar.length > 300 ? '<tr><td colspan="5" class="soluk">… ' + (satirlar.length - 300) + ' satır daha (hepsi kaydedilecek)</td></tr>' : '')
-      : '<tr><td colspan="5" class="bos-not" style="text-align:center;padding:28px">Kaydedilecek satır yok.</td></tr>';
+      ? satirlar.slice(0, 300).join('') + (satirlar.length > 300 ? '<tr><td colspan="3" class="soluk">… ' + (satirlar.length - 300) + ' satır daha (hepsi kaydedilecek)</td></tr>' : '')
+      : '<tr><td colspan="3" class="bos-not" style="text-align:center;padding:28px">Yeni kitap yok: listedeki ürünlerin hepsi programda kayıtlı.</td></tr>';
   }
 
   function temizle() {
@@ -128,7 +123,7 @@
     Veri.urunGirisi(kaydedilen).then(function (s) {
       var dosya = tablo ? tablo.dosya : '';
       temizle();
-      durum('giris-durum', 'basari', '“' + dosya + '” kaydedildi: ' + s.eklenen.length + ' yeni kitap, ' + s.guncellenen.length + ' kitapta stok arttı.' +
+      durum('giris-durum', 'basari', '“' + dosya + '” kaydedildi: ' + s.eklenen.length + ' yeni kitap eklendi.' +
         (Depo.rafsizKitaplar(P.d()).length ? ' Yeni kitapları aşağıdan rafına yerleştirin.' : ''));
       yerlestirCiz();
       if (s.eklenen.some(function (k) { return !k.bolmeId; })) $('yerlestir').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -196,7 +191,7 @@
     }).join('');
     $('yer-rafsiz').innerHTML = rafsiz.length ? rafsiz.slice(0, gosterilen).map(function (k) {
       return '<li><div class="metin"><b>' + O.kacis(k.ad) + '</b><span class="soluk">' + O.kacis([k.barkod, k.yayinevi].filter(Boolean).join(' · ')) +
-        (k.stok != null ? ' · ' + k.stok + ' adet' : '') + '</span></div>' +
+        '</span></div>' +
         '<button type="button" class="dugme" data-yerlestir="' + O.kacis(k.id) + '">Seçili bölmeye koy</button></li>';
     }).join('') : '<li class="bos-not">Rafa yerleştirilmeyi bekleyen kitap yok.</li>';
     $('yer-daha').hidden = rafsiz.length <= gosterilen;

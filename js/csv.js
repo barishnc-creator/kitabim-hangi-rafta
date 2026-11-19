@@ -4,7 +4,7 @@
 (function (kok) {
   var Depo = kok.Depo || (typeof require === 'function' ? require('./depo.js') : null);
 
-  var BASLIKLAR = ['Kitap adı', 'Yazar', 'Yayınevi', 'Barkod', 'Raf/Bölme', 'Fiyat', 'Stok'];
+  var BASLIKLAR = ['Kitap adı', 'Yazar', 'Yayınevi', 'Barkod', 'Raf/Bölme', 'Fiyat'];
 
   function ayiriciBul(ilkSatir) {
     var adaylar = [';', ',', '\t'];
@@ -58,7 +58,7 @@
     return [BASLIKLAR].concat(liste.map(function (k) {
       var yer = Depo.konum(d, k.bolmeId);
       return [k.ad, k.yazar, k.yayinevi, k.barkod, yer ? yer.kod : '',
-        k.fiyat == null ? '' : String(k.fiyat).replace('.', ','), k.stok == null ? '' : k.stok];
+        k.fiyat == null ? '' : String(k.fiyat).replace('.', ',')];
     }));
   }
 

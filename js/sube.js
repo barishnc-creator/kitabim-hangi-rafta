@@ -83,7 +83,7 @@
     return isFinite(n) && n > 0 ? Math.round(n) : 1;
   }
 
-  var DURUM = { var: 'Rafta', az: 'Stok yetersiz', tukendi: 'Stokta yok', kayitsiz: 'Kayıtlı değil' };
+  var DURUM = { var: 'Mağazada var', kayitsiz: 'Kayıtlı değil' };
 
   // Listeyi eşleştirir. sutun: sutunlariBul sonucu (kullanıcı değiştirmiş olabilir).
   // Aynı barkod listede birden çok geçerse adetleri toplanır.
@@ -93,7 +93,7 @@
       var a = barkodAnahtar(k.barkod);
       if (a && !dizin[a]) dizin[a] = k;
     });
-    var kalemler = [], gorulen = {}, atlanan = 0, stokVar = !(d.ayarlar && d.ayarlar.stok === false);
+    var kalemler = [], gorulen = {}, atlanan = 0;
     satirlar.forEach(function (satir, r) {
       if (r <= sutun.baslikSatiri || !satir) return;
       var ham = satir[sutun.barkod];
@@ -104,12 +104,7 @@
       if (gorulen[anahtar]) { gorulen[anahtar].adet += adet; return; }
       var kitap = dizin[anahtar] || null;
       var yer = kitap ? Depo.konum(d, kitap.bolmeId) : null;
-      var durum = 'kayitsiz';
-      if (kitap) {
-        if (!stokVar || kitap.stok == null) durum = 'var';
-        else if (kitap.stok <= 0) durum = 'tukendi';
-        else durum = 'var';
-      }
+      var durum = kitap ? 'var' : 'kayitsiz';
       var kalem = {
         satir: r + 1, barkod: temiz(ham).replace(/\s+/g, ''), anahtar: anahtar, adet: adet,
         listeAdi: sutun.ad >= 0 ? temiz(satir[sutun.ad]) : '',
@@ -117,9 +112,6 @@
       };
       gorulen[anahtar] = kalem;
       kalemler.push(kalem);
-    });
-    kalemler.forEach(function (k) {
-      if (stokVar && k.kitap && k.kitap.stok != null && k.kitap.stok > 0 && k.kitap.stok < k.adet) k.durum = 'az';
     });
     kalemler.sort(toplamaSirasi);
     return { kalemler: kalemler, atlanan: atlanan, ozet: ozet(kalemler) };
@@ -137,22 +129,20 @@
   }
 
   function ozet(kalemler) {
-    var o = { kalem: kalemler.length, adet: 0, var: 0, az: 0, tukendi: 0, kayitsiz: 0 };
+    var o = { kalem: kalemler.length, adet: 0, var: 0, kayitsiz: 0 };
     kalemler.forEach(function (k) { o.adet += k.adet; o[k.durum]++; });
     return o;
   }
 
   // Excel'e yazılacak satırlar (ilk satır başlık). Barkod metin kalır.
-  function ciktiSatirlari(sonuc, stokGoster) {
+  function ciktiSatirlari(sonuc) {
     var bas = ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet'];
-    if (stokGoster) bas.push('Mağaza stoğu');
     bas.push('Durum', 'Listedeki ad');
     return [bas].concat(sonuc.kalemler.map(function (k, i) {
       var s = [i + 1,
         k.yer ? k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : '') : '',
         k.yer ? k.yer.kod : '',
         k.barkod, k.kitap ? k.kitap.ad : '', k.kitap ? k.kitap.yazar || '' : '', k.kitap ? k.kitap.yayinevi || '' : '', k.adet];
-      if (stokGoster) s.push(k.kitap && k.kitap.stok != null ? k.kitap.stok : '');
       s.push(DURUM[k.durum], k.listeAdi);
       return s;
     }));

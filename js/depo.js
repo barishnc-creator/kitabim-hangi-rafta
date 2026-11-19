@@ -3,8 +3,8 @@
 //
 // Durum şekli:
 // { raflar:   [{ id, no, etiket, bolmeler: [{ id, no }] }],
-//   kitaplar: [{ id, ad, yazar, yayinevi, barkod, bolmeId, fiyat, stok, kapak, eklendi }],
-//   ayarlar:  { fiyat: true, stok: true, magazaAdi: '' } }
+//   kitaplar: [{ id, ad, yazar, yayinevi, barkod, bolmeId, fiyat, kapak, eklendi }],
+//   ayarlar:  { fiyat: true, magazaAdi: '' } }
 (function (kok) {
   function yeniId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -18,7 +18,7 @@
   }
 
   function bos() {
-    return { raflar: [], kitaplar: [], okulListeleri: [], ayarlar: { fiyat: true, stok: true, magazaAdi: '' } };
+    return { raflar: [], kitaplar: [], okulListeleri: [], ayarlar: { fiyat: true, magazaAdi: '' } };
   }
 
   function enBuyuk(liste) {
@@ -118,9 +118,7 @@
     // Excel ile girilen kitap rafsız olabilir (bolmeId null: "Rafa yerleştirilecek"); formdan eklenen kitapta raf zorunlu.
     if (giris.bolmeId ? !konum(d, giris.bolmeId) : !secenekler.rafsizOlabilir) throw hata('EKSIK', 'Raf ve bölme seçin.');
     var fiyat = sayiYap(giris.fiyat, false);
-    var stok = sayiYap(giris.stok, true);
     if (Number.isNaN(fiyat)) throw hata('GECERSIZ', 'Fiyat geçerli bir sayı olmalı.');
-    if (Number.isNaN(stok)) throw hata('GECERSIZ', 'Stok geçerli bir sayı olmalı.');
     var barkod = String(giris.barkod || '').replace(/\s+/g, '');
 
     var onceki = giris.id ? d.kitaplar.find(function (k) { return k.id === giris.id; }) : null;
@@ -138,7 +136,6 @@
       barkod: barkod,
       bolmeId: giris.bolmeId || null,
       fiyat: fiyat,
-      stok: stok,
       kapak: kapakAdresi(giris.kapak),
       eklendi: (onceki && onceki.eklendi) || giris.eklendi || new Date().toISOString()
     };
@@ -152,22 +149,12 @@
     return d.kitaplar.filter(function (k) { return !k.bolmeId; }).sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
   }
 
-  // Ürün girişi planını (Giris.planla) uygular: yeni kitapları ekler, kayıtlı kitapların stoğunu artırır.
-  // Döner: { eklenen: [kitap], guncellenen: [kitap] }
+  // Ürün girişi planını (Giris.planla) uygular: yeni kitapları ekler. Döner: { eklenen: [kitap] }
   function urunGirisiUygula(d, plan) {
-    var sonuc = { eklenen: [], guncellenen: [] };
-    plan.yeni.forEach(function (y) {
-      sonuc.eklenen.push(kitapKaydet(d, { ad: y.ad, yazar: y.yazar, yayinevi: y.yayinevi, barkod: y.barkod, bolmeId: y.bolmeId,
-        fiyat: y.fiyat, stok: y.stok }, { rafsizOlabilir: true, ayniBarkodaIzin: true }));
-    });
-    plan.artis.forEach(function (a) {
-      var k = d.kitaplar.find(function (x) { return x.id === a.kitapId; });
-      if (!k) return;
-      k.stok = (k.stok == null ? 0 : k.stok) + a.ek; // plan hazırlandıktan sonra stok değişmiş olabilir: güncel değere ekle
-      if (a.fiyat != null) k.fiyat = a.fiyat;
-      sonuc.guncellenen.push(k);
-    });
-    return sonuc;
+    return { eklenen: plan.yeni.map(function (y) {
+      return kitapKaydet(d, { ad: y.ad, yazar: y.yazar, yayinevi: y.yayinevi, barkod: y.barkod, bolmeId: y.bolmeId, fiyat: y.fiyat },
+        { rafsizOlabilir: true, ayniBarkodaIzin: true });
+    }) };
   }
 
   function kitapSil(d, kitapId) {
@@ -205,7 +192,7 @@
     var kalemler = liste.kalemler.map(function (k) {
       var kitap = k.kitapId && d.kitaplar.find(function (x) { return x.id === k.kitapId; });
       var yer = kitap && konum(d, kitap.bolmeId);
-      var hazir = !!(kitap && yer && kitap.stok !== 0);
+      var hazir = !!(kitap && yer);
       return { metin: k.metin, kitap: kitap || null, yer: yer || null, hazir: hazir };
     });
     var raflar = {};
@@ -268,13 +255,14 @@
     if (Array.isArray(ham.raflar)) d.raflar = ham.raflar.filter(function (r) { return r && r.id; }).map(function (r) {
       return { id: r.id, no: Number(r.no) || 0, etiket: r.etiket || '', bolmeler: (r.bolmeler || []).filter(function (b) { return b && b.id; }).map(function (b) { return { id: b.id, no: Number(b.no) || 0 }; }) };
     });
-    if (Array.isArray(ham.kitaplar)) d.kitaplar = ham.kitaplar.filter(function (k) { return k && k.id && k.ad; });
+    if (Array.isArray(ham.kitaplar)) d.kitaplar = ham.kitaplar.filter(function (k) { return k && k.id && k.ad; }).map(function (k) {
+      var kalan = Object.assign({}, k); delete kalan.stok; return kalan; // eski yerel verideki stok alanı atılır (stok takibi kaldırıldı)
+    });
     if (Array.isArray(ham.okulListeleri)) d.okulListeleri = ham.okulListeleri.filter(function (l) { return l && l.id && l.okul; }).map(function (l) {
       return { id: l.id, okul: String(l.okul), sinif: String(l.sinif || ''), kalemler: Array.isArray(l.kalemler) ? l.kalemler.filter(Boolean) : [] };
     });
     if (ham.ayarlar) {
       d.ayarlar.fiyat = ham.ayarlar.fiyat !== false;
-      d.ayarlar.stok = ham.ayarlar.stok !== false;
       d.ayarlar.magazaAdi = String(ham.ayarlar.magazaAdi || '').slice(0, 60);
       d.ayarlar.renk = /^#[0-9a-f]{6}$/i.test(ham.ayarlar.renk || '') ? ham.ayarlar.renk : '';
       d.ayarlar.logo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(ham.ayarlar.logo || '') && ham.ayarlar.logo.length <= 300000 ? ham.ayarlar.logo : '';

@@ -31,9 +31,9 @@
     $('talep-satirlar').innerHTML = liste.length ? liste.map(function (t) {
       var kitap = t.kitapId && d.kitaplar.find(function (k) { return k.id === t.kitapId; });
       var yer = kitap && Depo.konum(d, kitap.bolmeId);
-      var gelmis = kitap && kitap.stok > 0;
-      return '<tr><td><b>' + O.kacis(t.kitap) + '</b><div class="soluk">' + O.kacis(t.not || (kitap ? 'tükendi' : 'mağazada yok')) +
-        (gelmis ? ' · <span style="color:var(--yesil);font-weight:600">şu an stokta' + (yer ? ' (' + yer.kod + ')' : '') + '</span>' : '') + '</div></td>' +
+      var gelmis = !!yer;
+      return '<tr><td><b>' + O.kacis(t.kitap) + '</b><div class="soluk">' + O.kacis(t.not || (kitap ? '' : 'mağazada yok')) +
+        (gelmis ? ' · <span style="color:var(--yesil);font-weight:600">şu an rafta (' + yer.kod + ')</span>' : '') + '</div></td>' +
         '<td>' + O.kacis(t.ad) + '<div><a href="tel:' + O.kacis(t.telefon) + '" style="white-space:nowrap">' + O.ikon.tel + ' ' + O.kacis(telBicim(t.telefon)) + '</a></div></td>' +
         '<td style="white-space:nowrap">' + tarih(t.olusturuldu) + '</td>' +
         '<td><span class="rozet" style="' + RENK[t.durum] + '">' + DURUM[t.durum] + '</span></td>' +

@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 19 Kasım 2026 (Excel ile ürün girişi, rafa yerleştirme, .xls okuma)_
+_Son güncelleme: 19 Kasım 2026 (stok/adet kaldırıldı; ürün girişi tüm liste, kayıtlıyı atlar)_
 
 ## Proje
 
@@ -41,8 +41,11 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
+**SON DEĞİŞİKLİK (19 Kasım, kullanıcının kararı):** Mağaza kendi programına mal girişi yapıyor ve buraya her seferinde **tüm ürünlerin Excel listesini** verecek. Kararlar: (1) kayıtlı ürün (barkod; barkodsuzsa ad) **atlanır**, dokunulmaz (fiyat da güncellenmez), yalnız yeni kitap rafsız eklenir; aynı liste tekrar yüklenince 0 yeni. (2) **Stok ve adet programdan tamamen kaldırıldı**: kitap formu, kitap listesi sütunu, Ayarlar'daki stok anahtarı, müşteri ekranındaki Rafta var/Son N adet/Tükendi rozetleri, tükenen kitapta "Gelince haber verilsin" düğmesi (bulunamayan kitap ve okul listesi eksikleri için talep duruyor), genel bakıştaki "Tükenen kitap" (yerine bölme başına kitap), CSV dışa aktarmadaki Stok sütunu, şube eksiklerinde stok yetersiz/stokta yok (artık "Mağazada var"/"Kayıtlı değil"; şubenin **istenen adedi** duruyor, o stok değil), talepler panelinde "şu an stokta" → "şu an rafta". Veritabanındaki `stok` sütunları duruyor ama program okumuyor/yazmıyor (SQL değişikliği gerekmedi). Eski yerel veri/yedekteki stok `Depo.duzelt`'te atılır. sw khr-v11. Testler: 62 birim; e2e giris, giris-bulut, talep güncellendi, hepsi temiz.
+- Kullanıcıya sorulan, cevapsız: mağaza programının adı (otomatik aktarım ileride düşünülebilir).
+
 **ÖNCE BU — Excel ile ürün girişi YAZILDI ve bulutta açıldı (19 Kasım). Sıradaki: kullanıcı canlıda gerçek adetli Excel ile deneyecek.**
-Kullanıcının bilgisi: mağaza programı hazır alacak; personel kitap bilgisi tamamlamaz, ürünleri yalnız **Excel ile, adetli** ekler. Kararlar: Excel'de raf yok → yeni kitap rafsız ("Rafa yerleştirilecek"); kayıtlı barkod tekrar gelirse **adet stoğa eklenir**; BÜYÜK HARF adlar **normal yazıma** çevrilir; gerçek dosyada adet sütunu olacak (örnekte yoktu).
+Kullanıcının bilgisi: mağaza programı hazır alacak; personel kitap bilgisi tamamlamaz, ürünleri yalnız **Excel ile, adetli** ekler. Kararlar: Excel'de raf yok → yeni kitap rafsız ("Rafa yerleştirilecek"); BÜYÜK HARF adlar **normal yazıma** çevrilir. (Eski karar "adet stoğa eklenir" yukarıdaki SON DEĞİŞİKLİK ile kaldırıldı.)
 - Müşterinin örnek dosyası `DENEME.xls` (BIFF8, 88 ürün: BARCODE, MALINCINSI, KOD3=yayınevi; adet yok, 86 ISBN + 2 uzun ürün kodu, çoğu TYT/AYT/LGS test kitabı). **Depoya konmadı** (CLAUDE.md gizlilik); yalnız scratchpad'de denendi: 88 yeni kitap, 55 ms, hata yok.
 - `js/xls.js`: dış kütüphanesiz .xls (Compound File + BIFF8: SST/CONTINUE, LABELSST, LABEL, NUMBER, RK, MULRK, FORMULA/STRING, BOOLERR, mini akış). xlrd ile 1.295 satır birebir. Testler `tests/xls.test.cjs` + sentetik `tests/veri/xlwt-ornek.xls`, `libreoffice-ornek.xls`. Şube eksikleri de .xls okur.
 - `js/giris.js` (saf): `sutunlariBul` (Türkçesiz büyük harf başlıklar: MIKTAR→ı sorunu `sade()` ile çözüldü; aynı hata `js/sube.js`'te de düzeltildi), `adYazimi` (kısaltma listesi, Roma rakamı, ünlüsüz kısa parça, "ve/ile" küçük, kesmeden sonra küçük; metinde hiç İ yoksa I_SOZLUK + ünlü uyumu; %25'ten çok küçük harf varsa dokunmaz), `planla` (barkod ya da barkodsuzsa ad anahtarı; aynı anahtar toplanır; 0 adet geçerli, eksi hata; fiyat varsa günceller; Raf sütunu varsa yerleştirir, yoksa rafsız).

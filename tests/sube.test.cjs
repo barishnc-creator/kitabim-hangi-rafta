@@ -10,10 +10,10 @@ function magaza() {
   const d = Depo.bos();
   const r1 = Depo.rafEkle(d, 'Okul', 2);
   const r3 = Depo.rafEkle(d, 'Roman', 2);
-  Depo.kitapKaydet(d, { ad: 'Kürk Mantolu Madonna', barkod: '9789750719387', bolmeId: r3.bolmeler[0].id, stok: 5 });
-  Depo.kitapKaydet(d, { ad: 'Penguin Klasik', barkod: '9780140449136', bolmeId: r3.bolmeler[1].id, stok: 1 });
-  Depo.kitapKaydet(d, { ad: '7. Sınıf Matematik', barkod: '9786050000018', bolmeId: r1.bolmeler[1].id, stok: 0 });
-  Depo.kitapKaydet(d, { ad: 'Atlas', barkod: '8690000000017', bolmeId: r1.bolmeler[0].id, stok: null });
+  Depo.kitapKaydet(d, { ad: 'Kürk Mantolu Madonna', barkod: '9789750719387', bolmeId: r3.bolmeler[0].id });
+  Depo.kitapKaydet(d, { ad: 'Penguin Klasik', barkod: '9780140449136', bolmeId: r3.bolmeler[1].id });
+  Depo.kitapKaydet(d, { ad: '7. Sınıf Matematik', barkod: '9786050000018', bolmeId: r1.bolmeler[1].id });
+  Depo.kitapKaydet(d, { ad: 'Atlas', barkod: '8690000000017', bolmeId: r1.bolmeler[0].id });
   return d;
 }
 
@@ -54,32 +54,23 @@ test('Eşleştirme: raf ve bölme bulunur, toplama sırasına dizilir, durumlar 
   ];
   const sonuc = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
   assert.deepEqual(sonuc.kalemler.map((k) => [k.yer ? k.yer.kod : '-', k.durum, k.adet]), [
-    ['1.1', 'var', 1],      // Atlas: stok takip edilmiyor, adet boş → 1
-    ['1.2', 'tukendi', 1],  // Matematik: stok 0
+    ['1.1', 'var', 1],      // Atlas: adet boş → 1
+    ['1.2', 'var', 1],
     ['2.1', 'var', 3],      // Kürk: 2 + 1 (aynı barkod iki kez)
-    ['2.2', 'az', 3],       // Penguin: stok 1, istenen 3 (ISBN-10 ile eşleşti)
+    ['2.2', 'var', 3],      // Penguin: ISBN-10 ile eşleşti
     ['-', 'kayitsiz', 4]
   ]);
   assert.equal(sonuc.atlanan, 1);
-  assert.deepEqual(sonuc.ozet, { kalem: 5, adet: 12, var: 2, az: 1, tukendi: 1, kayitsiz: 1 });
-});
-
-test('Stok kapalıysa stok uyarısı verilmez', () => {
-  const d = magaza();
-  d.ayarlar.stok = false;
-  const satirlar = [['Barkod'], ['9786050000018'], ['9780140449136']];
-  const sonuc = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
-  assert.deepEqual(sonuc.kalemler.map((k) => k.durum), ['var', 'var']);
-  assert.equal(Sube.ciktiSatirlari(sonuc, false)[0].includes('Mağaza stoğu'), false);
+  assert.deepEqual(sonuc.ozet, { kalem: 5, adet: 12, var: 4, kayitsiz: 1 });
 });
 
 test('Excel çıktısı: başlık + satırlar, barkod metin olarak kalır', async () => {
   const d = magaza();
   const satirlar = [['Barkod', 'Adet'], ['9789750719387', '2'], ['9786059999999', '1']];
-  const cikti = Sube.ciktiSatirlari(Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar)), true);
-  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet', 'Mağaza stoğu', 'Durum', 'Listedeki ad']);
+  const cikti = Sube.ciktiSatirlari(Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar)));
+  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet', 'Durum', 'Listedeki ad']);
   assert.deepEqual(cikti[1].slice(0, 5), [1, '2. Raf · Roman', '2.1', '9789750719387', 'Kürk Mantolu Madonna']);
-  assert.equal(cikti[2][9], 'Kayıtlı değil');
+  assert.equal(cikti[2][8], 'Kayıtlı değil');
   const geri = await Xlsx.oku(Xlsx.yaz(cikti, { kalinBaslik: true }));
   assert.equal(geri.satirlar[1][3], '9789750719387');
 });
@@ -116,7 +107,7 @@ test('sütunlar: muhasebe programlarının büyük harfli Türkçesiz başlıkla
 
 test('eşleştirme: mağazada olan ama rafa yerleştirilmemiş kitap kayıtsız sayılmaz, onlardan önce gelir', () => {
   const d = magaza();
-  Depo.kitapKaydet(d, { ad: 'Yeni Gelen', barkod: '9789750701689', stok: 2 }, { rafsizOlabilir: true });
+  Depo.kitapKaydet(d, { ad: 'Yeni Gelen', barkod: '9789750701689' }, { rafsizOlabilir: true });
   const satirlar = [['Barkod', 'Adet'], ['9780000000002', '1'], ['9789750701689', '1'], ['9789750719387', '1']];
   const s = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
   assert.deepEqual(s.kalemler.map((k) => [k.barkod, k.durum, !!k.yer, !!k.kitap]), [

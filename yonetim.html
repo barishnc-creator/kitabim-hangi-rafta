@@ -198,14 +198,14 @@
         <p class="soluk" id="kitap-sayi"></p>
         <div class="tablo-kutu">
           <table class="tablo">
-            <thead><tr><th style="width:52px"><span class="gizli-etiket">Kapak</span></th><th>Kitap</th><th>Yayınevi</th><th>Konum</th><th class="sayi" data-alan="fiyat">Fiyat</th><th class="sayi" data-alan="stok">Stok</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead>
+            <thead><tr><th style="width:52px"><span class="gizli-etiket">Kapak</span></th><th>Kitap</th><th>Yayınevi</th><th>Konum</th><th class="sayi" data-alan="fiyat">Fiyat</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead>
             <tbody id="tum-kitaplar"></tbody>
           </table>
         </div>
         <button class="dugme" type="button" id="daha-fazla" hidden>Daha fazla göster</button>
         <details class="kart">
           <summary style="cursor:pointer;font-weight:600">Excel dosyası nasıl hazırlanır?</summary>
-          <p class="soluk" style="margin-top:10px;font-size:14px">İlk satır başlık olmalı: <b>Kitap adı; Yazar; Yayınevi; Barkod; Raf/Bölme; Fiyat; Stok</b>. Raf/Bölme sütununa “2.3” gibi yazın. Excel'de “Farklı kaydet → CSV (noktalı virgülle ayrılmış)” seçin. Örnek için önce “Excel'e aktar” ile bir dosya indirin.</p>
+          <p class="soluk" style="margin-top:10px;font-size:14px">Mağaza programının ürün listesi olduğu gibi kullanılabilir. Bir “Barkod” sütunu ve kitap adı sütunu yeter; Yayınevi, Yazar, Fiyat ve Raf/Bölme (“2.3” gibi) sütunları varsa onlar da okunur. Her seferinde tüm liste yüklenebilir: kayıtlı ürünler atlanır.</p>
         </details>
       </section>
 
@@ -264,7 +264,7 @@
       <section id="urun-girisi" role="tabpanel" aria-labelledby="sek-urun-girisi" class="bolum" hidden>
         <div class="kart bolum">
           <h2 style="font-size:20px">Excel'den ürün girişi</h2>
-          <p class="soluk" style="font-size:15px">Mağaza programından aldığınız ürün listesini yükleyin (.xls, .xlsx ya da .csv). Kayıtlı kitapların adedi stoğa eklenir; yeni kitaplar “Rafa yerleştirilecek” olarak kaydedilir, aşağıdan rafına yerleştirirsiniz.</p>
+          <p class="soluk" style="font-size:15px">Mağaza programından aldığınız tüm ürün listesini yükleyin (.xls, .xlsx ya da .csv). Programda zaten kayıtlı olan ürünler atlanır; yalnız yeni kitaplar “Rafa yerleştirilecek” olarak eklenir, aşağıdan rafına yerleştirirsiniz.</p>
           <div class="alan"><label for="giris-dosya">Ürün listesi</label><input id="giris-dosya" type="file" accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" style="padding:10px 14px"></div>
           <div class="sube-birak" id="giris-birak"><span data-ikon="yukle"></span>Dosyayı buraya sürükleyip bırakabilirsiniz</div>
           <div id="giris-durum" role="status"></div>
@@ -278,12 +278,12 @@
               <div class="izgara-2" style="margin-top:12px" id="giris-sutun-secim"></div>
             </details>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="dugme ana" type="button" id="giris-kaydet">Girişi kaydet</button>
+              <button class="dugme ana" type="button" id="giris-kaydet">Yeni kitapları kaydet</button>
               <button class="dugme" type="button" id="giris-vazgec">Vazgeç</button>
             </div>
           </div>
           <div class="tablo-kutu">
-            <table class="tablo"><thead><tr><th>İşlem</th><th>Kitap</th><th>Barkod</th><th class="sayi">Adet</th><th class="sayi">Stok</th></tr></thead><tbody id="giris-satirlar"></tbody></table>
+            <table class="tablo"><thead><tr><th>Durum</th><th>Kitap</th><th>Barkod</th></tr></thead><tbody id="giris-satirlar"></tbody></table>
           </div>
         </div>
 
@@ -341,7 +341,7 @@
           </div>
           <div class="sadece-yazdir" id="sube-yazdir-baslik"></div>
           <div class="tablo-kutu">
-            <table class="tablo sube-tablo"><thead><tr><th>Bölme</th><th>Kitap</th><th>Barkod</th><th class="sayi">Adet</th><th class="sayi" id="sube-stok-baslik">Stok</th><th>Durum</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
+            <table class="tablo sube-tablo"><thead><tr><th>Bölme</th><th>Kitap</th><th>Barkod</th><th class="sayi">Adet</th><th>Durum</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
           </div>
         </div>
       </section>
@@ -446,8 +446,7 @@
             </form>
             <div class="kart">
               <h2 style="font-size:17px;margin-bottom:6px">Alanlar</h2>
-              <label class="anahtar"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
-              <label class="anahtar" style="border-bottom:0"><span>Stok kullanılsın<br><span class="soluk">Müşteri “Rafta var / Son adetler / Tükendi” görür</span></span><input type="checkbox" id="ayar-stok"></label>
+              <label class="anahtar" style="border-bottom:0"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
             </div>
           </div>
           <div class="dar kart bolum">
@@ -497,7 +496,6 @@
       <div class="alan"><label for="f-raf">Raf <span class="zorunlu">*</span></label><select id="f-raf"></select></div>
       <div class="alan"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
       <div class="alan" id="alan-fiyat"><label for="f-fiyat">Fiyat (₺)</label><input id="f-fiyat" inputmode="decimal" placeholder="Örn. 250,00"></div>
-      <div class="alan" id="alan-stok"><label for="f-stok">Stok adedi</label><input id="f-stok" inputmode="numeric" placeholder="Örn. 12"></div>
     </div>
     <div id="form-mesaj" role="status"></div>
   </div>

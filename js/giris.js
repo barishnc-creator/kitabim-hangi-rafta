@@ -1,7 +1,8 @@
-// Excel ile ürün girişi: mağaza programından gelen listeyi (barkod, ad, yayınevi, adet…) okuyup
-// yeni kitapları ve stok artışlarını çıkarır. Veriyi değiştirmez; planı Veri modülü uygular.
+// Excel ile ürün girişi: mağaza programından gelen TÜM ürün listesini (barkod, ad, yayınevi…) okuyup
+// programda olmayan kitapları çıkarır. Veriyi değiştirmez; planı Veri modülü uygular.
 // Kurallar (kullanıcının kararları):
-//  - Kayıtlı barkod tekrar gelirse adet stoğa EKLENİR (3 + 5 = 8).
+//  - Mağaza her seferinde tüm ürün listesini verir: kayıtlı barkod (ya da barkodsuzsa ad) ATLANIR, dokunulmaz.
+//  - Stok/adet takibi yok.
 //  - Excel'de raf yoksa yeni kitap rafsız kaydedilir ("Rafa yerleştirilecek"), personel sonra yerleştirir.
 //  - Tamamı BÜYÜK HARF olan adlar normal yazıma çevrilir (kısaltmalar korunur).
 // Saf fonksiyonlar. Tarayıcıda window.Giris, Node'da module.exports.
@@ -17,14 +18,13 @@
   // Sıra önemli: bir başlık ilk uyan alana verilir.
   var ALANLAR = [
     ['barkod', /barkod|barcode|isbn|ean|gtin/],
-    ['adet', /^(adet|miktar|miktari|giris miktari|giris adedi|qty|quantity|sayi|adedi|stok)$|adet|miktar/], // Stok: programın kendi dışa aktardığı liste
     ['fiyat', /^(fiyat|satis fiyati|etiket fiyati|liste fiyati|perakende fiyat|price)$|fiyat/],
     ['yazar', /yazar|author/],
     ['yayinevi', /yayinevi|yayin evi|yayinci|publisher|marka|^kod ?3$/], // KOD3: bazı mağaza programlarında yayınevi
     ['konum', /^(raf|bolme|raf ?\/ ?bolme|raf bolme|konum|lokasyon|yer|reyon)$/],
     ['ad', /mal ?cins|malin ?cinsi|urun ?adi|stok ?adi|kitap ?adi|^adi?$|isim|eser|baslik|aciklama|kitap|urun/]
   ];
-  var BOS_SUTUN = { baslikSatiri: -1, barkod: -1, ad: -1, yazar: -1, yayinevi: -1, adet: -1, fiyat: -1, konum: -1 };
+  var BOS_SUTUN = { baslikSatiri: -1, barkod: -1, ad: -1, yazar: -1, yayinevi: -1, fiyat: -1, konum: -1 };
 
   function barkodGibi(x) { return /^\d{8,19}$/.test(String(x == null ? '' : x).replace(/[\s-]/g, '')); }
 
@@ -111,34 +111,25 @@
   }
 
   // ---------- Plan ----------
-  function adetOku(x) {
-    var s = temiz(x).replace(/\s/g, '');
-    if (!s) return { adet: 1 };
-    var n = Number(s.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
-    if (!isFinite(n)) return { hata: '“' + temiz(x) + '” geçerli bir adet değil.' };
-    if (n < 0) return { hata: 'Adet eksi olamaz (' + temiz(x) + ').' }; // 0: tükenmiş kitap (dışa aktarılan listede olabilir)
-    if (Math.round(n) !== n) return { hata: 'Adet tam sayı olmalı (' + temiz(x) + ').' };
-    return { adet: n };
-  }
   function barkodTemiz(x) { return temiz(x).replace(/[\s-]/g, ''); }
 
   // satirlar: tablo (başlık satırı dahil), sutun: sutunlariBul sonucu (kullanıcı değiştirmiş olabilir).
   // Döner: {
-  //   yeni:   [{ satir, barkod, ad, yazar, yayinevi, stok, fiyat, bolmeId|null }],
-  //   artis:  [{ satir, kitapId, ad, barkod, eskiStok, ek, yeniStok, fiyat|undefined }],
-  //   hatalar:[{ satir, mesaj }], bos: boş satır sayısı, toplamAdet, rafsiz: rafsız yeni kitap sayısı, adetSutunuYok
+  //   yeni:   [{ satir, barkod, ad, yazar, yayinevi, fiyat, bolmeId|null }],
+  //   kayitli: programda zaten olan (atlanan) ürün sayısı,
+  //   hatalar:[{ satir, mesaj }], uyarilar, bos: boş satır sayısı, rafsiz: rafsız yeni kitap sayısı
   // }
   function planla(d, satirlar, sutun) {
-    var sonuc = { yeni: [], artis: [], hatalar: [], bos: 0, toplamAdet: 0, rafsiz: 0, adetSutunuYok: sutun.adet < 0 };
+    var sonuc = { yeni: [], kayitli: 0, hatalar: [], uyarilar: [], bos: 0, rafsiz: 0 };
     if (sutun.barkod < 0) { sonuc.hatalar.push({ satir: 0, mesaj: 'Barkod sütunu bulunamadı.' }); return sonuc; }
     // Eşleştirme anahtarı: barkod; barkodu olmayan satırda kitap adı (Türkçe karaktersiz, küçük harf).
-    // Böylece barkodsuz kitaplar da aynı dosya iki kez yüklenince çiftlenmez.
+    // Böylece aynı liste her yüklendiğinde kitaplar çiftlenmez.
     var kayitli = {};
     d.kitaplar.forEach(function (k) {
-      if (k.barkod) kayitli[barkodTemiz(k.barkod)] = k;
-      else if (!kayitli['ad:' + sade(k.ad)]) kayitli['ad:' + sade(k.ad)] = k;
+      if (k.barkod) kayitli[barkodTemiz(k.barkod)] = true;
+      kayitli['ad:' + sade(k.ad)] = kayitli['ad:' + sade(k.ad)] || !k.barkod;
     });
-    var gruplar = {}, sira = [];
+    var gorulen = {};
     var al = function (satir, alan) { return sutun[alan] >= 0 ? temiz(satir[sutun[alan]]) : ''; };
 
     for (var r = sutun.baslikSatiri + 1; r < satirlar.length; r++) {
@@ -149,47 +140,25 @@
       if (!barkod && !al(satir, 'ad')) { sonuc.hatalar.push({ satir: no, mesaj: 'Barkod ve kitap adı boş.' }); continue; }
       if (barkod && !/^[0-9A-Za-z]{4,30}$/.test(barkod)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + barkod + '” geçerli bir barkod değil.' }); continue; }
       var anahtar = barkod || 'ad:' + sade(al(satir, 'ad'));
-      var a = sutun.adet >= 0 ? adetOku(satir[sutun.adet]) : { adet: 1 };
-      if (a.hata) { sonuc.hatalar.push({ satir: no, mesaj: a.hata }); continue; }
+      if (gorulen[anahtar]) continue; // aynı ürün listede ikinci kez geçiyor
+      gorulen[anahtar] = true;
+      if (kayitli[anahtar]) { sonuc.kayitli++; continue; }
+      if (!al(satir, 'ad')) { sonuc.hatalar.push({ satir: no, mesaj: barkod + ': kitap adı yok; yeni kitap eklenemedi.' }); continue; }
       var fiyatHam = al(satir, 'fiyat').replace(/[₺\s]|TL/gi, '');
       var fiyat = fiyatHam ? Depo.sayiYap(fiyatHam.replace(/\.(?=\d{3}(\D|$))/g, ''), false) : null;
-      if (Number.isNaN(fiyat)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + al(satir, 'fiyat') + '” geçerli bir fiyat değil.' }); continue; }
-      var g = gruplar[anahtar];
-      if (!g) {
-        g = gruplar[anahtar] = { anahtar: anahtar, satir: no, barkod: barkod, adet: 0, ad: al(satir, 'ad'), yazar: al(satir, 'yazar'),
-          yayinevi: al(satir, 'yayinevi'), konum: al(satir, 'konum'), fiyat: fiyat };
-        sira.push(g);
-      }
-      g.adet += a.adet; // aynı barkod listede birden çok satırda geçerse adetler toplanır
-      if (fiyat != null) g.fiyat = fiyat;
-    }
-
-    sira.forEach(function (g) {
-      sonuc.toplamAdet += g.adet;
-      var k = kayitli[g.anahtar];
-      if (k && g.adet === 0 && (g.fiyat == null || g.fiyat === k.fiyat)) return; // değişecek bir şey yok
-      if (k) {
-        var eski = k.stok == null ? 0 : k.stok;
-        var a = { satir: g.satir, kitapId: k.id, ad: k.ad, barkod: g.barkod, eskiStok: k.stok, ek: g.adet, yeniStok: eski + g.adet };
-        if (g.fiyat != null && g.fiyat !== k.fiyat) a.fiyat = g.fiyat;
-        sonuc.artis.push(a);
-        return;
-      }
-      if (!g.ad) { sonuc.hatalar.push({ satir: g.satir, mesaj: g.barkod + ': kitap adı yok; yeni kitap eklenemedi.' }); return; }
-      var yer = g.konum ? Depo.bolmeBul(d, g.konum) : null;
-      if (g.konum && !yer) { sonuc.hatalar.push({ satir: g.satir, mesaj: '“' + g.konum + '” diye bir bölme yok; kitap rafsız eklenecek.' }); }
-      var y = { satir: g.satir, barkod: g.barkod, ad: adYazimi(g.ad), yazar: adYazimi(g.yazar), yayinevi: adYazimi(g.yayinevi),
-        stok: g.adet, fiyat: g.fiyat, bolmeId: yer ? yer.bolme.id : null };
+      if (Number.isNaN(fiyat)) { sonuc.uyarilar.push({ satir: no, mesaj: '“' + al(satir, 'fiyat') + '” geçerli bir fiyat değil; fiyatsız eklenecek.' }); fiyat = null; }
+      var konum = al(satir, 'konum');
+      var yer = konum ? Depo.bolmeBul(d, konum) : null;
+      if (konum && !yer) sonuc.uyarilar.push({ satir: no, mesaj: '“' + konum + '” diye bir bölme yok; kitap rafsız eklenecek.' });
+      var y = { satir: no, barkod: barkod, ad: adYazimi(al(satir, 'ad')), yazar: adYazimi(al(satir, 'yazar')), yayinevi: adYazimi(al(satir, 'yayinevi')),
+        fiyat: fiyat, bolmeId: yer ? yer.bolme.id : null };
       if (!y.bolmeId) sonuc.rafsiz++;
       sonuc.yeni.push(y);
-    });
-    // Rafsız eklenecek uyarısı hata sayılmaz: kitap yine eklenir
-    sonuc.uyarilar = sonuc.hatalar.filter(function (h) { return /rafsız eklenecek/.test(h.mesaj); });
-    sonuc.hatalar = sonuc.hatalar.filter(function (h) { return !/rafsız eklenecek/.test(h.mesaj); });
+    }
     return sonuc;
   }
 
-  var api = { sutunlariBul: sutunlariBul, adYazimi: adYazimi, planla: planla, adetOku: adetOku, sade: sade };
+  var api = { sutunlariBul: sutunlariBul, adYazimi: adYazimi, planla: planla, sade: sade };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Giris = api;
 })(this);

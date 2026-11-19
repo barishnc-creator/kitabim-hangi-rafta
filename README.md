@@ -4,16 +4,16 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 
 ## Öne çıkanlar
 
-- **Müşteri ekranı (kiosk):** karşılama ekranı, dokunmatik Türkçe ekran klavyesi (`?kiosk=1`), kapak görselli sonuçlar, büyük raf/bölme kartı ve raf şeması, stok rozeti (Rafta var / Son N adet / Tükendi), raflara göre gezinme, yeni gelenler, raf etiketindeki QR okutulunca bölme içeriği, "Telefonunuza alın" QR'ı, 90 sn boşta kalınca başa dönme, tam ekran.
-- **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak (bulunamazsa "Kapaktan doldur"), kitap listesini CSV olarak dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat/stok ayarları.
+- **Müşteri ekranı (kiosk):** karşılama ekranı, dokunmatik Türkçe ekran klavyesi (`?kiosk=1`), kapak görselli sonuçlar, büyük raf/bölme kartı ve raf şeması, raflara göre gezinme, yeni gelenler, raf etiketindeki QR okutulunca bölme içeriği, "Telefonunuza alın" QR'ı, 90 sn boşta kalınca başa dönme, tam ekran.
+- **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak (bulunamazsa "Kapaktan doldur"), kitap listesini CSV olarak dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat ayarı. Stok/adet takibi yoktur (mağaza kendi programında tutar).
 
-- **Okul listeleri:** okulun listesi yapıştırılır, kitaplarla otomatik (yazım hatasına dayanıklı) eşleştirilir; veli müşteri ekranında okul → sınıf seçip listedeki kitapları raf ve stok durumuyla görür.
+- **Okul listeleri:** okulun listesi yapıştırılır, kitaplarla otomatik (yazım hatasına dayanıklı) eşleştirilir; veli müşteri ekranında okul → sınıf seçip listedeki kitapları raf durumuyla görür.
 - **Gelince haber ver:** bulunamayan ya da tükenen kitap için müşteri ad ve telefon bırakır (KVKK onaylı); panelde Talepler sekmesinden takip edilir.
 - **Mağaza haritası:** raflar kat planına sürüklenerek yerleştirilir; müşteri ekranı "Buradasınız"dan rafa yolu gösterir.
 - **Görünüm:** mağazanın logosu, ana rengi ve karşılama yazısı.
-- **Excel ile ürün girişi (Ürün girişi sekmesi):** mağaza programından alınan liste (.xls, .xlsx ya da .csv) yüklenir. Sütunlar kendiliğinden bulunur (BARCODE/Barkod, MALINCINSI/Kitap adı, KOD3/Yayınevi, MIKTAR/Adet, Fiyat, Raf; gerekirse elle seçilir). Kayıtlı barkodun adedi **stoğa eklenir**; yeni kitaplar BÜYÜK HARFli adları normal yazıma çevrilerek **rafsız** ("Rafa yerleştirilecek") kaydedilir. Barkodsuz satırlar kitap adıyla eşleşir. Kaydetmeden önce özet ve önizleme gösterilir. Mantık `js/giris.js`, ekran `js/panel-giris.js`.
+- **Excel ile ürün girişi (Ürün girişi sekmesi):** mağaza programından alınan liste (.xls, .xlsx ya da .csv) yüklenir. Mağaza her seferinde **tüm ürün listesini** yükleyebilir: sütunlar kendiliğinden bulunur (BARCODE/Barkod, MALINCINSI/Kitap adı, KOD3/Yayınevi, Fiyat, Raf; gerekirse elle seçilir), adet/miktar sütunu okunmaz. Programda kayıtlı ürünler **atlanır**, dokunulmaz; yalnız yeni kitaplar BÜYÜK HARFli adları normal yazıma çevrilerek **rafsız** ("Rafa yerleştirilecek") kaydedilir. Barkodsuz satırlar kitap adıyla eşleşir. Kaydetmeden önce özet ve önizleme gösterilir. Mantık `js/giris.js`, ekran `js/panel-giris.js`.
 - **Rafa yerleştir:** bölme bir kez seçilir, kitapların barkodları art arda okutulur (kamera her kitaptan sonra yeniden açılabilir); her kitap seçili bölmeye kaydedilir. Rafsız kitaplar müşteri ekranında "mağazaya yeni geldi, henüz rafına yerleştirilmedi" diye görünür; panelde "Rafsız" rozeti, menüde sayaç ve genel bakışta uyarı çıkar.
-- **Şube eksikleri:** şubeden gelen barkodlu eksik listesi (Excel .xlsx, .xls ya da .csv) yüklenir; her kitabın raf ve bölmesi bulunur, raf sırasına göre toplama listesi çıkar (stok yetersiz / stokta yok / kayıtlı değil uyarılarıyla). Liste Excel olarak indirilir ya da “Toplandı” kutucuklarıyla yazdırılır. Excel okuma/yazma dış kütüphanesiz (`js/xlsx.js`; eski .xls/Excel 97–2003 okuma `js/xls.js`).
+- **Şube eksikleri:** şubeden gelen barkodlu eksik listesi (Excel .xlsx, .xls ya da .csv) yüklenir; her kitabın raf ve bölmesi bulunur, raf sırasına göre toplama listesi çıkar (kayıtlı olmayanlar ayrıca gösterilir). Liste Excel olarak indirilir ya da “Toplandı” kutucuklarıyla yazdırılır. Excel okuma/yazma dış kütüphanesiz (`js/xlsx.js`; eski .xls/Excel 97–2003 okuma `js/xls.js`).
 - **İşlem geçmişi:** kim, ne zaman, hangi kitabı ekledi, taşıdı, sildi.
 - **İnternetsiz çalışma:** bağlantı kesilse de müşteri ekranı son listeyle arama yapar (hizmet çalışanı + yerel kopya).
 
@@ -29,7 +29,7 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 | Ürün girişi | Excel ile giriş, rafa yerleştirme | yok | Excel ile giriş, rafa yerleştirme |
 | Revizeler | görür, yazar, durum değiştirir | görür, yazar | yok |
 | Kullanıcılar | kişi ekler, yetki/şifre değiştirir | yok | yok |
-| Ayarlar | fiyat/stok aç-kapa, yedek | yok | yok |
+| Ayarlar | fiyat aç-kapa, yedek | yok | yok |
 
 Yetkiler yalnız ekranda değil, veritabanında da kontrol edilir (Supabase RLS).
 
