@@ -41,6 +41,8 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
+**Müşteri talebi kutusu (19 Kasım):** müşteri ekranının karşılama sayfasında üçüncü büyük kutu "Kitap talebi bırakın" (`#secim-talep`, yeşil `.k-secim.ucuncu`): boş "Kitap talebi" formunu açar (kitap adı, ad, telefon, KVKK onayı), talep paneldeki Talepler sekmesine düşer. sw khr-v12. `talep-e2e` bunu da dener.
+
 **SON DEĞİŞİKLİK (19 Kasım, kullanıcının kararı):** Mağaza kendi programına mal girişi yapıyor ve buraya her seferinde **tüm ürünlerin Excel listesini** verecek. Kararlar: (1) kayıtlı ürün (barkod; barkodsuzsa ad) **atlanır**, dokunulmaz (fiyat da güncellenmez), yalnız yeni kitap rafsız eklenir; aynı liste tekrar yüklenince 0 yeni. (2) **Stok ve adet programdan tamamen kaldırıldı**: kitap formu, kitap listesi sütunu, Ayarlar'daki stok anahtarı, müşteri ekranındaki Rafta var/Son N adet/Tükendi rozetleri, tükenen kitapta "Gelince haber verilsin" düğmesi (bulunamayan kitap ve okul listesi eksikleri için talep duruyor), genel bakıştaki "Tükenen kitap" (yerine bölme başına kitap), CSV dışa aktarmadaki Stok sütunu, şube eksiklerinde stok yetersiz/stokta yok (artık "Mağazada var"/"Kayıtlı değil"; şubenin **istenen adedi** duruyor, o stok değil), talepler panelinde "şu an stokta" → "şu an rafta". Veritabanındaki `stok` sütunları duruyor ama program okumuyor/yazmıyor (SQL değişikliği gerekmedi). Eski yerel veri/yedekteki stok `Depo.duzelt`'te atılır. sw khr-v11. Testler: 62 birim; e2e giris, giris-bulut, talep güncellendi, hepsi temiz.
 - Kullanıcıya sorulan, cevapsız: mağaza programının adı (otomatik aktarım ileride düşünülebilir).
 

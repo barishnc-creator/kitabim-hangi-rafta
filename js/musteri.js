@@ -188,8 +188,9 @@
     perde.className = 'kamera-perde talep-perde';
     perde.innerHTML =
       '<form class="kart bolum pencere" style="width:min(560px,100%);display:flex;flex-direction:column;gap:14px" role="dialog" aria-modal="true" aria-labelledby="talep-baslik" novalidate>' +
-      '<div><h2 id="talep-baslik" style="font-size:26px">Gelince haber verelim</h2><p class="soluk" style="font-size:15px;margin-top:4px">Kitap mağazaya ulaşınca sizi arayalım ya da mesaj atalım.</p></div>' +
-      '<div class="alan"><label for="t-kitap">Aradığınız kitap</label><input id="t-kitap" autocomplete="off"></div>' +
+      '<div><h2 id="talep-baslik" style="font-size:26px">' + (kitap ? 'Gelince haber verelim' : 'Kitap talebi') + '</h2><p class="soluk" style="font-size:15px;margin-top:4px">' +
+      (kitap ? 'Kitap mağazaya ulaşınca sizi arayalım ya da mesaj atalım.' : 'İstediğiniz kitabın adını yazın; mağazaya getirtip gelince sizi arayalım ya da mesaj atalım.') + '</p></div>' +
+      '<div class="alan"><label for="t-kitap">Aradığınız kitap</label><input id="t-kitap" autocomplete="off" placeholder="Kitap adı, yazar ya da yayınevi"></div>' +
       '<div class="alan"><label for="t-ad">Adınız</label><input id="t-ad" autocomplete="off" autocapitalize="words"></div>' +
       '<div class="alan"><label for="t-tel">Telefon</label><input id="t-tel" type="tel" inputmode="tel" autocomplete="off" placeholder="05XX XXX XX XX"></div>' +
       '<label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ikincil)"><input type="checkbox" id="t-onay" style="width:24px;height:24px;flex-shrink:0;accent-color:var(--mavi)">' +
@@ -340,6 +341,7 @@
     if (kioskModu) Klavye.ac(sorgu, { araBas: function () { ara(true); } });
   }
   $('secim-yaz').addEventListener('click', sorguyaOdaklan);
+  $('secim-talep').addEventListener('click', function () { Klavye.kapat(); talepFormu('', null, ''); });
   sorgu.addEventListener('focus', function () { if (kioskModu) Klavye.ac(sorgu, { araBas: function () { ara(true); } }); });
 
   // Barkod okuyucu klavye gibi yazar: odak başka yerdeyse tuşları arama kutusuna yönlendir.
