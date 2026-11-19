@@ -28,3 +28,13 @@ Devir adımları:
 - Depoya yalnız `sb_publishable_` anahtarı girer; `service_role` ve şifreler asla.
 - Fiyat notu (iç kullanım) bu depoya konmaz; depo herkese açık olabilir (GitHub Pages).
 - Müşteri/mağaza kişisel verisi depoya yazılmaz.
+
+## Kullanıcının genel çalışma kuralları (tüm projelerde geçerli)
+
+1. **Ücretsiz önce.** Ücretsiz kotaları, ücretsiz servisleri ve daha iyi ücretsiz yöntemleri sormadan kullan. Ücretli araç/kredi yalnız ücretsiz yol yoksa, gerekçesi ve tutarıyla, onayla.
+2. **Keşfet:** Bir iş verildiğinde yalnız bildiğin yolla yetinme; GitHub, hazır skill'ler, açık kaynak araçlar ve ücretsiz servisler arasında daha iyi yol varsa bul ve kullan.
+3. **Sormadan yap:** taslak, not/kayıt, yeni oturum açma ve kurallara uyan her sistematik adım.
+4. **Mutlaka sor:** her iş grubunun sonunda (kısa rapor + "devam") ve karar gereken her yerde. Para harcama, hesap açma, dışarıya yayın her zaman onaylı. Önemli/uzun işte telefon bildirimi açılsın mı diye sor.
+5. **Cevap: Türkçe, kısa, net.** Önce net cevap, sonra en fazla birkaç madde; ayrıntı dosyaya. Aynı soruyu tekrar sorma.
+6. **Hata ve bahane yok.** Alt ajan sonuçlarını sunmadan önce doğrula; doğrulanamayanı "doğrulanmadı" diye işaretle. Eksik çıkarsa özür dileme: düzelt, tek satırla söyle.
+7. Kararı kullanıcı verir; sen kanıtla desteklenmiş tek bir öneri sunarsın.
