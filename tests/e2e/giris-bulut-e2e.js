@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const K = 'http://localhost:8765/';
 const SB = fs.readFileSync(path.join(__dirname, '../../js/ayar.js'), 'utf8').match(/supabaseUrl:\s*'([^']+)'/)[1].replace(/\/$/, '');
-const REF = new URL(SB).hostname.split('.')[0];
 const XLS = path.join(__dirname, '../veri/libreoffice-ornek.xls');
 
 const VERI = {
@@ -27,11 +26,11 @@ function b64(o) { return Buffer.from(JSON.stringify(o)).toString('base64url'); }
   let tamam = true;
   const bekle = (kosul, ad) => { if (!kosul) { tamam = false; console.log('  BAŞARISIZ:', ad); } };
 
-  // Sahte oturum: supabase-js oturumu yerel depodan okur
+  // Sahte oturum: supabase-js oturumu sekmenin sessionStorage'ından okur (js/veri.js)
   const sure = Math.floor(Date.now() / 1000) + 3600;
   const token = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'u1', exp: sure, role: 'authenticated' }) + '.imza';
-  await ctx.addInitScript(([anahtar, deger]) => { localStorage.setItem(anahtar, deger); }, [
-    'sb-' + REF + '-auth-token',
+  await ctx.addInitScript(([anahtar, deger]) => { sessionStorage.setItem(anahtar, deger); }, [
+    'kitabim-hangi-rafta-oturum',
     JSON.stringify({ access_token: token, refresh_token: 'r', token_type: 'bearer', expires_in: 3600, expires_at: sure, user: { id: 'u1', email: 'test@ornek.com', aud: 'authenticated', role: 'authenticated' } }),
   ]);
   await ctx.route(SB + '/**', async (r) => {

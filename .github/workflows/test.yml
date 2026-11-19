@@ -17,3 +17,6 @@ jobs:
         with:
           deno-version: v2.x
       - run: npm run test:fonksiyon
+      # SQL testleri: runner'da kurulu PostgreSQL'i başlat
+      - run: sudo systemctl start postgresql.service && sudo -u postgres createuser -s "$USER" && sudo -u postgres createdb "$USER"
+      - run: npm run test:sql

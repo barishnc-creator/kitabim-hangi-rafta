@@ -61,3 +61,11 @@ Yayın öncesi, salt okunur denetim (kod düzeltmesi yapılmadı). Kapsam: `supa
 2. O1: talep eklemeye Turnstile ya da hız sınırı.
 3. O2: kendi alan adına geçiş (müdüre satış öncesi de profesyonel görünür).
 4. D1 + D2 + D3: tek SQL dosyasıyla (`kurulum.sql`'e ekleyip yeniden çalıştırma).
+
+## Düzeltme durumu (19 Kasım 2026, `claude/guvenlik-duzeltme` dalı)
+
+Elle yapılacak adımlar: `belgeler/guvenlik-duzeltme-adimlari.md`. Canlıya henüz uygulanmadı.
+
+- **O1:** `supabase/guvenlik-2026-11-19.sql`: BEFORE INSERT tetikleyicisi. Talep: aynı telefondan 24 saatte ≤ 5, toplam 10 dakikada ≤ 30 (aşınca anlaşılır hata); arama: dakikada ≤ 30 (fazlası hata vermeden atlanır). Kayıt zamanı sunucuda `now()` (istemci eski tarihle sınırı atlatamaz). Alan uzunlukları ve zorunlu KVKK onayı (`onay boolean check (onay)`, formda kutucuk + aydınlatma metni) zaten vardı. Turnstile/IP sınırı eklenmedi (ek servis gerektirir); toplam sınır betikli spam'i saatte en çok 180 taleple sınırlar. Testler: `npm run test:sql` (yerel PostgreSQL, 7 kontrol).
+- **O2:** `js/veri.js`: supabase-js oturumu `sessionStorage`'da, anahtar `kitabim-hangi-rafta-oturum`; eski `sb-…-auth-token` localStorage kaydı silinir. Kalan risk: aynı sekmede açılan başka bir `barishnc-creator.github.io` sayfası sessionStorage'ı da okuyabilir. **Gerçek çözüm ayrı köken:** Cloudflare Pages ya da Vercel ücretsiz alt alan adı veya özel alan adı. Kiosk girişsiz çalıştığı için etkilenmez; panel sekme kapanınca yeniden giriş ister.
+- **O3:** `kirtasiye-kullanici/index.ts`: şifre ≥ 10; önceden kayıtlı e-posta artık role bağlanmıyor, reddediliyor (ilk kurulumdaki davranışla aynı). Depoda `supabase/config.toml` yok; kayıt kapatma ve Auth asgari şifre uzunluğu panelden (adımlar belgesi, 2. adım). Testler: `npm run test:fonksiyon` (4 yeni).

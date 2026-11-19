@@ -168,7 +168,12 @@
 
   // ======================= BULUT MODU =======================
   function bulut() {
-    var sb = kok.supabase.createClient(A.supabaseUrl, A.supabaseKey);
+    // Oturum sekmeye özel sessionStorage'da: github.io kökenini paylaşan başka siteler localStorage'daki jetonu okuyamasın.
+    // Gerçek çözüm ayrı bir alan adı (belgeler/guvenlik-duzeltme-adimlari.md). Eski sürümün bıraktığı jetonu sil.
+    try { kok.localStorage.removeItem('sb-' + A.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token'); } catch (e) { /* depolama kapalı */ }
+    var sb = kok.supabase.createClient(A.supabaseUrl, A.supabaseKey, {
+      auth: { storage: kok.sessionStorage, storageKey: 'kitabim-hangi-rafta-oturum' }
+    });
     var benimRol = null;
 
     function kontrol(sonuc) {
