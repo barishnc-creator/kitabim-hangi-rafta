@@ -24,6 +24,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 - D&R görünümü beğenilmedi; kendi tasarımımız kalıyor, renk ayarlanabilir.
 - Şimdilik ücretsiz altyapı; müdür onaylarsa ücretli yeni Supabase projesine sıfır veriyle taşınır.
+- Şube eksiklerindeki "Adet" sütunu (şubenin istediği adet) **kalacak** (19 Kasım, kullanıcı onayladı); stok değildir.
 - Fiyat paketleri iç fiyat notundadır (kullanıcıda); herkese açık depoya yazılmaz.
 
 ## Canlı kurulum (18 Kasım 2026, tamamlandı)
