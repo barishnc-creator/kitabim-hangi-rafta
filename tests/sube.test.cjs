@@ -25,19 +25,19 @@ test('Barkod anahtarı: tire/boşluk silinir, ISBN-10 ISBN-13’e çevrilir', ()
 
 test('Sütunlar: başlık satırı üstte açıklama olsa da bulunur', () => {
   const s = Sube.sutunlariBul([['Şube: Kadıköy'], [], ['Sıra', 'Barkod', 'Kitap Adı', 'Eksik Adet']]);
-  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.adet], [2, 1, 2, 3]);
+  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad], [2, 1, 2]);
+  assert.equal(s.adet, undefined, 'adet sütunu okunmaz');
 });
 
 test('Sütunlar: başlık yoksa barkod sütunu içerikten seçilir', () => {
   const s = Sube.sutunlariBul([['Kürk', '9789750719387', '2'], ['Atlas', '8690000000017', '1']]);
   assert.equal(s.baslikSatiri, -1);
   assert.equal(s.barkod, 1);
-  assert.equal(s.adet, -1);
 });
 
 test('Sütunlar: başlıkta “barkod” yazmasa da barkodların üstündeki satır başlık sayılır', () => {
   const s = Sube.sutunlariBul([['Ürün', 'Kod', 'Miktar'], ['Kürk', '9789750719387', '2'], ['Atlas', '8690000000017', '1']]);
-  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad, s.adet], [0, 1, 0, 2]);
+  assert.deepEqual([s.baslikSatiri, s.barkod, s.ad], [0, 1, 0]);
 });
 
 test('Eşleştirme: raf ve bölme bulunur, toplama sırasına dizilir, durumlar doğru', () => {
@@ -53,24 +53,25 @@ test('Eşleştirme: raf ve bölme bulunur, toplama sırasına dizilir, durumlar 
     ['yok', 'geçersiz', '1']
   ];
   const sonuc = Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar));
-  assert.deepEqual(sonuc.kalemler.map((k) => [k.yer ? k.yer.kod : '-', k.durum, k.adet]), [
-    ['1.1', 'var', 1],      // Atlas: adet boş → 1
-    ['1.2', 'var', 1],
-    ['2.1', 'var', 3],      // Kürk: 2 + 1 (aynı barkod iki kez)
-    ['2.2', 'var', 3],      // Penguin: ISBN-10 ile eşleşti
-    ['-', 'kayitsiz', 4]
+  assert.deepEqual(sonuc.kalemler.map((k) => [k.yer ? k.yer.kod : '-', k.durum]), [
+    ['1.1', 'var'],
+    ['1.2', 'var'],
+    ['2.1', 'var'],      // Kürk: aynı barkod iki kez → tek kalem
+    ['2.2', 'var'],      // Penguin: ISBN-10 ile eşleşti
+    ['-', 'kayitsiz']
   ]);
+  assert.ok(sonuc.kalemler.every((k) => k.adet === undefined), 'adet tutulmaz');
   assert.equal(sonuc.atlanan, 1);
-  assert.deepEqual(sonuc.ozet, { kalem: 5, adet: 12, var: 4, kayitsiz: 1 });
+  assert.deepEqual(sonuc.ozet, { kalem: 5, var: 4, kayitsiz: 1 });
 });
 
 test('Excel çıktısı: başlık + satırlar, barkod metin olarak kalır', async () => {
   const d = magaza();
   const satirlar = [['Barkod', 'Adet'], ['9789750719387', '2'], ['9786059999999', '1']];
   const cikti = Sube.ciktiSatirlari(Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar)));
-  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet', 'Durum', 'Listedeki ad']);
-  assert.deepEqual(cikti[1].slice(0, 5), [1, '2. Raf · Roman', '2.1', '9789750719387', 'Kürk Mantolu Madonna']);
-  assert.equal(cikti[2][8], 'Kayıtlı değil');
+  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum']);
+  assert.deepEqual(cikti[1], [1, '2. Raf · Roman', '2.1', '9789750719387', 'Kürk Mantolu Madonna', 'Mağazada var']);
+  assert.equal(cikti[2][5], 'Kayıtlı değil');
   const geri = await Xlsx.oku(Xlsx.yaz(cikti, { kalinBaslik: true }));
   assert.equal(geri.satirlar[1][3], '9789750719387');
 });
@@ -98,10 +99,8 @@ test('Xlsx: yazılan dosya geri okunur, özel karakterler korunur; eski .xls aç
 test('sütunlar: muhasebe programlarının büyük harfli Türkçesiz başlıkları (MIKTAR, MALINCINSI)', () => {
   const s = Sube.sutunlariBul([['BARCODE', 'MALINCINSI', 'KOD3', 'MIKTAR'], ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CANYAYINLARI', '5']]);
   assert.equal(s.barkod, 0);
-  assert.equal(s.adet, 3, 'MIKTAR adet sütunu olmalı (büyük I, Türkçe küçük harfte ı olur)');
   assert.equal(s.ad, 1, 'MALINCINSI kitap adı sütunu olmalı');
   const t = Sube.sutunlariBul([['STOK KODU', 'STOK ADI', 'ADET'], ['9789750701689', 'X', '2']]);
-  assert.equal(t.adet, 2);
   assert.equal(t.ad, 1);
 });
 

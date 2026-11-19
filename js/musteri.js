@@ -102,7 +102,45 @@
     var yeniler = d.kitaplar.slice().sort(function (a, b) { return String(b.eklendi || '').localeCompare(String(a.eklendi || '')); }).slice(0, 6);
     $('yeniler-kutu').hidden = !yeniler.length;
     $('yeniler').innerHTML = yeniler.map(function (k) { return kart(k, false); }).join('');
+    kampanyaCiz();
   }
+
+  // ---------- Kampanya / reklam alanı ----------
+  // Panelde (Kampanyalar) girilen fotoğraf + başlık + açıklama; birden çoksa 7 sn'de bir kendiliğinden geçer.
+  var kampanyaSira = 0, kampanyaSayac = null, kampanyaImza = '';
+  function kampanyaCiz() {
+    var liste = (d.ayarlar && d.ayarlar.kampanyalar) || [];
+    var kutu = $('kampanya-kutu');
+    kutu.hidden = !liste.length;
+    var imza = liste.map(function (k) { return k.id + k.baslik + k.aciklama + k.resim.length; }).join('|');
+    if (imza === kampanyaImza) return;
+    kampanyaImza = imza;
+    if (kampanyaSira >= liste.length) kampanyaSira = 0;
+    $('kampanya-iz').innerHTML = liste.map(function (k, i) {
+      var metin = k.baslik || k.aciklama;
+      return '<article class="k-kampanya-kart' + (k.resim ? '' : ' resimsiz') + (i === kampanyaSira ? ' etkin' : '') + '" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + liste.length + '"' + (i === kampanyaSira ? '' : ' aria-hidden="true"') + '>' +
+        (k.resim ? '<img alt="" src="' + k.resim + '">' : '') +
+        (metin ? '<div class="k-kampanya-yazi"><span class="k-kampanya-rozet">Kampanya</span>' +
+          (k.baslik ? '<h2>' + O.kacis(k.baslik) + '</h2>' : '') + (k.aciklama ? '<p>' + O.kacis(k.aciklama) + '</p>' : '') + '</div>' : '') +
+        '</article>';
+    }).join('');
+    $('kampanya-noktalar').innerHTML = liste.length > 1 ? liste.map(function (k, i) {
+      return '<button type="button" role="tab" aria-label="' + (i + 1) + '. kampanya" aria-selected="' + (i === kampanyaSira) + '" data-kampanya="' + i + '"></button>';
+    }).join('') : '';
+    clearInterval(kampanyaSayac);
+    if (liste.length > 1) kampanyaSayac = setInterval(function () { if (!karsilama.hidden && !document.hidden) kampanyaGit(kampanyaSira + 1); }, 7000);
+  }
+  function kampanyaGit(i) {
+    var kartlar = document.querySelectorAll('.k-kampanya-kart'), noktalar = document.querySelectorAll('[data-kampanya]');
+    if (!kartlar.length) return;
+    kampanyaSira = (i + kartlar.length) % kartlar.length;
+    kartlar.forEach(function (k, j) { k.classList.toggle('etkin', j === kampanyaSira); if (j === kampanyaSira) k.removeAttribute('aria-hidden'); else k.setAttribute('aria-hidden', 'true'); });
+    noktalar.forEach(function (n, j) { n.setAttribute('aria-selected', String(j === kampanyaSira)); });
+  }
+  $('kampanya-noktalar').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kampanya]');
+    if (b) { kampanyaGit(Number(b.getAttribute('data-kampanya'))); kampanyaImza = ''; kampanyaCiz(); }
+  });
 
   function karsilamaGoster() {
     seciliKitapId = null;
@@ -181,27 +219,31 @@
     O.ikonlariDoldur(sonuc);
   }
 
-  // ---------- Gelince haber ver ----------
-  function talepFormu(kitap, kitapId, not) {
+  // ---------- Talep oluştur ----------
+  // kitaplar: [{ ad, id }] — boşsa müşteri kitap adını kendisi yazar; birden çoksa (okul listesi eksikleri) her kitap için ayrı talep açılır.
+  // Ad ve telefon isteğe bağlıdır; aynı kitaba gelen talepler panelde tek satırda sayılır.
+  function talepFormu(kitaplar, not) {
     if (document.querySelector('.talep-perde')) return;
+    kitaplar = (kitaplar || []).filter(function (k) { return k && String(k.ad || '').trim(); });
+    var cok = kitaplar.length > 1;
     var perde = document.createElement('div');
     perde.className = 'kamera-perde talep-perde';
     perde.innerHTML =
       '<form class="kart bolum pencere" style="width:min(560px,100%);display:flex;flex-direction:column;gap:14px" role="dialog" aria-modal="true" aria-labelledby="talep-baslik" novalidate>' +
-      '<div><h2 id="talep-baslik" style="font-size:26px">' + (kitap ? 'Gelince haber verelim' : 'Kitap talebi') + '</h2><p class="soluk" style="font-size:15px;margin-top:4px">' +
-      (kitap ? 'Kitap mağazaya ulaşınca sizi arayalım ya da mesaj atalım.' : 'İstediğiniz kitabın adını yazın; mağazaya getirtip gelince sizi arayalım ya da mesaj atalım.') + '</p></div>' +
-      '<div class="alan"><label for="t-kitap">Aradığınız kitap</label><input id="t-kitap" autocomplete="off" placeholder="Kitap adı, yazar ya da yayınevi"></div>' +
-      '<div class="alan"><label for="t-ad">Adınız</label><input id="t-ad" autocomplete="off" autocapitalize="words"></div>' +
-      '<div class="alan"><label for="t-tel">Telefon</label><input id="t-tel" type="tel" inputmode="tel" autocomplete="off" placeholder="05XX XXX XX XX"></div>' +
-      '<label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ikincil)"><input type="checkbox" id="t-onay" style="width:24px;height:24px;flex-shrink:0;accent-color:var(--mavi)">' +
-      '<span>Bilgilerimin yalnız bu talep için kullanılmasını ve kitap gelince benimle iletişime geçilmesini kabul ediyorum. <button type="button" id="t-metin" style="background:none;border:0;padding:0;color:var(--mavi);font:inherit;text-decoration:underline;cursor:pointer">Aydınlatma metni</button></span></label>' +
+      '<div><h2 id="talep-baslik" style="font-size:26px">Talep oluştur</h2><p class="soluk" style="font-size:15px;margin-top:4px">' +
+      (cok ? 'Aşağıdaki ' + kitaplar.length + ' kitap için mağazaya talep iletilir.' : 'İstediğiniz kitabı mağazaya bildirin.') + '</p></div>' +
+      (cok ? '<ul class="talep-kitaplar">' + kitaplar.map(function (k) { return '<li>' + O.kacis(k.ad) + '</li>'; }).join('') + '</ul>'
+        : '<div class="alan"><label for="t-kitap">İstediğiniz kitap</label><input id="t-kitap" autocomplete="off" placeholder="Kitap adı, yazar ya da yayınevi"></div>') +
+      '<div class="alan"><label for="t-ad">Adınız <span class="soluk">(isteğe bağlı)</span></label><input id="t-ad" autocomplete="off" autocapitalize="words"></div>' +
+      '<div class="alan"><label for="t-tel">Telefon <span class="soluk">(isteğe bağlı)</span></label><input id="t-tel" type="tel" inputmode="tel" autocomplete="off" placeholder="05XX XXX XX XX"></div>' +
       '<div id="t-mesaj" role="status"></div>' +
-      '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="dugme" id="t-vazgec">Vazgeç</button><button type="submit" class="dugme ana" style="min-width:200px">Talebimi gönder</button></div></form>';
+      '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="dugme" id="t-vazgec">Vazgeç</button><button type="submit" class="dugme ana" style="min-width:200px">Talep oluştur</button></div></form>';
     document.body.appendChild(perde);
     var $p = function (s2) { return perde.querySelector(s2); };
-    $p('#t-kitap').value = kitap || '';
+    if (!cok) $p('#t-kitap').value = kitaplar[0] ? kitaplar[0].ad : '';
     if (kioskModu) ['#t-kitap', '#t-ad', '#t-tel'].forEach(function (s2) {
       var el = $p(s2);
+      if (!el) return;
       el.setAttribute('inputmode', 'none');
       el.addEventListener('focus', function () {
         Klavye.ac(el, { onayYazi: 'Gönder', araBas: function () { $p('form').requestSubmit(); } });
@@ -211,25 +253,31 @@
     function tus(e) { if (e.key === 'Escape') kapat(); }
     document.addEventListener('keydown', tus);
     $p('#t-vazgec').addEventListener('click', kapat);
-    $p('#t-metin').addEventListener('click', function () { O.pencere(O.kvkkMetni(d.ayarlar.magazaAdi), { evet: 'Anladım' }); });
+    var gonderiliyor = false;
     $p('form').addEventListener('submit', function (e) {
       e.preventDefault();
-      var giris = { kitap: $p('#t-kitap').value, kitapId: kitapId, ad: $p('#t-ad').value, telefon: $p('#t-tel').value, onay: $p('#t-onay').checked, not: not || '' };
-      try { Depo.talepDogrula(giris); } catch (err) { $p('#t-mesaj').innerHTML = '<div class="mesaj hata">' + O.kacis(err.message) + '</div>'; return; }
-      Veri.talepEkle(giris).then(function (t) {
+      if (gonderiliyor) return;
+      var ortak = { ad: $p('#t-ad').value, telefon: $p('#t-tel').value, not: not || '' };
+      var istekler = (cok ? kitaplar : [{ ad: $p('#t-kitap').value, id: kitaplar[0] && kitaplar[0].ad === $p('#t-kitap').value ? kitaplar[0].id : null }])
+        .map(function (k) { return Object.assign({ kitap: k.ad, kitapId: k.id || null }, ortak); });
+      try { istekler.forEach(function (g) { Depo.talepDogrula(g); }); } catch (err) { $p('#t-mesaj').innerHTML = '<div class="mesaj hata">' + O.kacis(err.message) + '</div>'; return; }
+      gonderiliyor = true;
+      istekler.reduce(function (z, g) { return z.then(function () { return Veri.talepEkle(g); }); }, Promise.resolve()).then(function () {
         Klavye.kapat();
         $p('form').innerHTML = '<div style="text-align:center;padding:20px 8px;display:flex;flex-direction:column;gap:12px;align-items:center">' +
           '<div style="width:72px;height:72px;border-radius:50%;background:#DCFCE7;color:#166534;display:flex;align-items:center;justify-content:center;font-size:38px" aria-hidden="true">✓</div>' +
-          '<h2 style="font-size:26px">Talebiniz alındı</h2><p class="soluk" style="font-size:16px">“' + O.kacis(t.kitap) + '” gelince ' + O.kacis(t.telefon.replace(/^(\d{4})(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3 $4')) + ' numarasından size haber vereceğiz.</p>' +
+          '<h2 style="font-size:26px">Talebiniz oluşturuldu</h2><p class="soluk" style="font-size:16px">' +
+          (cok ? istekler.length + ' kitap' : '“' + O.kacis(istekler[0].kitap.trim()) + '”') + ' için talebiniz mağazaya iletildi. Teşekkür ederiz.</p>' +
           '<button type="button" class="dugme ana" id="t-tamam" style="min-width:160px">Tamam</button></div>';
         $p('#t-tamam').addEventListener('click', kapat);
         setTimeout(function () { if (perde.isConnected) kapat(); }, 8000);
       }).catch(function (err) {
+        gonderiliyor = false;
         $p('#t-mesaj').innerHTML = err.sinir ? '<div class="mesaj uyari">' + O.kacis(err.message) + '</div>'
           : '<div class="mesaj hata">Talep gönderilemedi: ' + O.kacis(err.message) + '</div>';
       });
     });
-    setTimeout(function () { $p(kitap ? '#t-ad' : '#t-kitap').focus(); }, 0);
+    setTimeout(function () { $p(cok || kitaplar[0] ? '#t-ad' : '#t-kitap').focus(); }, 0);
   }
 
   // ---------- Okul listeleri ----------
@@ -264,7 +312,7 @@
         '<div class="ilerleme" role="img" aria-label="' + du.hazir + ' / ' + du.toplam + ' hazır"><i style="width:' + (du.toplam ? Math.round(du.hazir / du.toplam * 100) : 0) + '%"></i></div>' +
         '<p style="margin:0;font-size:18px"><b>' + du.toplam + ' kitaptan ' + O.sayiEki(du.hazir) + '</b> mağazada hazır.</p>' +
         (raflar ? '<p class="soluk" style="font-size:15px">Raflar: ' + raflar + '</p>' : '') +
-        (eksik && !telefondan ? '<button type="button" class="dugme ana" data-talep-liste="' + liste.id + '" style="min-height:56px;font-size:17px">Eksik ' + eksik + ' kitap için haber verilsin</button>' : '') +
+        (eksik && !telefondan ? '<button type="button" class="dugme ana" data-talep-liste="' + liste.id + '" style="min-height:56px;font-size:17px">Eksik ' + eksik + ' kitap için talep oluştur</button>' : '') +
         '</div>' + telefonQr(liste, 'liste', 'Listeyi telefonunuza alın', 'Rafları gezerken listeyi telefonunuzdan takip edin.') + '</div></div>';
     }
     sonucGoster(html + '</div>');
@@ -282,10 +330,10 @@
   function bulunamadi(s) {
     sonucGoster('<div class="kart" style="text-align:center;padding:48px 20px;display:flex;flex-direction:column;gap:12px;align-items:center">' +
       '<h2 style="font-size:28px">“' + O.kacis(String(s).trim()) + '” bulunamadı</h2>' +
-      '<p class="soluk" style="font-size:17px;max-width:520px">Yazımı kontrol edin ya da yalnız bir kelimeyle deneyin. Kitap mağazada yoksa gelince size haber verebiliriz.</p>' +
+      '<p class="soluk" style="font-size:17px;max-width:520px">Yazımı kontrol edin ya da yalnız bir kelimeyle deneyin. Kitap mağazada yoksa talep oluşturabilirsiniz.</p>' +
       oneriHtml(s) +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button type="button" class="dugme" data-is="ana"><span data-ikon="geri"></span>Başa dön</button>' +
-      '<button type="button" class="dugme ana" data-talep-kitap="' + O.kacis(String(s).trim()) + '">Gelince haber verilsin</button></div></div>');
+      '<button type="button" class="dugme ana" data-talep-kitap="' + O.kacis(String(s).trim()) + '">Talep oluştur</button></div></div>');
     O.ikonlariDoldur(sonuc);
   }
 
@@ -342,7 +390,7 @@
     if (kioskModu) Klavye.ac(sorgu, { araBas: function () { ara(true); } });
   }
   $('secim-yaz').addEventListener('click', sorguyaOdaklan);
-  $('secim-talep').addEventListener('click', function () { Klavye.kapat(); talepFormu('', null, ''); });
+  $('secim-talep').addEventListener('click', function () { Klavye.kapat(); talepFormu([], ''); });
   sorgu.addEventListener('focus', function () { if (kioskModu) Klavye.ac(sorgu, { araBas: function () { ara(true); } }); });
 
   // Barkod okuyucu klavye gibi yazar: odak başka yerdeyse tuşları arama kutusuna yönlendir.
@@ -364,14 +412,14 @@
       return;
     }
     var talepB = e.target.closest('[data-talep-kitap]');
-    if (talepB) { talepFormu(talepB.getAttribute('data-talep-kitap'), talepB.getAttribute('data-talep-id'), ''); return; }
+    if (talepB) { talepFormu([{ ad: talepB.getAttribute('data-talep-kitap'), id: talepB.getAttribute('data-talep-id') }], ''); return; }
     var talepL = e.target.closest('[data-talep-liste]');
     if (talepL) {
       var liste = d.okulListeleri.find(function (l) { return l.id === talepL.getAttribute('data-talep-liste'); });
       if (liste) {
         var eksik = Depo.listeDurumu(d, liste).kalemler.filter(function (x) { return !x.hazir; })
-          .map(function (x) { return x.kitap ? x.kitap.ad : Arama.satirCoz(x.metin).ad; });
-        talepFormu(eksik.join(', '), null, liste.okul + ' · ' + liste.sinif + ' listesi');
+          .map(function (x) { return x.kitap ? { ad: x.kitap.ad, id: x.kitap.id } : { ad: Arama.satirCoz(x.metin).ad, id: null }; });
+        talepFormu(eksik, liste.okul + ' · ' + liste.sinif + ' listesi');
       }
       return;
     }

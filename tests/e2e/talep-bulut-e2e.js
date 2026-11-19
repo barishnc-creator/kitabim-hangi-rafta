@@ -60,17 +60,18 @@ async function senaryo(b, eski, bekle) {
   const k = await kctx.newPage();
   k.on('pageerror', (e) => hatalar.push('kiosk: ' + e.message));
   await k.goto(K + 'index.html?kiosk=1');
-  async function talepBirak() {
+  async function talepBirak(telefonsuz) {
     await k.click('#ana-sayfa').catch(() => {});
     await k.click('#secim-talep');
-    await k.fill('#t-kitap', 'Kınalı Serçe'); await k.fill('#t-ad', 'Ayşe'); await k.fill('#t-tel', '0532 111 22 33'); await k.check('#t-onay');
+    await k.fill('#t-kitap', 'Kınalı Serçe');
+    if (!telefonsuz) { await k.fill('#t-ad', 'Ayşe'); await k.fill('#t-tel', '0532 111 22 33'); }
     await k.click('.talep-perde button[type=submit]');
-    await k.waitForFunction(() => /Talebiniz alındı|en fazla|gönderilemedi/.test(document.querySelector('.talep-perde').textContent), null, { timeout: 5000 });
+    await k.waitForFunction(() => /Talebiniz oluşturuldu|en fazla|gönderilemedi/.test(document.querySelector('.talep-perde').textContent), null, { timeout: 5000 });
     return (await k.textContent('.talep-perde')).replace(/\s+/g, ' ');
   }
   const ilk = await talepBirak();
   console.log(ad, '· 1. talep:', ilk.slice(0, 60));
-  bekle(/Talebiniz alındı/.test(ilk), ad + ': talep kaydedilmeli');
+  bekle(/Talebiniz oluşturuldu/.test(ilk), ad + ': talep kaydedilmeli');
   if (eski) {
     const post = istekler.find((x) => x.son === 'kirtasiye_talepler' && x.yontem === 'POST');
     bekle(post && post.govde.telefon === '05321112233' && post.govde.onay === true, 'eski veritabanında tabloya doğrudan eklenmeli');
@@ -83,6 +84,12 @@ async function senaryo(b, eski, bekle) {
     bekle(mesaj === SINIR, 'sınır aşılınca nazik mesaj çıkmalı');
     bekle(!/gönderilemedi|spam/i.test(ikinci), 'mesajda "gönderilemedi" ya da "spam" olmamalı');
     bekle(await k.$('#t-mesaj .mesaj.uyari'), 'mesaj hata değil uyarı görünümünde olmalı');
+    // Telefon isteğe bağlı: ad ve telefon boş gönderilir
+    await k.click('#t-vazgec');
+    rpcSayisi = 0;
+    const ucuncu = await talepBirak(true);
+    const rpc = istekler.filter((x) => x.son === 'kirtasiye_talep_birak').pop();
+    bekle(/Talebiniz oluşturuldu/.test(ucuncu) && rpc.govde.p_telefon === '' && rpc.govde.p_ad === '', 'telefonsuz talep: fonksiyona boş ad/telefon gider');
   }
   await kctx.close();
 

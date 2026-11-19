@@ -140,3 +140,23 @@ body.klavye-acik .kamera-perde { align-items: flex-start; overflow-y: auto; padd
 
 .k-marka-ikon.logolu { background: #fff; overflow: hidden; }
 .logo-resim { width: 100%; height: 100%; object-fit: contain; display: block; }
+.talep-kitaplar { margin: 0; padding: 12px 16px 12px 34px; background: var(--zemin, #F8FAFC); border: 1px solid var(--cizgi, #E2E8F0); border-radius: 12px; max-height: 180px; overflow: auto; font-size: 16px; line-height: 1.6; }
+/* Kampanya / reklam alanı (karşılama ekranı) */
+.k-kampanya { position: relative; border-radius: 24px; overflow: hidden; background: #0F172A; box-shadow: 0 18px 40px -18px rgba(15, 23, 42, .45); }
+.k-kampanya-iz { position: relative; aspect-ratio: 16 / 5; min-height: 220px; max-height: 400px; width: 100%; }
+.k-kampanya-kart { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; pointer-events: none; }
+.k-kampanya-kart.etkin { opacity: 1; pointer-events: auto; }
+.k-kampanya-kart img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); transition: transform 7.5s ease-out; }
+.k-kampanya-kart.etkin img { transform: scale(1); }
+.k-kampanya-kart.resimsiz { background: linear-gradient(120deg, var(--mavi-koyu), var(--mavi) 60%, #7C3AED); }
+.k-kampanya-yazi { position: absolute; inset: auto 0 0 0; padding: 28px 32px 44px; color: #fff; background: linear-gradient(to top, rgba(2, 6, 23, .82), rgba(2, 6, 23, .35) 65%, transparent); display: flex; flex-direction: column; gap: 6px; transform: translateY(14px); opacity: 0; transition: transform .8s ease .25s, opacity .8s ease .25s; }
+.k-kampanya-kart.resimsiz .k-kampanya-yazi { inset: 0; justify-content: center; background: none; }
+.k-kampanya-kart.etkin .k-kampanya-yazi { transform: none; opacity: 1; }
+.k-kampanya-yazi h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(26px, 3.4vw, 44px); line-height: 1.08; margin: 0; text-wrap: balance; }
+.k-kampanya-yazi p { margin: 0; font-size: clamp(16px, 1.6vw, 21px); opacity: .92; max-width: 60ch; }
+.k-kampanya-rozet { align-self: flex-start; background: #FACC15; color: #422006; font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; }
+.k-kampanya-noktalar { position: absolute; right: 22px; bottom: 16px; display: flex; gap: 8px; }
+.k-kampanya-noktalar button { width: 12px; height: 12px; padding: 0; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .5); cursor: pointer; transition: width .3s, background .3s; }
+.k-kampanya-noktalar button[aria-selected="true"] { width: 34px; background: #fff; }
+@media (max-width: 640px) { .k-kampanya-iz { aspect-ratio: 4 / 3; } .k-kampanya-yazi { padding: 20px 20px 40px; } }
+@media (prefers-reduced-motion: reduce) { .k-kampanya-kart, .k-kampanya-kart img, .k-kampanya-yazi { transition: none; } }

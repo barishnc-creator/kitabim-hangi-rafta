@@ -108,7 +108,7 @@ test('okul listesi: zorunlu alanlar, aynı okul+sınıf engeli, durum hesabı', 
   assert.equal(d.okulListeleri.length, 0);
 });
 
-test('talep: telefon biçimi, zorunlu alanlar ve onay', () => {
+test('talep: yalnız kitap adı zorunlu, telefon isteğe bağlı', () => {
   assert.equal(Depo.telefonDuzelt('0532 123 45 67'), '05321234567');
   assert.equal(Depo.telefonDuzelt('+90 (532) 123-45-67'), '05321234567');
   assert.equal(Depo.telefonDuzelt('532 123 45 67'), '05321234567');
@@ -118,7 +118,39 @@ test('talep: telefon biçimi, zorunlu alanlar ve onay', () => {
   const iyi = { kitap: 'Suç ve Ceza', ad: 'Ayşe', telefon: '0532 123 45 67', onay: true };
   assert.equal(Depo.talepDogrula(iyi).telefon, '05321234567');
   assert.throws(() => Depo.talepDogrula({ ...iyi, kitap: ' ' }), { kod: 'EKSIK' });
-  assert.throws(() => Depo.talepDogrula({ ...iyi, ad: '' }), { kod: 'EKSIK' });
   assert.throws(() => Depo.talepDogrula({ ...iyi, telefon: '12' }), { kod: 'GECERSIZ' });
-  assert.throws(() => Depo.talepDogrula({ ...iyi, onay: 'evet' }), { kod: 'ONAY' });
+  const yalin = Depo.talepDogrula({ kitap: 'Simyacı' });
+  assert.deepEqual([yalin.kitap, yalin.ad, yalin.telefon, yalin.onay], ['Simyacı', '', '', true], 'ad, telefon ve onay kutusu gerekmez');
+});
+
+test('talep: aynı kitap tek satırda toplanır, talep sayısı artar', () => {
+  const g = Depo.talepGrupla([
+    { id: 1, kitap: 'Suç ve Ceza', olusturuldu: '2026-11-18T10:00:00Z' },
+    { id: 2, kitap: 'Simyacı', kitapId: 'k7', olusturuldu: '2026-11-18T11:00:00Z', ad: 'Ali', telefon: '05321234567' },
+    { id: 3, kitap: '  suç ve  ceza ', olusturuldu: '2026-11-19T09:00:00Z', ad: 'Ayşe' },
+    { id: 4, kitap: 'SUÇ VE CEZA!', olusturuldu: '2026-11-17T09:00:00Z' },
+    { id: 5, kitap: 'simyacı', olusturuldu: '2026-11-19T12:00:00Z' }
+  ]);
+  assert.deepEqual(g.map((x) => [x.kitap, x.sayi]), [['Suç ve Ceza', 3], ['Simyacı', 2]]);
+  assert.equal(g[0].son, '2026-11-19T09:00:00Z');
+  assert.equal(g[0].ilk, '2026-11-17T09:00:00Z');
+  assert.deepEqual(g[0].idler, [1, 3, 4]);
+  assert.deepEqual(g[0].kisiler, [{ ad: 'Ayşe', telefon: '' }]);
+  assert.equal(g[1].kitapId, 'k7', 'kayıtlı kitapla aynı adlı talep birleşir');
+});
+
+test('kampanya: en çok 6, resim ve metin sınırları', () => {
+  const resim = 'data:image/jpeg;base64,' + 'A'.repeat(100);
+  const l = Depo.kampanyaDuzelt([
+    { id: 'a', baslik: 'Okula dönüş', aciklama: 'Tüm test kitaplarında %20', resim },
+    { id: 'b', baslik: '', resim: 'javascript:alert(1)' },
+    { id: 'c', baslik: 'x'.repeat(100), resim: 'data:image/gif;base64,AAAA' },
+    ...Array.from({ length: 8 }, (_, i) => ({ id: 'z' + i, baslik: 'K' + i }))
+  ]);
+  assert.equal(l.length, 6);
+  assert.deepEqual(l[0], { id: 'a', baslik: 'Okula dönüş', aciklama: 'Tüm test kitaplarında %20', resim });
+  assert.equal(l[1].id, 'c', 'resimsiz ve başlıksız kampanya atılır');
+  assert.equal(l[1].baslik.length, 60);
+  assert.equal(l[1].resim, '', 'izin verilmeyen biçim atılır');
+  assert.deepEqual(Depo.duzelt({ ayarlar: { kampanyalar: 'bozuk' } }).ayarlar.kampanyalar, []);
 });

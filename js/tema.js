@@ -87,7 +87,34 @@
     });
   }
 
-  var api = { VARSAYILAN: VARSAYILAN, renkler: renkler, kontrast: kontrast, renkGecerli: renkGecerli, logoGecerli: logoGecerli, uygula: uygula, logoHazirla: logoHazirla };
+  // Kampanya görseli: en fazla 1600 px genişlik, JPEG; veritabanı sınırı için boyut 380 KB altına inene kadar kalite düşürülür.
+  function kampanyaResmiHazirla(dosya) {
+    return new Promise(function (coz, red) {
+      if (!dosya || !/^image\/(png|jpeg|webp|gif)$/.test(dosya.type)) { red(new Error('PNG, JPG ya da WebP bir fotoğraf seçin.')); return; }
+      if (dosya.size > 20 * 1024 * 1024) { red(new Error('Fotoğraf 20 MB’tan küçük olmalı.')); return; }
+      var url = URL.createObjectURL(dosya), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var genislik = Math.min(1600, img.width), veri = '';
+        for (var deneme = 0; deneme < 8; deneme++) {
+          var olcek = genislik / img.width, c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * olcek));
+          c.height = Math.max(1, Math.round(img.height * olcek));
+          var cx = c.getContext('2d');
+          cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+          cx.drawImage(img, 0, 0, c.width, c.height);
+          veri = c.toDataURL('image/jpeg', deneme < 4 ? 0.85 - deneme * 0.1 : 0.55);
+          if (veri.length <= 380000) break;
+          if (deneme >= 3) genislik = Math.round(genislik * 0.8);
+        }
+        veri.length <= 380000 ? coz(veri) : red(new Error('Fotoğraf küçültülemedi. Daha küçük bir dosya deneyin.'));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); red(new Error('Fotoğraf açılamadı.')); };
+      img.src = url;
+    });
+  }
+
+  var api = { VARSAYILAN: VARSAYILAN, renkler: renkler, kontrast: kontrast, renkGecerli: renkGecerli, logoGecerli: logoGecerli, uygula: uygula, logoHazirla: logoHazirla, kampanyaResmiHazirla: kampanyaResmiHazirla };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Tema = api;
 })(this);

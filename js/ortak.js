@@ -53,6 +53,7 @@
   ikon.saat = s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>');
   ikon.sube = s('<path d="M3 9l1.5-5h15L21 9M3 9h18M4 9v11h16V9M9 20v-6h6v6"/>');
   ikon.kamera = s('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>');
+  ikon.kampanya = s('<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>');
   ikon.geri = s('<path d="M19 12H5M12 19l-7-7 7-7"/>');
 
   // <span data-ikon="ad"> öğelerini simgeyle doldurur.
@@ -70,15 +71,6 @@
     var onlar = { 1: 'u', 2: 'si', 3: 'u', 4: 'ı', 5: 'si', 6: 'ı', 7: 'i', 8: 'i', 9: 'ı' };
     var ek = n === 0 ? 'ı' : n % 10 ? birler[n % 10] : n % 100 ? onlar[(n % 100) / 10] : n % 1000 ? 'ü' : 'i';
     return n + "'" + ek;
-  }
-
-  // "Gelince haber ver" formu için örnek KVKK aydınlatma metni. Mağaza kendi metniyle değiştirmeli (hukukçu kontrolü önerilir).
-  function kvkkMetni(magaza) {
-    var m = magaza || 'Mağazamız';
-    return m + ' olarak, “gelince haber ver” talebi için verdiğiniz adınızı ve telefon numaranızı yalnız aradığınız kitap mağazaya ulaştığında sizinle iletişime geçmek amacıyla işliyoruz.\n\n' +
-      'Bilgileriniz üçüncü kişilerle paylaşılmaz, reklam amacıyla kullanılmaz ve talebiniz sonuçlandıktan sonra en geç 90 gün içinde silinir.\n\n' +
-      'KVKK 11. maddesindeki haklarınız (bilgilerinize erişme, düzeltme, silinmesini isteme) için mağaza görevlisine başvurabilirsiniz.\n\n' +
-      '(Bu bir örnek metindir; mağaza kendi bilgileriyle güncellemelidir.)';
   }
 
   function tarihKisa(t) {
@@ -123,5 +115,5 @@
     });
   }
 
-  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon, pencere: pencere, ikonlariDoldur: ikonlariDoldur, tarihKisa: tarihKisa, sayiEki: sayiEki, kvkkMetni: kvkkMetni };
+  kok.Ortak = { kacis: kacis, para: para, sirali: sirali, siraliBolmeler: siraliBolmeler, ikon: ikon, pencere: pencere, ikonlariDoldur: ikonlariDoldur, tarihKisa: tarihKisa, sayiEki: sayiEki };
 })(window);

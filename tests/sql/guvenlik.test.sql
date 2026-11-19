@@ -198,4 +198,25 @@ begin
   assert m = '', 'onaysız talep reddedilmeliydi';
 end $$;
 
-\echo 'guvenlik.test.sql: 11 kontrol geçti'
+-- 12) Telefon isteğe bağlı (20 Kasım): ad ve telefon boş talep kaydedilir; telefonsuzlar ortak günlük 5 sınırına takılmaz,
+--     ama toplamda 10 dakikada 30'u geçemez; bu durumda bildirim yazılmaz.
+do $$
+declare i int; ok boolean; n int;
+begin
+  update public.kirtasiye_talepler set olusturuldu = now() - interval '2 days';
+  for i in 1..30 loop
+    set local role anon;
+    ok := public.kirtasiye_talep_birak('Simyacı', null, '', '', '');
+    reset role;
+    assert ok, i || '. telefonsuz talep kaydedilmeliydi';
+  end loop;
+  set local role anon;
+  ok := public.kirtasiye_talep_birak('Simyacı', null, '', '', '');
+  reset role;
+  assert not ok, '31. telefonsuz talep (10 dakikada) kaydedilmemeliydi';
+  select count(*) into n from public.kirtasiye_bildirimler where telefon = '';
+  assert n = 0, 'telefonsuz talep için bildirim yazılmamalı';
+  assert (select count(*) from public.kirtasiye_talepler where telefon = '' and ad = '') = 30;
+end $$;
+
+\echo 'guvenlik.test.sql: 12 kontrol geçti'

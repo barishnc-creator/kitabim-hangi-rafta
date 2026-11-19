@@ -109,6 +109,7 @@
       <button class="yan-ogesi" role="tab" id="sek-gecmis" aria-controls="gecmis" aria-selected="false" data-yetki="duzenleyici revizeci"><span data-ikon="saat"></span>İşlem geçmişi</button>
       <button class="yan-ogesi" role="tab" id="sek-revizeler" aria-controls="revizeler" aria-selected="false" data-yetki="duzenleyici revizeci"><span data-ikon="revize"></span>Revizeler<span class="sayac" id="revize-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-kullanicilar" aria-controls="kullanicilar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kullanici"></span>Kullanıcılar</button>
+      <button class="yan-ogesi" role="tab" id="sek-kampanyalar" aria-controls="kampanyalar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kampanya"></span>Kampanyalar</button>
       <button class="yan-ogesi" role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="ayar"></span>Ayarlar</button>
     </nav>
     <div class="yan-alt">
@@ -249,16 +250,12 @@
       <!-- TALEPLER -->
       <section id="talepler" role="tabpanel" aria-labelledby="sek-talepler" class="bolum" hidden>
         <div class="arac-cubugu">
-          <p class="soluk" style="font-size:15px;flex:1 1 300px">Müşterilerin kitap talepleri (müşteri ekranındaki “Kitap talebi bırakın” kutusundan ve bulunamayan kitaplardan). Kitap gelince arayın, durumu güncelleyin.</p>
-          <label class="gizli-etiket" for="talep-filtre">Duruma göre</label>
-          <select id="talep-filtre"><option value="acik">Açık talepler</option><option value="">Tümü</option><option value="yeni">Yeni</option><option value="arandi">Arandı</option><option value="geldi">Geldi / teslim</option><option value="iptal">İptal</option></select>
+          <p class="soluk" style="font-size:15px;flex:1 1 300px">Müşterilerin oluşturduğu kitap talepleri. Aynı kitaba gelen talepler tek satırda toplanır; en çok istenen en üstte. Kitabı getirttiğinizde satırı kapatın.</p>
           <button class="dugme" type="button" id="talep-indir"><span data-ikon="indir"></span>Excel'e aktar</button>
-          <button class="dugme tehlike" type="button" id="talep-temizle">Kapananları sil</button>
         </div>
         <div class="tablo-kutu">
-          <table class="tablo"><thead><tr><th>Kitap</th><th>Müşteri</th><th>Tarih</th><th>Durum</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead><tbody id="talep-satirlar"></tbody></table>
+          <table class="tablo"><thead><tr><th>Kitap</th><th class="sayi">Talep sayısı</th><th>Son talep</th><th>Bırakılan bilgi</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead><tbody id="talep-satirlar"></tbody></table>
         </div>
-        <p class="soluk">Kişisel veri: telefonlar yalnız düzenleyici ve çalışanlara görünür. Kapanan talepleri düzenli olarak silin (önerilen en geç 90 gün).</p>
       </section>
 
       <!-- ÜRÜN GİRİŞİ (id "giris" oturum açma ekranınındır) -->
@@ -320,17 +317,14 @@
           <div class="sube-birak" id="sube-birak"><span data-ikon="yukle"></span>Dosyayı buraya sürükleyip bırakabilirsiniz</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button class="dugme" type="button" id="sube-ornek"><span data-ikon="indir"></span>Örnek liste indir</button>
-            <span class="soluk">Listede bir “Barkod” sütunu olması yeter; “Adet” sütunu varsa istenen adet de okunur.</span>
+            <span class="soluk">Listede bir “Barkod” sütunu olması yeter; program her kitabın rafını ve bölmesini ekler.</span>
           </div>
           <div id="sube-durum" role="status"></div>
         </div>
         <div id="sube-sonuc" class="bolum" hidden>
           <div class="kart bolum yazdirma-gizle">
             <div class="sube-ozet" id="sube-ozet"></div>
-            <div class="izgara-2">
-              <div class="alan"><label for="sube-barkod-sutun">Barkod sütunu</label><select id="sube-barkod-sutun"></select></div>
-              <div class="alan"><label for="sube-adet-sutun">Adet sütunu</label><select id="sube-adet-sutun"></select></div>
-            </div>
+            <div class="alan" style="max-width:520px"><label for="sube-barkod-sutun">Barkod sütunu</label><select id="sube-barkod-sutun"></select></div>
           </div>
           <div class="arac-cubugu yazdirma-gizle">
             <label class="gizli-etiket" for="sube-filtre">Göster</label>
@@ -342,7 +336,7 @@
           </div>
           <div class="sadece-yazdir" id="sube-yazdir-baslik"></div>
           <div class="tablo-kutu">
-            <table class="tablo sube-tablo"><thead><tr><th>Bölme</th><th>Kitap</th><th>Barkod</th><th class="sayi">Adet</th><th>Durum</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
+            <table class="tablo sube-tablo"><thead><tr><th>Bölme</th><th>Kitap</th><th>Barkod</th><th>Durum</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
           </div>
         </div>
       </section>
@@ -416,6 +410,20 @@
       </section>
 
       <!-- AYARLAR -->
+      <section id="kampanyalar" role="tabpanel" aria-labelledby="sek-kampanyalar" class="bolum" hidden>
+        <div class="kart bolum">
+          <div><h2 style="font-size:20px">Müşteri ekranı reklam alanı</h2>
+          <p class="soluk">İndirim, kampanya ve duyurularınızı müşteri ekranının karşılama sayfasında gösterin. Her kampanyaya bir fotoğraf, başlık ve kısa açıklama girin; birden çok kampanya 7 saniyede bir sırayla döner. En çok 6 kampanya.</p></div>
+          <div class="kampanya-liste" id="kampanya-liste"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="dugme" type="button" id="kampanya-ekle"><span data-ikon="arti"></span>Kampanya ekle</button>
+            <span style="flex-grow:1"></span>
+            <button class="dugme ana" type="button" id="kampanya-kaydet" disabled>Kaydet</button>
+          </div>
+          <div id="kampanya-durum" role="status"></div>
+        </div>
+      </section>
+
       <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
         <div class="iki-sutun">
           <div class="genis bolum">
@@ -532,6 +540,7 @@
 <script src="js/panel-giris.js"></script>
 <script src="js/harita.js"></script>
 <script src="js/panel-gorunum.js"></script>
+<script src="js/panel-kampanya.js"></script>
 <script src="js/panel-harita.js"></script>
 <script src="js/panel-gecmis.js"></script>
 <script src="js/kur.js"></script>

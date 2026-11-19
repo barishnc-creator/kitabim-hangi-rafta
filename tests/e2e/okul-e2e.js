@@ -38,7 +38,7 @@ const OUT = process.argv[2] || require('os').tmpdir(), K = 'http://localhost:876
   await k.click('[data-liste]:has-text("7-A")');
   await k.waitForTimeout(200);
   console.log('liste satırı:', await k.$$eval('.liste-satir', (x) => x.length), '| durum:', await k.textContent('.ilerleme + p'));
-  console.log('haber düğmesi:', await k.textContent('[data-talep-liste]'));
+  console.log('talep düğmesi:', await k.textContent('[data-talep-liste]'));
   await k.screenshot({ path: OUT + '/okul-kiosk.png', fullPage: true });
   await k.click('.liste-satir[data-kitap="k6"]');
   console.log('satıra tıklayınca:', await k.textContent('.k-yer strong'));

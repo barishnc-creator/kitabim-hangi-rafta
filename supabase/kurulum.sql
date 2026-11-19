@@ -53,6 +53,8 @@ alter table public.kirtasiye_ayarlar add column if not exists renk text not null
 alter table public.kirtasiye_ayarlar add column if not exists logo text not null default '' check (logo = '' or (logo ~ '^data:image/(png|jpeg|webp);base64,' and length(logo) <= 300000));
 alter table public.kirtasiye_ayarlar add column if not exists karsilama text not null default '' check (length(karsilama) <= 80);
 alter table public.kirtasiye_ayarlar add column if not exists plan jsonb not null default '{}'::jsonb check (pg_column_size(plan) < 100000);
+-- Müşteri ekranındaki kampanya/reklam alanı: [{id, baslik, aciklama, resim(data URL)}], en çok 6.
+alter table public.kirtasiye_ayarlar add column if not exists kampanyalar jsonb not null default '[]'::jsonb check (jsonb_typeof(kampanyalar) = 'array' and pg_column_size(kampanyalar) < 3000000);
 insert into public.kirtasiye_ayarlar (id) values (1) on conflict do nothing;
 
 -- Müşteri ekranındaki aramalar (en çok arananlar / bulunamayanlar raporu için). Kişisel bilgi tutulmaz.
@@ -84,19 +86,26 @@ create table if not exists public.kirtasiye_okul_listeleri (
   unique (okul, sinif)
 );
 
--- "Gelince haber ver" talepleri. Kişisel veri (ad, telefon): yalnız düzenleyici ve çalışan görür.
+-- Müşteri kitap talepleri. Yalnız kitap adı zorunlu; ad ve telefon isteğe bağlı (yalnız düzenleyici ve çalışan görür).
 create table if not exists public.kirtasiye_talepler (
   id uuid primary key default gen_random_uuid(),
   kitap text not null check (length(trim(kitap)) between 1 and 300),
   kitap_id uuid references public.kirtasiye_kitaplar (id) on delete set null,
-  ad text not null check (length(trim(ad)) between 1 and 60),
-  telefon text not null check (telefon ~ '^0[2-5][0-9]{9}$'),
+  ad text not null default '' check (length(ad) <= 60),
+  telefon text not null default '' check (telefon = '' or telefon ~ '^0[2-5][0-9]{9}$'),
   notu text not null default '' check (length(notu) <= 120),
   onay boolean not null check (onay),
   durum text not null default 'yeni' check (durum in ('yeni', 'arandi', 'geldi', 'iptal')),
   olusturuldu timestamptz not null default now()
 );
 create index if not exists kirtasiye_talepler_zaman on public.kirtasiye_talepler (olusturuldu);
+-- Eski kurulumlarda ad ve telefon zorunluydu: isteğe bağlı yap.
+alter table public.kirtasiye_talepler drop constraint if exists kirtasiye_talepler_ad_check;
+alter table public.kirtasiye_talepler drop constraint if exists kirtasiye_talepler_telefon_check;
+alter table public.kirtasiye_talepler alter column ad set default '';
+alter table public.kirtasiye_talepler alter column telefon set default '';
+alter table public.kirtasiye_talepler add constraint kirtasiye_talepler_ad_check check (length(ad) <= 60);
+alter table public.kirtasiye_talepler add constraint kirtasiye_talepler_telefon_check check (telefon = '' or telefon ~ '^0[2-5][0-9]{9}$');
 
 -- API yetkileri açıkça verilir (projede "yeni tablolara otomatik API erişimi" kapalı olsa da çalışsın).
 -- Kimin neyi görüp değiştirebileceğini aşağıdaki RLS kuralları belirler.
@@ -273,7 +282,8 @@ begin
       case when new.renk is distinct from old.renk then 'ana renk' end,
       case when new.logo is distinct from old.logo then 'logo' end,
       case when new.karsilama is distinct from old.karsilama then 'karşılama yazısı' end,
-      case when new.plan is distinct from old.plan then 'mağaza haritası' end);
+      case when new.plan is distinct from old.plan then 'mağaza haritası' end,
+      case when new.kampanyalar is distinct from old.kampanyalar then 'kampanyalar' end);
     if v_ayrinti = '' then return null; end if;
   else
     return null;

@@ -42,7 +42,7 @@ function zenginlestir() {
   await p.fill('#sorgu', 'kürk'); await p.press('#sorgu', 'Enter'); await p.waitForTimeout(3800); await foto('k2-sonuc');
   await p.click('#ana-sayfa'); await p.click('#okul-gezin [data-okul-ad="Örnek Ortaokulu"]'); await p.click('[data-liste="l1"]'); await p.waitForTimeout(300); await foto('k3-okul', true);
   await p.click('#ana-sayfa'); await p.fill('#sorgu', 'Suç ve Ceza'); await p.press('#sorgu', 'Enter'); await p.click('[data-talep-kitap]');
-  await p.fill('#t-ad', 'Ayşe'); await p.fill('#t-tel', '0532 123 45 67'); await p.check('#t-onay'); await p.waitForTimeout(200); await foto('k4-talep');
+  await p.fill('#t-ad', 'Ayşe'); await p.waitForTimeout(200); await foto('k4-talep');
   await p.keyboard.press('Escape'); await p.evaluate(() => window.Klavye && Klavye.kapat());
   await p.fill('#sorgu', 'kurk mantolu madona'); await p.press('#sorgu', 'Enter'); await p.waitForTimeout(200); await foto('k5-oneri');
   // Yönetim paneli

@@ -2,7 +2,7 @@
 -- Supabase → SQL Editor → New query → bu dosyanın tamamını yapıştır → Run. Birden çok kez çalıştırmak zararsızdır.
 --
 -- Ne yapar:
---  - Talep: aynı telefondan 24 saatte en çok 5. Fazlası kaydedilmez; müşteri nazik bir mesaj görür ve
+--  - Talep: aynı telefondan 24 saatte en çok 5 (telefonsuz taleplerde toplamda 10 dakikada en çok 30). Fazlası kaydedilmez; müşteri nazik bir mesaj görür ve
 --    yönetim paneline "Bu kişi birden fazla istek gönderiyor" bildirimi düşer (telefon, deneme sayısı, zaman).
 --  - Arama kaydı (rapor için): toplamda dakikada en çok 30; fazlası sessizce kaydedilmez, arama yine çalışır.
 --  - Kayıt zamanı her zaman sunucu saatidir (istemci eski tarih yazıp sınırı atlatamaz; KVKK onayının zamanı da budur).
@@ -41,9 +41,15 @@ begin
     new.olusturuldu := now();
     -- Aynı anda gelen istekler sırayla sayılsın (yoksa paralel istekler sınırı aşabilir).
     perform pg_advisory_xact_lock(hashtext('kirtasiye_talepler'));
-    if (select count(*) from kirtasiye_talepler where telefon = new.telefon and olusturuldu > now() - interval '24 hours') >= 5 then
+    if coalesce(new.telefon, '') <> '' then
+      if (select count(*) from kirtasiye_talepler where telefon = new.telefon and olusturuldu > now() - interval '24 hours') >= 5 then
+        raise exception using errcode = 'KT429',
+          message = 'Bu numarayla bugün en fazla 5 talep bırakılabiliyor; kırtasiye çalışanımız sizinle ilgilenecek.';
+      end if;
+    -- Telefon isteğe bağlı (20 Kasım): telefonsuz talepler için toplamda 10 dakikada en çok 30.
+    elsif (select count(*) from kirtasiye_talepler where telefon = '' and olusturuldu > now() - interval '10 minutes') >= 30 then
       raise exception using errcode = 'KT429',
-        message = 'Bu numarayla bugün en fazla 5 talep bırakılabiliyor; kırtasiye çalışanımız sizinle ilgilenecek.';
+        message = 'Şu anda çok sayıda talep geldi; lütfen biraz sonra tekrar deneyin.';
     end if;
   else
     new.zaman := now();
@@ -70,10 +76,11 @@ returns boolean language plpgsql security definer set search_path = public as $$
 begin
   begin
     insert into kirtasiye_talepler (kitap, kitap_id, ad, telefon, notu, onay)
-      values (p_kitap, p_kitap_id, p_ad, p_telefon, coalesce(p_notu, ''), true);
+      values (p_kitap, p_kitap_id, coalesce(p_ad, ''), coalesce(p_telefon, ''), coalesce(p_notu, ''), true);
     return true;
   exception when sqlstate 'KT429' then null;
   end;
+  if coalesce(p_telefon, '') = '' then return false; end if; -- telefonsuz: bildirim yazılmaz
   update kirtasiye_bildirimler set deneme = deneme + 1, son = now(), okundu = false
     where telefon = p_telefon and son > now() - interval '24 hours';
   if not found then

@@ -29,7 +29,7 @@
         kok.localStorage.setItem(GECMIS, JSON.stringify(l.slice(0, 1000)));
       } catch (e) { /* geçmiş tutulamazsa işlem yine yapılır */ }
     }
-    var AYAR_ADI = { fiyat: 'fiyat alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası' };
+    var AYAR_ADI = { fiyat: 'fiyat alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası', kampanyalar: 'kampanyalar' };
     function talepOku() { try { return JSON.parse(kok.localStorage.getItem(TALEP)) || []; } catch (e) { return []; } }
     function talepYaz(l) { kok.localStorage.setItem(TALEP, JSON.stringify(l)); return Promise.resolve(); }
     function oku() {
@@ -185,6 +185,10 @@
         if (/row-level security|permission denied/i.test(m)) throw new Error('Bu işlem için yetkiniz yok.');
         if (/kirtasiye_kitaplar_bolme_id_fkey|violates foreign key/i.test(m)) throw new Error('Bu bölmede kitap var. Önce kitapları taşıyın.');
         if (/duplicate key/i.test(m)) throw new Error('Aynı numara başka bir cihazdan az önce kullanıldı. Tekrar deneyin.');
+        // Talep ad/telefon isteğe bağlı ya da kampanya alanı için veritabanı güncellenmemiş
+        if (/kirtasiye_talepler_(ad|telefon)_check|kirtasiye_talepler.*(ad|telefon)|column "kampanyalar"|kampanyalar.*(does not exist|schema cache)/i.test(m) || (sonuc.error.code === '23514' && /talepler/i.test(m))) {
+          throw new Error('Veritabanı güncel değil: Supabase SQL Editor’de supabase/guncelleme-20-kasim.sql dosyasını çalıştırın.');
+        }
         // Rafsız kitap (Excel ile ürün girişi) için veritabanı güncellenmemiş: bolme_id hâlâ zorunlu
         if (sonuc.error.code === '23502' || /null value in column "bolme_id"|bolme_id.*not-null/i.test(m)) {
           throw new Error('Veritabanının güncellenmesi gerekiyor: Supabase SQL Editor\'de supabase/kurulum.sql dosyasını bir kez yeniden çalıştırın, sonra tekrar deneyin.');
@@ -212,7 +216,9 @@
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
         hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,kapak,eklendi', 'ad'),
         sb.from('kirtasiye_ayarlar').select('fiyat,magaza_adi,renk,logo,karsilama,plan').eq('id', 1).maybeSingle().then(kontrol),
-        hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul')
+        hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul'),
+        // Kampanya sütunu sonradan eklendi: yoksa (SQL çalıştırılmamışsa) program yine açılır.
+        sb.from('kirtasiye_ayarlar').select('kampanyalar').eq('id', 1).maybeSingle().then(function (r) { return r.error || !r.data ? [] : r.data.kampanyalar; }, function () { return []; })
       ]).then(function (s) {
         var d = Depo.bos();
         d.raflar = s[0].map(function (r) {
@@ -222,7 +228,7 @@
           return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
             fiyat: k.fiyat == null ? null : Number(k.fiyat), kapak: k.kapak || '', eklendi: k.eklendi };
         });
-        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan } }).ayarlar;
+        if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan, kampanyalar: s[5] } }).ayarlar;
         d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
         return d;
@@ -342,7 +348,7 @@
         return sb.from('kirtasiye_aramalar').select('sorgu,sonuc,zaman').gte('zaman', sinir).order('zaman', { ascending: false }).limit(5000).then(kontrol);
       },
       ayarKaydet: function (alan, deger) {
-        var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama', plan: 'plan' };
+        var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama', plan: 'plan', kampanyalar: 'kampanyalar' };
         if (sutun[alan]) {
           var o = {}; o[alan] = deger;
           g[sutun[alan]] = Depo.duzelt({ ayarlar: o }).ayarlar[alan];
@@ -396,7 +402,8 @@
             return sb.from('kirtasiye_talepler').insert({ kitap: t.kitap, kitap_id: t.kitapId, ad: t.ad, telefon: t.telefon, notu: t.not, onay: true }).then(kontrol);
           }
           if (kontrol(s) === false) {
-            var e = new Error('Bu numarayla bugün en fazla 5 talep bırakılabiliyor; kırtasiye çalışanımız sizinle ilgilenecek.');
+            var e = new Error(t.telefon ? 'Bu numarayla bugün en fazla 5 talep bırakılabiliyor; kırtasiye çalışanımız sizinle ilgilenecek.'
+              : 'Şu anda çok sayıda talep geldi; lütfen biraz sonra tekrar deneyin.');
             e.sinir = true;
             throw e;
           }

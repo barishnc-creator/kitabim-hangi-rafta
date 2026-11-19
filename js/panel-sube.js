@@ -62,8 +62,6 @@
     for (var k = 0; k < enGenis; k++) se += '<option value="' + k + '">' + O.kacis(ad(k)) + '</option>';
     $('sube-barkod-sutun').innerHTML = se;
     $('sube-barkod-sutun').value = String(s.barkod);
-    $('sube-adet-sutun').innerHTML = '<option value="-1">Adet sütunu yok (her kalem 1 adet)</option>' + se;
-    $('sube-adet-sutun').value = String(s.adet);
   }
 
   function hesapla() {
@@ -74,7 +72,7 @@
 
   function ozetCiz() {
     var o = sonuc.ozet, parca = [
-      ['Kalem', o.kalem], ['Toplam adet', o.adet], ['Mağazada var', o.var]
+      ['Kalem', o.kalem], ['Mağazada var', o.var]
     ];
     parca.push(['Kayıtlı değil', o.kayitsiz]);
     $('sube-ozet').innerHTML = parca.map(function (p) { return '<span><b>' + p[1] + '</b>' + p[0] + '</span>'; }).join('') +
@@ -89,7 +87,7 @@
       return !f || (f === 'bulunan' ? !!k.yer : k.durum !== 'var');
     });
     var ekleyebilir = P.yetkili('duzenleyici', 'calisan'), sonRaf = null, html = '';
-    var sutunSayisi = 6;
+    var sutunSayisi = 5;
     kalemler.forEach(function (k) {
       var rafId = k.yer ? k.yer.raf.id : k.kitap ? 'rafsiz' : '-';
       if (rafId !== sonRaf) {
@@ -99,12 +97,11 @@
           : k.kitap ? 'Mağazada var, henüz rafa yerleştirilmedi' : 'Mağazada kayıtlı olmayan kitaplar') + '</td></tr>';
       }
       var kitap = k.kitap;
-      var alt = kitap ? [kitap.yazar, kitap.yayinevi].filter(Boolean).join(' · ') : 'Listede: ' + (k.listeAdi || 'ad yok');
+      var alt = kitap ? '' : 'Listede: ' + (k.listeAdi || 'ad yok');
       html += '<tr>' +
         '<td>' + (k.yer ? '<span class="kod-rozet">' + k.yer.kod + '</span>' : k.kitap ? '<span class="kod-rozet rafsiz">Rafsız</span>' : '—') + '</td>' +
-        '<td><b>' + O.kacis(kitap ? kitap.ad : (k.listeAdi || 'Bilinmeyen kitap')) + '</b><div class="soluk">' + O.kacis(alt) + '</div></td>' +
+        '<td><b>' + O.kacis(kitap ? kitap.ad : (k.listeAdi || 'Bilinmeyen kitap')) + '</b>' + (alt ? '<div class="soluk">' + O.kacis(alt) + '</div>' : '') + '</td>' +
         '<td style="font-variant-numeric:tabular-nums;white-space:nowrap">' + O.kacis(k.barkod) + '</td>' +
-        '<td class="sayi"><b>' + k.adet + '</b></td>' +
         '<td><span class="rozet ' + RENK[k.durum] + '">' + Sube.DURUM[k.durum] + '</span></td>' +
         '<td class="islem"><span class="yazdirma-gizle">' +
           (!kitap && ekleyebilir ? '<button class="dugme" type="button" data-sube-ekle="' + O.kacis(k.barkod) + '" style="min-height:36px">Kitabı ekle</button>' : '') +
@@ -113,7 +110,7 @@
     $('sube-satirlar').innerHTML = html || '<tr><td colspan="' + sutunSayisi + '" class="bos-not" style="text-align:center;padding:28px">Bu filtrede kalem yok.</td></tr>';
     var sube = $('sube-ad').value.trim();
     $('sube-yazdir-baslik').innerHTML = '<h2>' + O.kacis((sube ? sube + ' · ' : '') + 'Eksik listesi') + '</h2><p class="soluk">' +
-      O.kacis(liste.dosya) + ' · ' + new Date().toLocaleDateString('tr-TR') + ' · ' + sonuc.ozet.kalem + ' kalem, ' + sonuc.ozet.adet + ' adet</p>';
+      O.kacis(liste.dosya) + ' · ' + new Date().toLocaleDateString('tr-TR') + ' · ' + sonuc.ozet.kalem + ' kalem</p>';
   }
 
   function indir(bayt, ad) {
@@ -137,7 +134,6 @@
   birak.addEventListener('drop', function (e) { e.preventDefault(); dosyaOku(e.dataTransfer.files[0]); });
 
   $('sube-barkod-sutun').addEventListener('change', function () { liste.sutun.barkod = Number(this.value); hesapla(); });
-  $('sube-adet-sutun').addEventListener('change', function () { liste.sutun.adet = Number(this.value); hesapla(); });
   $('sube-filtre').addEventListener('change', ciz);
   $('sube-ad').addEventListener('input', function () { if (sonuc) ciz(); });
 
@@ -145,7 +141,7 @@
     if (!sonuc) return;
     var sube = $('sube-ad').value.trim();
     var satirlar = Sube.ciktiSatirlari(sonuc);
-    var genislik = [6, 22, 8, 16, 40, 24, 22, 12, 15, 34];
+    var genislik = [6, 24, 8, 16, 44, 15];
     indir(Xlsx.yaz(satirlar, { sayfa: sube || 'Eksik listesi', genislikler: genislik, kalinBaslik: true }),
       dosyaAdi('eksik-listesi-' + (sube ? sube + '-' : '') + new Date().toISOString().slice(0, 10)) + '.xlsx');
   });
@@ -158,12 +154,12 @@
   });
   // Örnek liste: mağazadaki barkodlu birkaç kitap + kayıtlı olmayan bir barkod; yükleyip hemen denenebilir.
   $('sube-ornek').addEventListener('click', function () {
-    var satir = [['Şube: Örnek şube'], [], ['Barkod', 'Kitap adı', 'Adet']];
-    P.d().kitaplar.filter(function (k) { return k.barkod; }).slice(0, 5).forEach(function (k, i) {
-      satir.push([k.barkod, k.ad, [2, 1, 3, 1, 4][i]]);
+    var satir = [['Şube: Örnek şube'], [], ['Barkod', 'Kitap adı']];
+    P.d().kitaplar.filter(function (k) { return k.barkod; }).slice(0, 5).forEach(function (k) {
+      satir.push([k.barkod, k.ad]);
     });
-    satir.push(['9789750000001', 'Mağazada olmayan örnek kitap', 1]);
-    indir(Xlsx.yaz(satir, { sayfa: 'Eksikler', genislikler: [18, 40, 8] }), 'ornek-eksik-listesi.xlsx');
+    satir.push(['9789750000001', 'Mağazada olmayan örnek kitap']);
+    indir(Xlsx.yaz(satir, { sayfa: 'Eksikler', genislikler: [18, 40] }), 'ornek-eksik-listesi.xlsx');
   });
   $('sube-satirlar').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sube-ekle]');

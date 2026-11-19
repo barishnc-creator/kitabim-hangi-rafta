@@ -230,7 +230,7 @@
     return p;
   }
 
-  // ---- Gelince haber ver talepleri ----
+  // ---- Müşteri kitap talepleri ----
   // Telefonu 05XXXXXXXXX biçimine getirir; geçersizse ''.
   function telefonDuzelt(t) {
     var r = String(t || '').replace(/\D+/g, '');
@@ -238,14 +238,51 @@
     if (/^5\d{9}$/.test(r)) r = '0' + r;
     return /^0[2-5]\d{9}$/.test(r) ? r : '';
   }
+  // Yalnız kitap adı zorunlu; ad ve telefon isteğe bağlı (telefon yazılmışsa geçerli olmalı).
   function talepDogrula(g) {
     var kitap = String(g.kitap || '').trim(), ad = String(g.ad || '').trim();
-    var telefon = telefonDuzelt(g.telefon);
-    if (!kitap) throw hata('EKSIK', 'Aradığınız kitabı yazın.');
-    if (!ad) throw hata('EKSIK', 'Adınızı yazın.');
-    if (!telefon) throw hata('GECERSIZ', 'Telefon numarasını 05XX XXX XX XX biçiminde yazın.');
-    if (g.onay !== true) throw hata('ONAY', 'Devam etmek için bilgilendirme metnini onaylayın.');
+    var hamTel = String(g.telefon || '').trim(), telefon = hamTel ? telefonDuzelt(hamTel) : '';
+    if (!kitap) throw hata('EKSIK', 'İstediğiniz kitabın adını yazın.');
+    if (hamTel && !telefon) throw hata('GECERSIZ', 'Telefon numarasını 05XX XXX XX XX biçiminde yazın ya da boş bırakın.');
     return { kitap: kitap.slice(0, 300), kitapId: g.kitapId || null, ad: ad.slice(0, 60), telefon: telefon, not: String(g.not || '').slice(0, 120), onay: true };
+  }
+  function talepAnahtar(t) {
+    if (t.kitapId) return 'id:' + t.kitapId;
+    return 'ad:' + String(t.kitap || '').toLocaleLowerCase('tr').replace(/[^0-9a-zçğıöşü]+/g, ' ').trim();
+  }
+  // Aynı kitaba gelen talepleri tek satırda toplar: talep sayısı, son tarih, bırakılan iletişim bilgileri.
+  // Kitap kaydı olan taleplerle aynı adı taşıyan kayıtsız talepler de birleşir.
+  function talepGrupla(talepler) {
+    var gruplar = {}, adaGore = {}, sira = [];
+    (talepler || []).forEach(function (t) {
+      var a = talepAnahtar(t), adA = 'ad:' + talepAnahtar({ kitap: t.kitap }).slice(3);
+      var g = gruplar[a] || gruplar[adaGore[adA]];
+      if (!g) {
+        g = { anahtar: a, kitap: String(t.kitap || '').trim(), kitapId: t.kitapId || null, sayi: 0, son: '', ilk: '', kisiler: [], notlar: [], idler: [] };
+        gruplar[a] = g; sira.push(g);
+      }
+      adaGore[adA] = g.anahtar;
+      if (!g.kitapId && t.kitapId) g.kitapId = t.kitapId;
+      g.sayi++;
+      g.idler.push(t.id);
+      var z = t.olusturuldu || '';
+      if (!g.son || z > g.son) g.son = z;
+      if (!g.ilk || z < g.ilk) g.ilk = z;
+      if (t.ad || t.telefon) g.kisiler.push({ ad: t.ad || '', telefon: t.telefon || '' });
+      if (t.not && g.notlar.indexOf(t.not) < 0) g.notlar.push(t.not);
+    });
+    return sira.sort(function (x, y) { return y.sayi - x.sayi || (y.son > x.son ? 1 : y.son < x.son ? -1 : 0); });
+  }
+
+  // ---- Kampanya / reklam alanı (müşteri ekranı) ----
+  var KAMPANYA_EN_COK = 6;
+  function resimGecerli(u, sinir) { return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || '')) && u.length <= (sinir || 400000); }
+  function kampanyaDuzelt(liste) {
+    if (!Array.isArray(liste)) return [];
+    return liste.filter(function (k) { return k && (resimGecerli(k.resim) || String(k.baslik || '').trim()); }).slice(0, KAMPANYA_EN_COK).map(function (k, i) {
+      return { id: String(k.id || ('kp' + i)).slice(0, 40), baslik: String(k.baslik || '').trim().slice(0, 60), aciklama: String(k.aciklama || '').trim().slice(0, 160),
+        resim: resimGecerli(k.resim) ? k.resim : '' };
+    });
   }
 
   // Yedekten gelen veriyi doğrulayıp eksik alanları tamamlar.
@@ -268,6 +305,7 @@
       d.ayarlar.logo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(ham.ayarlar.logo || '') && ham.ayarlar.logo.length <= 300000 ? ham.ayarlar.logo : '';
       d.ayarlar.karsilama = String(ham.ayarlar.karsilama || '').slice(0, 80);
       d.ayarlar.plan = planDuzelt(ham.ayarlar.plan, d.raflar.length ? d.raflar : null);
+      d.ayarlar.kampanyalar = kampanyaDuzelt(ham.ayarlar.kampanyalar);
     }
     return d;
   }
@@ -276,7 +314,8 @@
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
     kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap, rafsizKitaplar: rafsizKitaplar, urunGirisiUygula: urunGirisiUygula,
-    planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula,
+    planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula, talepGrupla: talepGrupla,
+    kampanyaDuzelt: kampanyaDuzelt, KAMPANYA_EN_COK: KAMPANYA_EN_COK,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -26,14 +26,13 @@
 
   var BASLIK = {
     barkod: /barkod|barcode|isbn|ean|gtin/,
-    adet: /adet|miktar|eksik|sayi|istenen|ihtiyac|talep|siparis|qty|quantity/,
     ad: /kitap|urun|ad[i]?$|^ad\b|isim|aciklama|eser|baslik|mal ?cins|malin ?cinsi|stok adi/
   };
 
   // Başlık satırını ve sütunları bulur. Başlık yoksa barkod sütunu içeriğe göre seçilir.
-  // Döner: { baslikSatiri: -1|n, barkod: k, adet: k|-1, ad: k|-1, basliklar: [...] }
+  // Döner: { baslikSatiri: -1|n, barkod: k, ad: k|-1, basliklar: [...] }
   function sutunlariBul(satirlar) {
-    var sonuc = { baslikSatiri: -1, barkod: -1, adet: -1, ad: -1, basliklar: [] };
+    var sonuc = { baslikSatiri: -1, barkod: -1, ad: -1, basliklar: [] };
     for (var r = 0; r < Math.min(satirlar.length, 15); r++) {
       var satir = satirlar[r] || [];
       var b = satir.findIndex(function (h) { return BASLIK.barkod.test(baslikSade(h)); });
@@ -44,8 +43,7 @@
         satir.forEach(function (h, k) {
           var s = baslikSade(h);
           if (k === b || !s) return;
-          if (sonuc.adet < 0 && BASLIK.adet.test(s)) sonuc.adet = k;
-          else if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;
+          if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;
         });
         break;
       }
@@ -67,8 +65,7 @@
           ust.forEach(function (x, k) {
             var s = baslikSade(x);
             if (k === enIyi || !s) return;
-            if (sonuc.adet < 0 && BASLIK.adet.test(s)) sonuc.adet = k;
-            else if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;
+            if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;
           });
           break;
         }
@@ -78,15 +75,10 @@
     return sonuc;
   }
 
-  function adetOku(x) {
-    var n = Number(String(x == null ? '' : x).replace(',', '.').replace(/[^\d.]/g, ''));
-    return isFinite(n) && n > 0 ? Math.round(n) : 1;
-  }
-
   var DURUM = { var: 'Mağazada var', kayitsiz: 'Kayıtlı değil' };
 
   // Listeyi eşleştirir. sutun: sutunlariBul sonucu (kullanıcı değiştirmiş olabilir).
-  // Aynı barkod listede birden çok geçerse adetleri toplanır.
+  // Aynı barkod listede birden çok geçerse tek kalem olur. Adet okunmaz: liste yalnız barkod ve raf bilgisini verir.
   function eslestir(d, satirlar, sutun) {
     var dizin = {};
     d.kitaplar.forEach(function (k) {
@@ -100,13 +92,12 @@
       if (!temiz(ham)) return;
       var anahtar = barkodAnahtar(ham);
       if (!/^\d{6,14}$/.test(anahtar)) { atlanan++; return; }
-      var adet = sutun.adet >= 0 ? adetOku(satir[sutun.adet]) : 1;
-      if (gorulen[anahtar]) { gorulen[anahtar].adet += adet; return; }
+      if (gorulen[anahtar]) return;
       var kitap = dizin[anahtar] || null;
       var yer = kitap ? Depo.konum(d, kitap.bolmeId) : null;
       var durum = kitap ? 'var' : 'kayitsiz';
       var kalem = {
-        satir: r + 1, barkod: temiz(ham).replace(/\s+/g, ''), anahtar: anahtar, adet: adet,
+        satir: r + 1, barkod: temiz(ham).replace(/\s+/g, ''), anahtar: anahtar,
         listeAdi: sutun.ad >= 0 ? temiz(satir[sutun.ad]) : '',
         kitap: kitap, yer: yer, durum: durum
       };
@@ -129,21 +120,19 @@
   }
 
   function ozet(kalemler) {
-    var o = { kalem: kalemler.length, adet: 0, var: 0, kayitsiz: 0 };
-    kalemler.forEach(function (k) { o.adet += k.adet; o[k.durum]++; });
+    var o = { kalem: kalemler.length, var: 0, kayitsiz: 0 };
+    kalemler.forEach(function (k) { o[k.durum]++; });
     return o;
   }
 
   // Excel'e yazılacak satırlar (ilk satır başlık). Barkod metin kalır.
   function ciktiSatirlari(sonuc) {
-    var bas = ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Yazar', 'Yayınevi', 'İstenen adet'];
-    bas.push('Durum', 'Listedeki ad');
+    var bas = ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum'];
     return [bas].concat(sonuc.kalemler.map(function (k, i) {
       var s = [i + 1,
         k.yer ? k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : '') : '',
         k.yer ? k.yer.kod : '',
-        k.barkod, k.kitap ? k.kitap.ad : '', k.kitap ? k.kitap.yazar || '' : '', k.kitap ? k.kitap.yayinevi || '' : '', k.adet];
-      s.push(DURUM[k.durum], k.listeAdi);
+        k.barkod, k.kitap ? k.kitap.ad : k.listeAdi, DURUM[k.durum]];
       return s;
     }));
   }
