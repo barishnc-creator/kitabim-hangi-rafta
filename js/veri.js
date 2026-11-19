@@ -150,6 +150,7 @@
         return talepYaz(l).then(function () { return t; });
       },
       talepler: function () { return Promise.resolve(talepOku()); },
+      bildirimler: function () { return Promise.resolve(null); }, // sınır ve bildirim yalnız bulutta
       talepDurum: function (id, durum) { return talepYaz(talepOku().map(function (t) { return t.id === id ? Object.assign({}, t, { durum: durum }) : t; })); },
       talepSil: function (ids) { ids = [].concat(ids); return talepYaz(talepOku().filter(function (t) { return ids.indexOf(t.id) < 0; })); },
 
@@ -386,11 +387,29 @@
       gecmis: function () {
         return sb.from('kirtasiye_gecmis').select('zaman,kim_ad,islem,konu,ayrinti').order('zaman', { ascending: false }).limit(500).then(kontrol);
       },
+      // Talep fonksiyonla bırakılır: aynı telefondan 24 saatte 5'ten fazlası kaydedilmez, panele bildirim düşer
+      // (supabase/guvenlik-2026-11-19.sql). Fonksiyon henüz kurulmadıysa eski yoldan tabloya eklenir.
       talepEkle: function (g) {
         var t = Depo.talepDogrula(g);
-        return sb.from('kirtasiye_talepler').insert({ kitap: t.kitap, kitap_id: t.kitapId, ad: t.ad, telefon: t.telefon, notu: t.not, onay: true })
-          .then(kontrol).then(function () { return t; });
+        return sb.rpc('kirtasiye_talep_birak', { p_kitap: t.kitap, p_kitap_id: t.kitapId, p_ad: t.ad, p_telefon: t.telefon, p_notu: t.not }).then(function (s) {
+          if (s.error && s.error.code === 'PGRST202') {
+            return sb.from('kirtasiye_talepler').insert({ kitap: t.kitap, kitap_id: t.kitapId, ad: t.ad, telefon: t.telefon, notu: t.not, onay: true }).then(kontrol);
+          }
+          if (kontrol(s) === false) {
+            var e = new Error('Bu numarayla bugün en fazla 5 talep bırakılabiliyor; kırtasiye çalışanımız sizinle ilgilenecek.');
+            e.sinir = true;
+            throw e;
+          }
+        }).then(function () { return t; });
       },
+      // Okunmamış yönetici bildirimleri; tablo henüz kurulmadıysa null (panel bölümü gizler).
+      bildirimler: function () {
+        return sb.from('kirtasiye_bildirimler').select('id,telefon,deneme,ilk,son').eq('okundu', false).order('son', { ascending: false }).then(function (s) {
+          if (s.error && (s.error.code === 'PGRST205' || s.error.code === '42P01')) return null;
+          return kontrol(s);
+        });
+      },
+      bildirimOkundu: function (id) { return sb.from('kirtasiye_bildirimler').update({ okundu: true }).eq('id', id).then(kontrol); },
       talepler: function () {
         return sb.from('kirtasiye_talepler').select('id,kitap,kitap_id,ad,telefon,notu,durum,olusturuldu').order('olusturuldu', { ascending: false }).limit(1000).then(kontrol)
           .then(function (l) { return l.map(function (t) { return { id: t.id, kitap: t.kitap, kitapId: t.kitap_id, ad: t.ad, telefon: t.telefon, not: t.notu, durum: t.durum, olusturuldu: t.olusturuldu }; }); });

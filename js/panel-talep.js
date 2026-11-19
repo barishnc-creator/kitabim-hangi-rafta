@@ -18,8 +18,23 @@
     $('talep-sayac').textContent = n;
   }
 
+  // Aynı telefondan günde 5'ten fazla talep denenince (talep kaydedilmez) üstte uyarı şeridi.
+  // Bildirim tablosu yoksa (SQL henüz çalıştırılmadı) ya da okunamazsa şerit gizli kalır.
+  function bildirimleriCiz(l) {
+    var s = $('bildirim-serit');
+    s.hidden = !(l && l.length);
+    s.innerHTML = s.hidden ? '' : l.map(function (b) {
+      return '<div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between">' +
+        '<span><b>Bu kişi birden fazla istek gönderiyor:</b> <a href="tel:' + O.kacis(b.telefon) + '" style="white-space:nowrap">' + O.kacis(telBicim(b.telefon)) + '</a>' +
+        ' · 24 saatte ' + Number(b.deneme) + ' deneme · son ' + tarih(b.son) + '. Günde en fazla 5 talep kaydedilir; fazlası kaydedilmedi.</span>' +
+        '<button type="button" class="dugme" data-bildirim-okundu="' + O.kacis(b.id) + '">Okundu</button></div>';
+    }).join('');
+  }
+  function bildirimYukle() { return Veri.bildirimler().then(bildirimleriCiz, function () { bildirimleriCiz(null); }); }
+
   function yukle() {
     if (!yetki()) return Promise.resolve();
+    bildirimYukle();
     return Veri.talepler().then(function (l) { son = l; sayac(l); if (!$('talepler').hidden) ciz(); })
       .catch(function (e) { $('talep-satirlar').innerHTML = '<tr><td colspan="5"><div class="mesaj hata">' + O.kacis(e.message) + '</div></td></tr>'; });
   }
@@ -43,6 +58,10 @@
   }
 
   $('talep-filtre').addEventListener('change', ciz);
+  $('bildirim-serit').addEventListener('click', function (e) {
+    var id = e.target.getAttribute('data-bildirim-okundu');
+    if (id) P.yap(function () { return Veri.bildirimOkundu(id); }, 'Bildirim okundu olarak işaretlendi.').then(bildirimYukle, bildirimYukle);
+  });
   $('talep-satirlar').addEventListener('change', function (e) {
     var id = e.target.getAttribute('data-talep');
     if (!id) return;

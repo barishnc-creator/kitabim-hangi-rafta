@@ -1,7 +1,7 @@
 // Kitabım Hangi Rafta: kullanıcı yönetimi.
 // Hesap açmak service role gerektirdiği için tarayıcıdan değil buradan yapılır.
 // İşlemler: durum, ilk-kurulum, ekle, rol, sifre, kaldir.
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -13,36 +13,8 @@ const json = (body: unknown, status = 200) =>
 const hata = (mesaj: string, status = 400) => json({ hata: mesaj }, status);
 
 const ROLLER = ["duzenleyici", "revizeci", "calisan"];
-const SIFRE_EN_AZ = 10;
 
-export function sifreDogrula(sifre: string) {
-  if (sifre.length < SIFRE_EN_AZ) throw new Error(`Şifre en az ${SIFRE_EN_AZ} karakter olmalı.`);
-  return sifre;
-}
-
-export function girdiDogrula(govde: Record<string, unknown>) {
-  const ad = String(govde.ad || "").trim();
-  const eposta = String(govde.eposta || "").trim().toLowerCase();
-  if (!ad) throw new Error("Ad boş olamaz.");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) throw new Error("Geçerli bir e-posta girin.");
-  return { ad, eposta, sifre: sifreDogrula(String(govde.sifre || "")) };
-}
-
-// Yeni hesap açar. E-posta önceden kayıtlıysa reddeder: o hesabın şifresini başkası belirlemiş olabilir
-// (ör. herkese açık kayıtla), bu yüzden şifresine dokunmadan role bağlamak güvenli değil.
-export async function hesapAc(db: SupabaseClient, eposta: string, sifre: string): Promise<string> {
-  const { data, error } = await db.auth.admin.createUser({ email: eposta, password: sifre, email_confirm: true });
-  if (!error && data.user) return data.user.id;
-  const m = error?.message || "";
-  if (error?.code === "email_exists" || /already/i.test(m)) {
-    throw new Error("Bu e-posta ile zaten bir hesap var; güvenlik için bağlanmadı. Farklı bir e-posta kullanın ya da o hesabı Supabase panelinden (Authentication → Users) silip yeniden ekleyin.");
-  }
-  if (error?.code === "weak_password" || /password/i.test(m)) throw new Error("Şifre kabul edilmedi; daha uzun bir şifre seçin.");
-  throw new Error("Hesap açılamadı: " + m);
-}
-
-// Testte sunucu başlatılmaz (KULLANICI_TEST=1).
-if (!Deno.env.get("KULLANICI_TEST")) Deno.serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return hata("POST gerekli", 405);
 
@@ -59,14 +31,38 @@ if (!Deno.env.get("KULLANICI_TEST")) Deno.serve(async (req) => {
     return count ?? 0;
   };
 
+  // E-postası verilen hesabı açar; zaten varsa mevcut hesabı döndürür (şifresine dokunmaz).
+  const hesapAcVeyaBul = async (eposta: string, sifre: string) => {
+    const { data, error } = await db.auth.admin.createUser({ email: eposta, password: sifre, email_confirm: true });
+    if (!error && data.user) return { id: data.user.id, yeni: true };
+    for (let sayfa = 1; sayfa <= 20; sayfa++) {
+      const { data: l } = await db.auth.admin.listUsers({ page: sayfa, perPage: 200 });
+      const u = l?.users.find((x) => (x.email || "").toLowerCase() === eposta);
+      if (u) return { id: u.id, yeni: false };
+      if (!l || l.users.length < 200) break;
+    }
+    throw new Error(error?.message?.includes("Password") ? "Şifre en az 6 karakter olmalı." : "Hesap açılamadı: " + (error?.message || ""));
+  };
+
+  const girdi = () => {
+    const ad = String(govde.ad || "").trim();
+    const eposta = String(govde.eposta || "").trim().toLowerCase();
+    const sifre = String(govde.sifre || "");
+    if (!ad) throw new Error("Ad boş olamaz.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) throw new Error("Geçerli bir e-posta girin.");
+    if (sifre.length < 6) throw new Error("Şifre en az 6 karakter olmalı.");
+    return { ad, eposta, sifre };
+  };
+
   try {
     if (islem === "durum") return json({ kurulumGerekli: (await duzenleyiciSayisi()) === 0 });
 
     if (islem === "ilk-kurulum") {
       if ((await duzenleyiciSayisi()) > 0) return hata("Kurulum zaten yapılmış.", 403);
-      const { ad, eposta, sifre } = girdiDogrula(govde);
-      const id = await hesapAc(db, eposta, sifre);
-      await db.from("kirtasiye_uyeler").insert({ user_id: id, ad, eposta, rol: "duzenleyici", kirtasiye_hesabi: true }).throwOnError();
+      const { ad, eposta, sifre } = girdi();
+      const h = await hesapAcVeyaBul(eposta, sifre);
+      if (!h.yeni) return hata("Bu e-posta başka bir uygulamada kayıtlı. Farklı bir e-posta kullanın.");
+      await db.from("kirtasiye_uyeler").insert({ user_id: h.id, ad, eposta, rol: "duzenleyici", kirtasiye_hesabi: true }).throwOnError();
       return json({ tamam: true });
     }
 
@@ -85,12 +81,14 @@ if (!Deno.env.get("KULLANICI_TEST")) Deno.serve(async (req) => {
     };
 
     if (islem === "ekle") {
-      const { ad, eposta, sifre } = girdiDogrula(govde);
+      const { ad, eposta, sifre } = girdi();
       const rol = String(govde.rol);
       if (!ROLLER.includes(rol)) return hata("Geçersiz yetki.");
-      const id = await hesapAc(db, eposta, sifre);
-      await db.from("kirtasiye_uyeler").insert({ user_id: id, ad, eposta, rol, kirtasiye_hesabi: true }).throwOnError();
-      return json({ tamam: true });
+      const h = await hesapAcVeyaBul(eposta, sifre);
+      const { data: var_ } = await db.from("kirtasiye_uyeler").select("user_id").eq("user_id", h.id).maybeSingle();
+      if (var_) return hata("Bu kişi zaten listede.");
+      await db.from("kirtasiye_uyeler").insert({ user_id: h.id, ad, eposta, rol, kirtasiye_hesabi: h.yeni }).throwOnError();
+      return json({ tamam: true, mevcutHesap: !h.yeni });
     }
 
     if (islem === "rol") {
@@ -107,7 +105,8 @@ if (!Deno.env.get("KULLANICI_TEST")) Deno.serve(async (req) => {
     if (islem === "sifre") {
       const u = await hedef();
       if (!u.kirtasiye_hesabi) return hata("Bu hesap başka bir uygulamaya ait; şifresi buradan değiştirilemez.");
-      const sifre = sifreDogrula(String(govde.sifre || ""));
+      const sifre = String(govde.sifre || "");
+      if (sifre.length < 6) return hata("Şifre en az 6 karakter olmalı.");
       const { error } = await db.auth.admin.updateUserById(hedefId, { password: sifre });
       if (error) throw error;
       return json({ tamam: true });

@@ -221,7 +221,7 @@
       });
     }
     else if (is === 'uye-sifre') {
-      O.pencere('Yeni şifre (en az 10 karakter):', { girdi: true, evet: 'Şifreyi değiştir' }).then(function (s) {
+      O.pencere('Yeni şifre (en az 6 karakter):', { girdi: true, evet: 'Şifreyi değiştir' }).then(function (s) {
         if (s) yap(function () { return Veri.uyeSifre(id, s); }, 'Şifre değiştirildi. Yeni şifreyi kişiye iletin.').catch(sus);
       });
     }
@@ -672,8 +672,8 @@
   $('uye-form').addEventListener('submit', function (e) {
     e.preventDefault();
     var u = { ad: $('u-ad').value, eposta: $('u-eposta').value, sifre: $('u-sifre').value, rol: $('u-rol').value };
-    Veri.uyeEkle(u).then(function () {
-      bildir($('uye-mesaj'), 'basari', (u.ad || u.eposta) + ' eklendi. Şifreyi kendisine iletin.');
+    Veri.uyeEkle(u).then(function (s) {
+      bildir($('uye-mesaj'), 'basari', (u.ad || u.eposta) + ' eklendi' + (s && s.mevcutHesap ? ' (mevcut hesabıyla; kendi şifresiyle girer).' : '. Şifreyi kendisine iletin.'));
       ['u-ad', 'u-eposta', 'u-sifre'].forEach(function (i) { $(i).value = ''; });
       uyeleriCiz();
     }).catch(function (err) { bildir($('uye-mesaj'), 'hata', err.message); });

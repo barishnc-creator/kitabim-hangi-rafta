@@ -5,7 +5,7 @@ Yayın öncesi, salt okunur denetim (kod düzeltmesi yapılmadı). Kapsam: `supa
 ## Özet
 
 - **Kritik ve yüksek önemde bulgu yok.** RLS 10 tablonun hepsinde açık, yönetim işlemleri veritabanında (RLS) ve fonksiyonda (rol denetimi) korunuyor; istemcide yalnız gizlenen yetki yok. Depoda gizli anahtar yok.
-- **3 orta önemde bulgu:** anonim talep/arama ekleme sınırsız (spam, KVKK yükü), oturum jetonu paylaşılan `github.io` kökeninde localStorage'da, Auth'ta herkese açık kayıt + 6 karakterlik şifre sınırı.
+- **3 orta önemde bulgu:** anonim talep/arama ekleme sınırsız (toplu sahte kayıt, KVKK yükü), oturum jetonu paylaşılan `github.io` kökeninde localStorage'da, Auth'ta herkese açık kayıt + 6 karakterlik şifre sınırı.
 - **7 düşük önemde bulgu:** savunma derinliği (varsayılan tablo yetkileri, SECURITY DEFINER fonksiyonuna anon erişimi, CSP yok, ham hata mesajları vb.).
 
 ## Bulgular
@@ -45,7 +45,7 @@ Yayın öncesi, salt okunur denetim (kod düzeltmesi yapılmadı). Kapsam: `supa
 
 **Doğrulanmadı:**
 - Canlı `pg_policies` ve Supabase güvenlik danışmanı (`get_advisors`): proje kullanıcının ayrı Supabase hesabında, Claude'un Supabase MCP bağlantısında yok (yalnız `ortak-muhasebe` ve `csn` görünüyor). Canlı politikaların `kurulum.sql` ile aynı olduğu varsayıldı; DEVIR'e göre bulutta geçmiş tetikleyicisi eski sürüm.
-- Yazma gerektiren testler bilerek yapılmadı: anonim talep spam'i (O1), rolsüz kayıtlı hesabın davranışı, kitap-bilgi fonksiyonunun hız sınırı.
+- Yazma gerektiren testler bilerek yapılmadı: anonim toplu sahte talep (O1), rolsüz kayıtlı hesabın davranışı, kitap-bilgi fonksiyonunun hız sınırı.
 - Auth tarafındaki asgari şifre uzunluğu, sızmış şifre koruması, giriş denemesi hız sınırları (panelden bakılmalı).
 - O2: kullanıcının aynı GitHub hesabında başka Pages sitesi olup olmadığı.
 
@@ -62,10 +62,10 @@ Yayın öncesi, salt okunur denetim (kod düzeltmesi yapılmadı). Kapsam: `supa
 3. O2: kendi alan adına geçiş (müdüre satış öncesi de profesyonel görünür).
 4. D1 + D2 + D3: tek SQL dosyasıyla (`kurulum.sql`'e ekleyip yeniden çalıştırma).
 
-## Düzeltme durumu (19 Kasım 2026, `claude/guvenlik-duzeltme` dalı)
+## Düzeltme durumu (19 Kasım 2026, `main`'e alındı)
 
-Elle yapılacak adımlar: `belgeler/guvenlik-duzeltme-adimlari.md`. Canlıya henüz uygulanmadı.
+Kullanıcının yapacağı tek adım: `belgeler/guvenlik-duzeltme-adimlari.md` (SQL dosyasını çalıştırmak).
 
-- **O1:** `supabase/guvenlik-2026-11-19.sql`: BEFORE INSERT tetikleyicisi. Talep: aynı telefondan 24 saatte ≤ 5, toplam 10 dakikada ≤ 30 (aşınca anlaşılır hata); arama: dakikada ≤ 30 (fazlası hata vermeden atlanır). Kayıt zamanı sunucuda `now()` (istemci eski tarihle sınırı atlatamaz). Alan uzunlukları ve zorunlu KVKK onayı (`onay boolean check (onay)`, formda kutucuk + aydınlatma metni) zaten vardı. Turnstile/IP sınırı eklenmedi (ek servis gerektirir); toplam sınır betikli spam'i saatte en çok 180 taleple sınırlar. Testler: `npm run test:sql` (yerel PostgreSQL, 7 kontrol).
+- **O1:** `supabase/guvenlik-2026-11-19.sql`. Talep: aynı telefondan 24 saatte en çok 5 (BEFORE INSERT tetikleyicisi, her yoldan geçerli). Müşteri ekranı talebi `kirtasiye_talep_birak` fonksiyonuyla bırakır: 6. ve sonraki deneme kaydedilmez, müşteri nazik mesaj görür, `kirtasiye_bildirimler` tablosuna "Bu kişi birden fazla istek gönderiyor" kaydı düşer (telefon, deneme sayısı, zaman); panelde üstte uyarı şeridi, "Okundu" ile kapanır. Bildirimleri yalnız düzenleyici ve çalışan görür/günceller; anonim yalnız fonksiyon üzerinden dolaylı yazar. Herkese toplam sınır (10 dakikada 30) kullanıcı kararıyla kaldırıldı. Arama kaydı: dakikada en çok 30 (fazlası sessizce atlanır). Kayıt zamanı sunucuda `now()`. Ön yüz SQL'den önce de çalışır (fonksiyon yoksa tabloya doğrudan ekler, tablo yoksa şerit gizlenir). Testler: `npm run test:sql` (11 kontrol), `tests/talep-sinir.test.cjs`, `tests/e2e/talep-bulut-e2e.js`.
 - **O2:** `js/veri.js`: supabase-js oturumu `sessionStorage`'da, anahtar `kitabim-hangi-rafta-oturum`; eski `sb-…-auth-token` localStorage kaydı silinir. Kalan risk: aynı sekmede açılan başka bir `barishnc-creator.github.io` sayfası sessionStorage'ı da okuyabilir. **Gerçek çözüm ayrı köken:** Cloudflare Pages ya da Vercel ücretsiz alt alan adı veya özel alan adı. Kiosk girişsiz çalıştığı için etkilenmez; panel sekme kapanınca yeniden giriş ister.
-- **O3:** `kirtasiye-kullanici/index.ts`: şifre ≥ 10; önceden kayıtlı e-posta artık role bağlanmıyor, reddediliyor (ilk kurulumdaki davranışla aynı). Depoda `supabase/config.toml` yok; kayıt kapatma ve Auth asgari şifre uzunluğu panelden (adımlar belgesi, 2. adım). Testler: `npm run test:fonksiyon` (4 yeni).
+- **O3: kullanıcı kararıyla kabul edildi (tek yönetici hesabı var).** Kayıt ayarı, şifre sınırı ve kullanıcı fonksiyonu (`kirtasiye-kullanici/index.ts`) değiştirilmedi.

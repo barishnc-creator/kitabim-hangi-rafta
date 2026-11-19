@@ -225,7 +225,8 @@
         $p('#t-tamam').addEventListener('click', kapat);
         setTimeout(function () { if (perde.isConnected) kapat(); }, 8000);
       }).catch(function (err) {
-        $p('#t-mesaj').innerHTML = '<div class="mesaj hata">Talep gönderilemedi: ' + O.kacis(err.message) + '</div>';
+        $p('#t-mesaj').innerHTML = err.sinir ? '<div class="mesaj uyari">' + O.kacis(err.message) + '</div>'
+          : '<div class="mesaj hata">Talep gönderilemedi: ' + O.kacis(err.message) + '</div>';
       });
     });
     setTimeout(function () { $p(kitap ? '#t-ad' : '#t-kitap').focus(); }, 0);
