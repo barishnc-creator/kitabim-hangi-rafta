@@ -66,8 +66,8 @@ Kullanıcının bilgisi: mağaza programı hazır alacak; personel kitap bilgisi
    - Kullanıcıya sorulacak karar: Google aramasını açmak için faturalandırma (kart) açılsın mı? Açılmazsa akış: Google Kitaplar (anahtarla; Books API projede etkin olmalı, değilse anahtarsız) → Open Library → "Kapaktan doldur".
 0b. Tanı satırı: barkod penceresinde `sürüm 18.11-c · motor · foto · deneme · hata` (iPhone fotoğraf sorunu için eklendi; arkadaşın sorunu aslında Google Kitaplar kotasıydı).
 1. Kullanıcı canlı sistemi deneyip revize verecek; revizeleri bu depoda yap, test et, push et (Pages otomatik güncellenir).
-2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (16 slayt, kaynağı `belgeler/sunum/`). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak.
-3. Sunuma "tablete uygulama olarak kurulur" bilgisi eklenebilir (PDF'te var).
+2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (17 slayt, kaynağı `belgeler/sunum/`; 19 Kasım sürüm 11: stok ifadeleri çıkarıldı, yeni “Yeni ürünler Excel’le gelir” slaytı, talep slaytı “Müşteri kitap talebi” ve karşılama ekranı görüntüsü, okul/şube görüntüleri yenilendi, telefon slaytına tablete uygulama kurulumu). Fiyat yerleri `[₺__]`, teslim süresi, ad/telefon kullanıcı tarafından doldurulacak.
+3. Proje PDF'i (`belgeler/`) henüz stok kaldırma, ürün girişi ve talep kutusuna göre güncellenmedi.
 4. Android tablette kamera testi (iPhone tamam), Türkçe kitaplarda Google Books kapsamı, Microsoft Excel ile gerçek şube listesi denemesi.
 
 ## Açık sorular
