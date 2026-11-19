@@ -59,8 +59,8 @@
   <div class="kapak-gorsel"><img src="pdf-img/k2-sonuc.jpg" alt="Müşteri ekranında kitabın rafı ve mağaza haritası"></div>
   <div class="kapak-alt">
     <div><b>Belge</b>Proje dokümanı ve kullanım özeti</div>
-    <div><b>Tarih</b>18 Kasım 2026</div>
-    <div><b>Sürüm</b>1.1 · ekran görüntüleri örnek verilerle hazırlanmıştır</div>
+    <div><b>Tarih</b>19 Kasım 2026</div>
+    <div><b>Sürüm</b>1.2 · ekran görüntüleri örnek verilerle hazırlanmıştır</div>
   </div>
 </section>
 
@@ -82,8 +82,8 @@
   <h2>Sistem ne işe yarar?</h2>
   <p>Kırtasiyede en sık sorulan soru “Bu kitap nerede?” sorusudur. <b>Kitabım Hangi Rafta?</b> bu soruyu personele gerek kalmadan yanıtlar. Mağazadaki raflar ve bölmeler (1.1, 1.2, 2.3 …) programa bir kez tanımlanır, kitaplar barkod okutularak ya da elle bölmelere eklenir. Müşteri dükkândaki ekranda kitabın adını yazar ya da barkodunu okutur; program kitabın hangi raf ve bölmede olduğunu söyler, mağaza haritasında oraya giden yolu gösterir.</p>
   <div class="ozet-izgara">
-    <div><b>Müşteri için</b>Kitabını kendisi bulur, okul listesindeki kitapları tek ekranda görür, olmayan kitap için “gelince haber ver” der.</div>
-    <div><b>Personel için</b>Barkodu okutunca kitap bilgileri kendiliğinden dolar; yalnız rafı seçip kaydeder. Toplu yükleme Excel’den yapılır.</div>
+    <div><b>Müşteri için</b>Kitabını kendisi bulur, okul listesindeki kitapları tek ekranda görür, olmayan kitap için talep bırakır, gelince haber verilir.</div>
+    <div><b>Personel için</b>Barkodu okutunca kitap bilgileri kendiliğinden dolar; yalnız rafı seçip kaydeder. Yeni ürünler mağaza programının Excel listesinden toplu girilir.</div>
     <div><b>Yönetici için</b>Raflar, harita, kullanıcılar ve yetkiler; en çok aranan ve aranıp bulunamayan kitapların raporu; işlem geçmişi.</div>
   </div>
   <p>Sistem bir web uygulamasıdır: uygulama mağazası gerektirmez, dükkândaki dokunmatik ekranda, bilgisayarda, tablette ve telefonda tarayıcıdan açılır. İstenirse tablete ve telefona simgesiyle <b>uygulama olarak kurulur</b>: müşteri ekranı tam ekran “Kitabım Nerede”, yönetim paneli “Raf Yönetimi” adıyla ana ekrana eklenir. Veriler bulutta tutulur; personelin telefonundan eklenen kitap aynı anda müşteri ekranında görünür.</p>
@@ -94,14 +94,14 @@
   <p class="bolum-no">2</p>
   <h2>Müşteri ekranı</h2>
   <p>Dükkândaki ekranda açık duran, giriş gerektirmeyen ekrandır. Dokunmatik kiosk modunda Türkçe ekran klavyesi açılır; 90 saniye dokunulmazsa başlangıca döner.</p>
-  <figure><img src="pdf-img/k1-karsilama.jpg" alt="Karşılama ekranı"><figcaption>Karşılama: kitap adı yazma ve barkod okutma, okul kitap listeleri, raflara göre gezinme, yeni gelen kitaplar. Logo, renk ve karşılama yazısı mağazaya göre değiştirilebilir.</figcaption></figure>
+  <figure><img src="pdf-img/k1-karsilama.jpg" alt="Karşılama ekranı"><figcaption>Karşılama: kitap adı yazma, barkod okutma ve kitap talebi bırakma; okul kitap listeleri, raflara göre gezinme, yeni gelen kitaplar. Logo, renk ve karşılama yazısı mağazaya göre değiştirilebilir.</figcaption></figure>
 </section>
 
 <section class="yeni-sayfa">
   <h3>Arama sonucu ve mağaza haritası</h3>
   <ul>
     <li>Ad, yazar, yayınevi ya da barkodla arama; Türkçe harf ve büyük-küçük harf farkı önemsizdir.</li>
-    <li>Kitabın kapağı, bilgileri, büyük harflerle <b>raf ve bölme</b>, yön tarifi (“Girişten sağa, kasanın arkası”), fiyat ve stok durumu (Rafta var / Son 2 adet / Tükendi).</li>
+    <li>Kitabın kapağı, bilgileri, büyük harflerle <b>raf ve bölme</b>, yön tarifi (“Girişten sağa, kasanın arkası”) ve fiyat. Mağazaya yeni gelip henüz rafına konmamış kitapta “mağazaya yeni geldi, henüz rafına yerleştirilmedi” yazar.</li>
     <li><b>Mağaza haritası:</b> “Buradasınız” noktasından aranan rafa giden yol çizilir, hedef raf yanıp söner. Haritası çizilmemiş mağazada raf şeması gösterilir.</li>
     <li><b>Telefonunuza alın:</b> müşteri QR’ı okutunca kitabın yeri kendi telefonunda açılır.</li>
   </ul>
@@ -113,13 +113,13 @@
 
 <section class="yeni-sayfa">
   <h3>Okul kitap listeleri <span class="etiket">Sezonun en çok kullanılacak özelliği</span></h3>
-  <p>Veli okulunu ve sınıfını seçer; listedeki bütün kitaplar raf yerleri ve stok durumuyla tek ekranda çıkar. “8 kitaptan 6’sı hazır” özeti, hangi raflara gidileceği ve eksik kitaplar için tek dokunuşla “haber ver” talebi bulunur. Liste QR ile telefona alınabilir.</p>
+  <p>Veli okulunu ve sınıfını seçer; listedeki bütün kitaplar raf yerleriyle tek ekranda çıkar. “8 kitaptan 6’sı hazır” özeti, hangi raflara gidileceği ve eksik kitaplar için tek dokunuşla “haber ver” talebi bulunur. Liste QR ile telefona alınabilir.</p>
   <figure><img src="pdf-img/k3-okul.jpg" alt="Okul listesi"><figcaption>Okul → sınıf seçimi ve listenin mağazadaki durumu.</figcaption></figure>
 </section>
 
 <section class="yeni-sayfa">
-  <h3>Gelince haber ver</h3>
-  <p>Bulunamayan, tükenen ya da okul listesinde eksik olan kitap için müşteri adını ve telefonunu bırakır. Form, kişisel verilerin yalnız bu talep için kullanılacağına dair onay kutusu ve aydınlatma metni içerir. Talepler yönetim panelinde listelenir.</p>
+  <h3>Kitap talebi</h3>
+  <p>Müşteri, aradığı kitap mağazada yoksa ya da okul listesinde eksikse adını ve telefonunu bırakır. Karşılama ekranındaki yeşil “Kitap talebi bırakın” kutusuyla, aramadan doğrudan da talep oluşturulabilir (kitap adı, ad, telefon). Form, kişisel verilerin yalnız bu talep için kullanılacağına dair onay kutusu ve aydınlatma metni içerir. Talepler yönetim panelinde listelenir.</p>
   <figure><img style="width:86%" src="pdf-img/k4-talep.jpg" alt="Talep formu"><figcaption>Kiosk modunda ekran klavyesiyle talep formu. Klavye açıkken form ekranın üstüne yaslanır.</figcaption></figure>
   <h3>Telefonda</h3>
   <div class="telefonlar">
@@ -150,14 +150,26 @@
 <section class="yeni-sayfa">
   <h3>Kitaplar</h3>
   <ul>
-    <li>Arama ve rafa göre süzme yapılabilen tablo; kapak, yazar, yayınevi, konum, fiyat ve stok.</li>
+    <li>Arama ve rafa göre süzme yapılabilen tablo; kapak, yazar, yayınevi, konum ve fiyat. Henüz rafa konmamış kitaplar “Rafsız” rozetiyle görünür, “Rafa yerleştirilecek” süzgeciyle listelenir.</li>
     <li><b>Barkoddan otomatik bilgi:</b> kitap barkodu (ISBN) okutulunca ad, yazar, yayınevi ve kapak internetten (Google Kitaplar, yoksa Open Library) gelir; personel yalnız rafı seçip kaydeder. Raf ve bölme bir sonraki kitap için seçili kalır.</li>
     <li>Barkod kasa tipi okuyucuyla, telefon/tablet kamerasıyla ya da barkodun fotoğrafı çekilerek okunabilir. Kamera okuması yüksek çözünürlükte çalışır; iPhone’da gerçek kitaplarla denendi.</li>
     <li>Aynı barkod ikinci kez girilirse uyarı verir.</li>
-    <li><b>Excel ile toplu işlem:</b> kitap listesi Excel’e aktarılır; Excel’den toplu yükleme yapılır, hatalı satırlar tek tek gösterilir.</li>
+    <li>Kitap listesi Excel’e aktarılır. Toplu ekleme “Ürün girişi” sekmesinden yapılır (aşağıda).</li>
   </ul>
   <figure><img src="pdf-img/p4-kitaplar.jpg" alt="Kitaplar"><figcaption>Kitap tablosu.</figcaption></figure>
   <figure><img src="pdf-img/p5-kitap-ekle.jpg" alt="Kitap ekle"><figcaption>Kitap ekleme formu (yandan açılır).</figcaption></figure>
+</section>
+
+<section class="yeni-sayfa">
+  <h3>Ürün girişi <span class="etiket">Mağaza programıyla birlikte</span></h3>
+  <p>Mağaza mal girişini kendi satış programında yapar; buraya o programdan alınan <b>tüm ürünlerin Excel listesini</b> (.xls, .xlsx ya da .csv) yükler. Program listeyi kayıtlı kitaplarla karşılaştırır.</p>
+  <ul>
+    <li>Programda zaten kayıtlı ürün (barkoduna, barkodu yoksa adına göre) <b>atlanır</b>, dokunulmaz. Aynı liste ikinci kez yüklenirse hiçbir şey eklenmez.</li>
+    <li>Yalnız yeni kitaplar eklenir ve “Rafa yerleştirilecek” olarak işaretlenir. Barkod, kitap adı ve yayınevi sütunları otomatik bulunur; gerekirse elle seçilir. BÜYÜK HARFLE yazılmış adlar normal yazıma çevrilir (“KINALI SERÇE” → “Kınalı Serçe”).</li>
+    <li>Kaydetmeden önce özet ve önizleme gösterilir: kaç yeni kitap, kaçı zaten kayıtlı.</li>
+    <li><b>Rafa yerleştir:</b> personel bölmeyi seçer, kitapların barkodunu art arda okutur (okuyucu ya da kamera); her kitap seçili bölmeye kaydedilir. Başka bölmedeki kitap için taşıma onayı sorulur. Bekleyen kitap sayısı menüde ve genel bakışta görünür.</li>
+  </ul>
+  <figure><img src="pdf-img/p13-urun-girisi.jpg" alt="Ürün girişi"><figcaption>Excel listesinin önizlemesi ve altta rafa yerleştirme.</figcaption></figure>
 </section>
 
 <section class="yeni-sayfa">
@@ -165,16 +177,16 @@
   <p>Okulun yayınladığı liste olduğu gibi yapıştırılır. Program satırları mağazadaki kitaplarla otomatik eşleştirir: numaralar ve madde işaretleri temizlenir, yazım hataları tolere edilir, farklı sınıfların kitapları (7. sınıf / 8. sınıf) birbirine karışmaz. Eşleşmeyen satırlar için “Kitap ekle” düğmesi çıkar; eşleşmeler elle düzeltilebilir.</p>
   <figure><img src="pdf-img/p6-okul.jpg" alt="Okul listeleri"><figcaption>Listeyi yapıştır, eşleştir, kaydet.</figcaption></figure>
   <h3>Talepler</h3>
-  <p>“Gelince haber ver” talepleri; kitap şu an stoktaysa bu da gösterilir. Durum (Yeni → Arandı → Geldi / İptal) güncellenir, menüde yeni talep sayacı görünür, liste Excel’e aktarılır, kapanan talepler silinir.</p>
+  <p>Müşterilerin bıraktığı kitap talepleri; istenen kitap şu an raftaysa bu da gösterilir. Durum (Yeni → Arandı → Geldi / İptal) güncellenir, menüde yeni talep sayacı görünür, liste Excel’e aktarılır, kapanan talepler silinir.</p>
   <figure><img src="pdf-img/p7-talepler.jpg" alt="Talepler"><figcaption>Talepler.</figcaption></figure>
 </section>
 
 <section class="yeni-sayfa">
   <h3>Şube eksik listesi <span class="etiket">Şubeler arası sevkiyat</span></h3>
-  <p>Şubeden gelen barkodlu eksik listesi (Excel .xlsx ya da .csv) panele yüklenir. Program her kitabın mağazada hangi raf ve bölmede olduğunu bulur ve listeyi <b>raf sırasına göre</b> dizer; personel rafları sırayla dolaşarak kitapları toplar.</p>
+  <p>Şubeden gelen barkodlu eksik listesi (Excel .xlsx, .xls ya da .csv) panele yüklenir. Program her kitabın mağazada hangi raf ve bölmede olduğunu bulur ve listeyi <b>raf sırasına göre</b> dizer; personel rafları sırayla dolaşarak kitapları toplar.</p>
   <ul>
     <li>Listede bir “Barkod” sütunu olması yeter; “Adet” sütunu varsa istenen adet de okunur. Sütunlar otomatik bulunur, gerekirse elle seçilir.</li>
-    <li>Her kalem için durum: <b>Rafta</b>, <b>Stok yetersiz</b>, <b>Stokta yok</b> ya da <b>Kayıtlı değil</b>. Kayıtlı olmayan barkod tek dokunuşla kitap olarak eklenir.</li>
+    <li>Her kalem için durum: <b>Mağazada var</b> (raf ve bölmesiyle) ya da <b>Kayıtlı değil</b>; şubenin istediği adet listede kalır. Kayıtlı olmayan barkod tek dokunuşla kitap olarak eklenir.</li>
     <li>Sonuç Excel olarak indirilir ya da işaretleme kutucuklu toplama listesi olarak yazdırılır.</li>
   </ul>
   <figure><img src="pdf-img/p12-sube.jpg" alt="Şube eksikleri"><figcaption>Kadıköy şubesinin eksik listesi: özet, raf raf toplama listesi ve kayıtlı olmayan kitap.</figcaption></figure>
@@ -194,7 +206,7 @@
   <p>Müdür ya da yönetici programla ilgili isteklerini (yeni özellik, değişiklik) buraya yazar. İstekler “Yeni / İletildi / Yapıldı” olarak takip edilir; yeni istekler tek düğmeyle toplu kopyalanıp geliştiriciye iletilir.</p>
   <figure><img src="pdf-img/p10-revizeler.jpg" alt="Revizeler"><figcaption>Revizeler.</figcaption></figure>
   <h3>Ayarlar ve görünüm</h3>
-  <p>Mağaza adı, logo, ana renk (hazır renkler ya da özel renk), müşteri ekranının karşılama yazısı; fiyat ve stok alanlarının açılıp kapatılması; yedek indirme. Seçilen renk beyaz yazıyla okunmayacak kadar açıksa okunur olması için otomatik koyulaştırılır.</p>
+  <p>Mağaza adı, logo, ana renk (hazır renkler ya da özel renk), müşteri ekranının karşılama yazısı; fiyatın gösterilip gösterilmemesi; yedek indirme. Seçilen renk beyaz yazıyla okunmayacak kadar açıksa okunur olması için otomatik koyulaştırılır.</p>
   <figure><img src="pdf-img/p11-ayarlar.jpg" alt="Ayarlar"><figcaption>Görünüm ayarları ve canlı önizleme.</figcaption></figure>
 </section>
 
@@ -226,7 +238,7 @@
     <li><b>Erişim kuralları:</b> her tablo için satır düzeyinde güvenlik (RLS). Giriş yapmamış müşteri ekranı yalnız kitapları okuyabilir, talep ve arama kaydı ekleyebilir; kimsenin telefonunu okuyamaz.</li>
     <li><b>Kişisel veri (KVKK):</b> talep formunda açık onay ve aydınlatma metni; telefonlar yalnız düzenleyici ve çalışana görünür; kapanan taleplerin düzenli silinmesi önerilir (en geç 90 gün). Arama raporunda kişisel bilgi tutulmaz.</li>
     <li><b>Gizli anahtar yok:</b> uygulamada yalnız herkese açık olması tasarlanmış anahtar bulunur; hesap açma gibi yetkili işlemler sunucu tarafındaki fonksiyonda yapılır.</li>
-    <li><b>Test:</b> 43 otomatik birim testi ve her özellik için tarayıcıda uçtan uca testler. Veritabanı kurulum dosyası gerçek PostgreSQL üzerinde çalıştırılıp erişim kuralları rol rol doğrulandı.</li>
+    <li><b>Test:</b> 62 otomatik birim testi ve her özellik için tarayıcıda uçtan uca testler. Veritabanı kurulum dosyası gerçek PostgreSQL üzerinde çalıştırılıp erişim kuralları rol rol doğrulandı.</li>
   </ul>
 </section>
 
@@ -240,7 +252,7 @@
     <li><b>Yayın:</b> uygulama dosyaları GitHub Pages (ya da benzeri) üzerinde yayınlanır; proje adresi ve açık anahtar <i>js/ayar.js</i> dosyasına yazılır.</li>
     <li><b>İlk yönetici:</b> yönetim paneli ilk açıldığında “İlk kurulum” ekranından yönetici hesabı oluşturulur.</li>
     <li><b>Mağaza düzeni:</b> raflar ve bölmeler eklenir, harita çizilir, logo ve renk seçilir, etiketler yazdırılıp raflara yapıştırılır.</li>
-    <li><b>Kitaplar:</b> barkod okutarak ya da Excel’den toplu olarak eklenir; okul listeleri girilir.</li>
+    <li><b>Kitaplar:</b> mağaza programının ürün listesi Excel olarak “Ürün girişi”ne yüklenir, kitaplar barkod okutularak raflara yerleştirilir; okul listeleri girilir.</li>
     <li><b>Kiosk:</b> dükkândaki ekranda müşteri ekranı <i>?kiosk=1</i> ile tam ekran açılır (ekran klavyesi etkin).</li>
     <li><b>Tablete ve telefona kurulum:</b> Android’de Chrome menüsünden “Uygulamayı yükle”, iPad/iPhone’da Safari’de “Paylaş → Ana Ekrana Ekle” seçilir; yönetim panelindeki “Uygulama olarak kur” düğmesi de bunu yapar. Kurulan uygulama adres çubuğu olmadan, kendi simgesiyle açılır.</li>
   </ol>
@@ -265,7 +277,8 @@
     <li>Canlı kamerayla barkod okuma iPhone’da doğrulandı; Android tablette ayrıca denenecek. Sorun çıkan cihazlarda “fotoğraf çekerek okut” yedeği vardır.</li>
     <li>Excel listeleri .xlsx, eski .xls (Excel 97–2003) ve .csv olarak okunur; Excel 95 ve öncesinin biçimi okunmaz.</li>
     <li>Talep formundaki aydınlatma metni örnektir; mağazanın kendi bilgileriyle güncellenmesi ve bir hukukçuya kontrol ettirilmesi önerilir.</li>
-    <li>İleride eklenebilecekler: şubeler arası ortak stok görünümü, SMS/WhatsApp ile otomatik “kitabınız geldi” bildirimi, satış programı entegrasyonu.</li>
+    <li>Program stok ve adet tutmaz; stok mağaza programındadır. Yeni ürünler her seferinde tüm ürün listesiyle gelir, programda kayıtlı olanlar atlanır.</li>
+    <li>İleride eklenebilecekler: mağaza programından otomatik ürün aktarımı, eksik kitap bilgilerinin (yazar, kapak) toplu tamamlanması, SMS/WhatsApp ile otomatik “kitabınız geldi” bildirimi, şubeler arası görünüm.</li>
   </ul>
 </section>
 </body>

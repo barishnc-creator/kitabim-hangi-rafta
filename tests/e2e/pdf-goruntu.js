@@ -58,6 +58,9 @@ function zenginlestir() {
   await sekme('gecmis', 'p9-gecmis');
   await sekme('revizeler', 'p10-revizeler');
   await sekme('ayarlar', 'p11-ayarlar');
+  // Ürün girişi: mağaza programının .xls listesi yüklenir, önizleme
+  await p.click('#sek-urun-girisi'); await p.setInputFiles('#giris-dosya', require('path').join(__dirname, '../veri/libreoffice-ornek.xls'));
+  await p.waitForSelector('#giris-onizleme:not([hidden])'); await p.waitForTimeout(300); await p.evaluate(() => document.getElementById('giris-ozet').scrollIntoView()); await p.evaluate(() => window.scrollBy(0, -140)); await foto('p13-urun-girisi');
   // Şube eksikleri: örnek listeyi indir, geri yükle
   await p.click('#sek-sube'); await p.fill('#sube-ad', 'Kadıköy şubesi');
   const [ind] = await Promise.all([p.waitForEvent('download'), p.click('#sube-ornek')]);

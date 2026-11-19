@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 19 Kasım 2026 (stok/adet kaldırıldı; ürün girişi tüm liste, kayıtlıyı atlar)_
+_Son güncelleme: 19 Kasım 2026 (proje PDF'i 1.2: stok yok, ürün girişi, talep kutusu)_
 
 ## Proje
 
@@ -67,7 +67,7 @@ Kullanıcının bilgisi: mağaza programı hazır alacak; personel kitap bilgisi
 0b. Tanı satırı: barkod penceresinde `sürüm 18.11-c · motor · foto · deneme · hata` (iPhone fotoğraf sorunu için eklendi; arkadaşın sorunu aslında Google Kitaplar kotasıydı).
 1. Kullanıcı canlı sistemi deneyip revize verecek; revizeleri bu depoda yap, test et, push et (Pages otomatik güncellenir).
 2. Sunum: claude.ai/artifact/DcQsrxVbtD3ER7ZxvUkAGN (26 slayt; sürüm 13: panelin 14 bölümü ızgara slaytı + Raflar, Kitaplar, Okul listeleri (panel), Talepler, Raf etiketleri, İşlem geçmişi, Revizeler, Ayarlar slaytları; kapanışta “Teşekkürler · Tidex Technology”, telefon yok; önceki: 17 slayt, kaynağı `belgeler/sunum/`; 19 Kasım sürüm 11: stok ifadeleri çıkarıldı, yeni “Yeni ürünler Excel’le gelir” slaytı, talep slaytı “Müşteri kitap talebi” ve karşılama ekranı görüntüsü, okul/şube görüntüleri yenilendi, telefon slaytına tablete uygulama kurulumu). Fiyat yerleri `[₺__]` ve teslim süresi kullanıcı tarafından doldurulacak (ad yerine Tidex Technology yazıldı, telefon kaldırıldı).
-3. Proje PDF'i (`belgeler/`) henüz stok kaldırma, ürün girişi ve talep kutusuna göre güncellenmedi.
+3. Proje PDF'i sürüm 1.2 (19 Kasım): stok ifadeleri çıkarıldı, yeni "Ürün girişi" sayfası (`pdf-img/p13-urun-girisi.jpg`, `pdf-goruntu.js` bunu da üretir), müşteri "Kitap talebi" kutusu, şube durumları "Mağazada var / Kayıtlı değil", 62 test; tüm ekran görüntüleri yenilendi (24 sayfa).
 4. Android tablette kamera testi (iPhone tamam), Türkçe kitaplarda Google Books kapsamı, Microsoft Excel ile gerçek şube listesi denemesi.
 
 ## Açık sorular
