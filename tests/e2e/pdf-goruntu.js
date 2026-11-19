@@ -19,8 +19,12 @@ function zenginlestir() {
   localStorage.setItem('kitabim-hangi-rafta:aramalar', JSON.stringify(a));
   localStorage.setItem('kitabim-hangi-rafta:talepler', JSON.stringify([
     { id: 't1', kitap: 'Suç ve Ceza', ad: 'Ayşe', telefon: '05321234567', not: '', durum: 'yeni', olusturuldu: g(0, 30), onay: true },
-    { id: 't2', kitap: '7. Sınıf İngilizce Workbook, Sefiller', ad: 'Mehmet', telefon: '05551234567', not: 'Örnek Ortaokulu · 7-A listesi', durum: 'yeni', olusturuldu: g(1), onay: true },
-    { id: 't3', kitap: 'Harry Potter ve Felsefe Taşı', ad: 'Zeynep', telefon: '05440001122', not: '', durum: 'arandi', olusturuldu: g(2), onay: true }]));
+    { id: 't2', kitap: 'suç ve ceza', ad: '', telefon: '', not: '', durum: 'yeni', olusturuldu: g(1, 20), onay: true },
+    { id: 't3', kitap: 'Suç ve Ceza', ad: 'Mert', telefon: '', not: '', durum: 'yeni', olusturuldu: g(2), onay: true },
+    { id: 't4', kitap: 'Sefiller', ad: 'Mehmet', telefon: '05551234567', not: 'Örnek Ortaokulu · 7-A listesi', durum: 'yeni', olusturuldu: g(1), onay: true },
+    { id: 't5', kitap: 'Sefiller', ad: '', telefon: '', not: '', durum: 'yeni', olusturuldu: g(3), onay: true },
+    { id: 't6', kitap: 'Harry Potter ve Felsefe Taşı', ad: 'Zeynep', telefon: '05440001122', not: '', durum: 'yeni', olusturuldu: g(2), onay: true },
+    { id: 't7', kitap: 'Küçük Kara Balık', ad: '', telefon: '', not: '', durum: 'yeni', olusturuldu: g(4), onay: true }]));
   localStorage.setItem('kitabim-hangi-rafta:revizeler', JSON.stringify([{ id: 'v1', yazan_ad: 'Mağaza müdürü', metin: 'Müşteri kartında kitabın sınıfı da yazsın.', durum: 'yeni', olusturuldu: g(1) }]));
   localStorage.setItem('kitabim-hangi-rafta:gecmis', JSON.stringify([
     { zaman: g(0, 5), kim_ad: 'Ayşe K. · Çalışan', islem: 'ekledi', konu: 'kitap', ayrinti: '“7. Sınıf Fen Bilimleri Konu Anlatımı” → 1.2' },
@@ -31,12 +35,31 @@ function zenginlestir() {
     { zaman: g(2, 15), kim_ad: 'Ayşe K. · Çalışan', islem: 'yukledi', konu: 'kitap', ayrinti: 'Excel\'den 120 kitap' },
     { zaman: g(2, 90), kim_ad: 'Yönetici · Düzenleyici', islem: 'ekledi', konu: 'raf', ayrinti: '4. Raf · Sözlük ve atlas (2 bölme)' }]));
 }
+// Örnek kampanya görseli (yalnız ekran görüntüleri için): sağda renkli kitap sırtları, solda boş alan (yazı üstüne gelir).
+async function kampanyaGorseli(b, renk1, renk2, rozet) {
+  const boy = [300, 360, 330, 390, 280, 350, 320, 370, 300];
+  const sirtlar = ['#FDE68A', '#FCA5A5', '#93C5FD', '#FFFFFF', '#86EFAC', '#C4B5FD', '#FDBA74', '#F9A8D4', '#A5F3FC']
+    .map((c, i) => '<i style="display:block;width:46px;height:' + boy[i] + 'px;background:' + c + ';border-radius:6px 6px 0 0;box-shadow:inset -6px 0 0 rgba(0,0,0,.12)"></i>').join('');
+  const p = await b.newPage({ viewport: { width: 1600, height: 500 } });
+  await p.setContent('<body style="margin:0"><div style="position:relative;width:1600px;height:500px;overflow:hidden;background:linear-gradient(115deg,' + renk1 + ' 0%,' + renk2 + ' 100%);font-family:sans-serif">' +
+    '<div style="position:absolute;right:-120px;top:-160px;width:620px;height:620px;border-radius:50%;background:rgba(255,255,255,.12)"></div>' +
+    '<div style="position:absolute;right:120px;bottom:0;display:flex;align-items:flex-end;gap:10px">' + sirtlar + '</div>' +
+    '<div style="position:absolute;right:640px;top:70px;width:200px;height:200px;border-radius:50%;background:#FACC15;color:#422006;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:64px;transform:rotate(-12deg);box-shadow:0 20px 40px rgba(0,0,0,.25)">' + rozet + '</div>' +
+    '</div></body>');
+  const veri = 'data:image/jpeg;base64,' + (await p.screenshot({ type: 'jpeg', quality: 82 })).toString('base64');
+  await p.close();
+  return veri;
+}
 (async () => {
   const b = await chromium.launch();
+  const kampanyalar = [
+    { id: 'kp1', baslik: 'Okula dönüşte test kitaplarında %20 indirim', aciklama: 'Tüm LGS, TYT ve AYT kitaplarında 30 Kasım’a kadar, kasada geçerli.', resim: await kampanyaGorseli(b, '#EA580C', '#BE123C', '%20') },
+    { id: 'kp2', baslik: 'Yeni gelenler: 2027 deneme setleri', aciklama: 'Raf 2’de sizi bekliyor.', resim: await kampanyaGorseli(b, '#0284C7', '#4338CA', 'YENİ') }
+  ];
   const ctx = await b.newContext({ viewport: { width: 1366, height: 860 }, deviceScaleFactor: 1.5 });
   const p = await ctx.newPage();
   const foto = (ad, tam) => p.screenshot({ path: OUT + '/' + ad + '.jpg', type: 'jpeg', quality: 82, fullPage: !!tam });
-  await p.goto(K + 'index.html?yerel=1'); await p.evaluate(tohum); await p.evaluate(zenginlestir);
+  await p.goto(K + 'index.html?yerel=1'); await p.evaluate(tohum); await p.evaluate(zenginlestir); await p.evaluate((l) => { const v = JSON.parse(localStorage.getItem('kitabim-hangi-rafta:v1')); v.ayarlar.kampanyalar = l; localStorage.setItem('kitabim-hangi-rafta:v1', JSON.stringify(v)); }, kampanyalar);
   // Müşteri ekranı
   await p.goto(K + 'index.html?yerel=1&kiosk=1'); await p.waitForTimeout(500); await foto('k1-karsilama', true);
   await p.fill('#sorgu', 'kürk'); await p.press('#sorgu', 'Enter'); await p.waitForTimeout(3800); await foto('k2-sonuc');
@@ -58,6 +81,7 @@ function zenginlestir() {
   await sekme('gecmis', 'p9-gecmis');
   await sekme('revizeler', 'p10-revizeler');
   await sekme('ayarlar', 'p11-ayarlar');
+  await sekme('kampanyalar', 'p14-kampanyalar');
   // Ürün girişi: mağaza programının .xls listesi yüklenir, önizleme
   await p.click('#sek-urun-girisi'); await p.setInputFiles('#giris-dosya', require('path').join(__dirname, '../veri/libreoffice-ornek.xls'));
   await p.waitForSelector('#giris-onizleme:not([hidden])'); await p.waitForTimeout(300); await p.evaluate(() => document.getElementById('giris-ozet').scrollIntoView()); await p.evaluate(() => window.scrollBy(0, -140)); await foto('p13-urun-girisi');

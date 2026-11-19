@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 19 Kasım 2026 (proje PDF'i 1.2: stok yok, ürün girişi, talep kutusu)_
+_Son güncelleme: 20 Kasım 2026 (talep oluştur, kampanya alanı, şubede adet yok, sunum sürüm 15)_
 
 ## Proje
 
@@ -24,7 +24,9 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 - D&R görünümü beğenilmedi; kendi tasarımımız kalıyor, renk ayarlanabilir.
 - Şimdilik ücretsiz altyapı; müdür onaylarsa ücretli yeni Supabase projesine sıfır veriyle taşınır.
-- Şube eksiklerindeki "Adet" sütunu (şubenin istediği adet) **kalacak** (19 Kasım, kullanıcı onayladı); stok değildir.
+- Şube eksiklerinde adet YOK (20 Kasım son karar).
+- Talepte KVKK onayı yok, telefon isteğe bağlı (20 Kasım).
+- Paketler: yalnız Standart ve Kiosk.
 - Fiyat paketleri iç fiyat notundadır (kullanıcıda); herkese açık depoya yazılmaz.
 
 ## Canlı kurulum (18 Kasım 2026, tamamlandı)
@@ -41,6 +43,16 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Deneme sürümü (yerel veri, örnek doldurma): claude.ai/artifact/W2Go9k3SPxdrxF93SZNXDw — kaynağı scratchpad'deydi; yeniden üretmek için `index.html`/`yonetim.html`'den supabase.js ve service worker çıkarılıp `js/ayar.js` boş bırakılır.
 
 ## Sıradaki işler
+
+000. **20 Kasım revizesi YAYINDA (main, sw khr-v16).** Kullanıcının istekleri ve kararları:
+   - **Talep oluştur:** "Gelince haber verilsin" kaldırıldı, her yerde "Talep oluştur". Yalnız kitap adı zorunlu; ad ve telefon **isteğe bağlı**; **KVKK onay kutusu ve aydınlatma metni kaldırıldı** (kullanıcı kararı; `Ortak.kvkkMetni` silindi). Okul listesi eksiklerinde kitap başına ayrı talep. Panelde aynı kitap **tek satır + talep sayısı** (`Depo.talepGrupla`: kitapId ya da sadeleştirilmiş ad), en çok istenen üstte; Yeni/Arandı/Geldi durumu kaldırıldı, "Kapat" grubun taleplerini siler. Güvenlik oturumunun bildirim şeridi korundu.
+   - **Güvenlik sınırı uyarlandı** (`supabase/guvenlik-2026-11-19.sql`): telefon varsa numara başına 24 saatte 5 (aynı); telefonsuz talepte toplamda 10 dakikada 30, bildirim yazılmaz. SQL testi 12 kontrol.
+   - **Şube eksikleri:** adet tamamen kaldırıldı (kullanıcı önce "kalsın" dedi, sonra "kaldır"; son karar: kaldır). Çıktı: Sıra, Raf, Bölme, Barkod, Kitap adı, Durum. Yazar/yayınevi de çıkarıldı.
+   - **Kampanyalar (reklam alanı):** müşteri karşılamasında fotoğraf+başlık+açıklama, 7 sn'de döner, en çok 6; panelde Kampanyalar sekmesi (yalnız düzenleyici), `js/panel-kampanya.js`, `Tema.kampanyaResmiHazirla` (≤1600 px JPEG, ≤380 KB). Veri `kirtasiye_ayarlar.kampanyalar` jsonb; sütun yoksa program yine açılır.
+   - **KULLANICININ YAPACAĞI (sorulacak):** SQL Editor'de önce `supabase/guvenlik-2026-11-19.sql` (çalıştırmadıysa ya da güncel hâli), sonra `supabase/guncelleme-20-kasim.sql`. Çalıştırılmadan bulutta adsız/telefonsuz talep ve kampanya kaydı hata verir (mesaj dosyayı söyler).
+   - Sunum sürüm 15 (27 slayt): çözüm 1. adım "Ara / Kitabı isminden ara", talep ve talepler slaytları yeni akış, yeni "kampanya" slaytı, şube slaytı adetsiz, güven slaytında KVKK yerine talep sınırı, panel 15 bölüm, paketler **Standart ve Kiosk** (iki paket), üstte magic geçişle kayan ilerleme çubuğu ve kademeli giriş animasyonları. Kaynak kopya scratchpad'deydi; canlı sürüm artifact'te.
+   - Proje PDF'i sürüm 1.3 (kampanya sayfası, talep ve şube metinleri).
+   - Testler: birim 74, SQL 12, e2e talep, kampanya, talep-bulut, giris-bulut, kiosk, panel, okul vb. temiz.
 
 00. **Güvenlik düzeltmesi YAYINDA (19 Kasım, main).** Kullanıcının tek adımı: `supabase/guvenlik-2026-11-19.sql`'i SQL Editor'de çalıştırmak (`belgeler/guvenlik-duzeltme-adimlari.md`); çalıştırdı mı sorulacak. Kararlar: telefon başına 24 saatte 5 talep; 6.+ deneme kaydedilmez, müşteriye nazik mesaj, `kirtasiye_bildirimler`'e kayıt ve panelde üst şerit ("Bu kişi birden fazla istek gönderiyor", Okundu); kiosk `rpc kirtasiye_talep_birak` kullanır (yoksa PGRST202 → eski doğrudan ekleme), panel tablo yoksa şeridi gizler. Toplam 10 dk/30 sınırı kaldırıldı; arama sınırı (dk'da 30) duruyor. Hiçbir metinde "spam" kelimesi kullanılmaz. Oturum sessionStorage'da (kalsın). O3 (kayıt/şifre/kullanıcı fonksiyonu) kullanıcı kararıyla değiştirilmedi, 4221060'taki değişiklik geri alındı. Gerçek O2 çözümü ayrı alan adı: kullanıcı kararı. Testler: `npm test` (72), `npm run test:fonksiyon` (15), `npm run test:sql` (11 kontrol, yerel PostgreSQL), e2e `talep-bulut-e2e.js`. sw khr-v15.
 
