@@ -262,7 +262,7 @@
           <p class="soluk" style="font-size:15px">Şubeden gelen barkodlu eksik listesini yükleyin. Program her kitabın hangi raf ve bölmede olduğunu bulur, raf sırasına göre bir toplama listesi çıkarır; listeyi Excel olarak indirebilir ya da yazdırabilirsiniz.</p>
           <div class="izgara-2">
             <div class="alan"><label for="sube-ad">Şube adı <span class="soluk">(isteğe bağlı)</span></label><input id="sube-ad" placeholder="Örn. Kadıköy şubesi" autocomplete="off" maxlength="60"></div>
-            <div class="alan"><label for="sube-dosya">Eksik listesi (Excel .xlsx ya da .csv)</label><input id="sube-dosya" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" style="padding:10px 14px"></div>
+            <div class="alan"><label for="sube-dosya">Eksik listesi (Excel .xlsx, .xls ya da .csv)</label><input id="sube-dosya" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="padding:10px 14px"></div>
           </div>
           <div class="sube-birak" id="sube-birak"><span data-ikon="yukle"></span>Dosyayı buraya sürükleyip bırakabilirsiniz</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -473,6 +473,7 @@
 <script src="js/yonetim.js"></script>
 <script src="js/panel-okul.js"></script>
 <script src="js/xlsx.js"></script>
+<script src="js/xls.js"></script>
 <script src="js/sube.js"></script>
 <script src="js/panel-talep.js"></script>
 <script src="js/panel-sube.js"></script>

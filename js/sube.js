@@ -6,6 +6,10 @@
 
   function temiz(x) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); }
   function kucuk(x) { return temiz(x).toLocaleLowerCase('tr-TR'); }
+  // Başlık karşılaştırması için: küçük harf ve Türkçe karaktersiz. Muhasebe programları başlıkları çoğu zaman
+  // büyük harfle ve Türkçesiz yazar (MIKTAR, MALINCINSI); Türkçe küçük harfte I → ı olduğu için sadeleştirilir.
+  var SADE = { 'ı': 'i', 'i̇': 'i', 'ş': 's', 'ç': 'c', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'â': 'a', 'î': 'i', 'û': 'u' };
+  function baslikSade(x) { return kucuk(x).replace(/i̇|[ışçğüöâîû]/g, function (h) { return SADE[h]; }); }
 
   // Barkodun karşılaştırma anahtarı: yalnız rakamlar (ISBN-10'un X'i dahil).
   // ISBN-10, aynı kitabın ISBN-13'üne çevrilir; böylece iki biçim de eşleşir.
@@ -22,8 +26,8 @@
 
   var BASLIK = {
     barkod: /barkod|barcode|isbn|ean|gtin/,
-    adet: /adet|miktar|eksik|say[ıi]|istenen|ihtiya[çc]|talep|sipari[şs]|qty|quantity/,
-    ad: /kitap|[üu]r[üu]n|ad[ıi]?$|^ad\b|isim|a[çc][ıi]klama|eser|ba[şs]l[ıi]k/
+    adet: /adet|miktar|eksik|sayi|istenen|ihtiyac|talep|siparis|qty|quantity/,
+    ad: /kitap|urun|ad[i]?$|^ad\b|isim|aciklama|eser|baslik|mal ?cins|malin ?cinsi|stok adi/
   };
 
   // Başlık satırını ve sütunları bulur. Başlık yoksa barkod sütunu içeriğe göre seçilir.
@@ -32,13 +36,13 @@
     var sonuc = { baslikSatiri: -1, barkod: -1, adet: -1, ad: -1, basliklar: [] };
     for (var r = 0; r < Math.min(satirlar.length, 15); r++) {
       var satir = satirlar[r] || [];
-      var b = satir.findIndex(function (h) { return BASLIK.barkod.test(kucuk(h)); });
+      var b = satir.findIndex(function (h) { return BASLIK.barkod.test(baslikSade(h)); });
       if (b >= 0) {
         sonuc.baslikSatiri = r;
         sonuc.barkod = b;
         sonuc.basliklar = satir.map(temiz);
         satir.forEach(function (h, k) {
-          var s = kucuk(h);
+          var s = baslikSade(h);
           if (k === b || !s) return;
           if (sonuc.adet < 0 && BASLIK.adet.test(s)) sonuc.adet = k;
           else if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;
@@ -61,7 +65,7 @@
           sonuc.baslikSatiri = h;
           sonuc.basliklar = ust.map(temiz);
           ust.forEach(function (x, k) {
-            var s = kucuk(x);
+            var s = baslikSade(x);
             if (k === enIyi || !s) return;
             if (sonuc.adet < 0 && BASLIK.adet.test(s)) sonuc.adet = k;
             else if (sonuc.ad < 0 && BASLIK.ad.test(s)) sonuc.ad = k;

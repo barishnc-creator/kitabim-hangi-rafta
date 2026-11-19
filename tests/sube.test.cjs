@@ -103,3 +103,13 @@ test('Xlsx: yazılan dosya geri okunur, özel karakterler korunur; eski .xls aç
   await assert.rejects(Xlsx.oku(new Uint8Array([0xD0, 0xCF, 0x11, 0xE0, 0, 0])), /xls/);
   await assert.rejects(Xlsx.oku(new TextEncoder().encode('düz metin')), /Excel/);
 });
+
+test('sütunlar: muhasebe programlarının büyük harfli Türkçesiz başlıkları (MIKTAR, MALINCINSI)', () => {
+  const s = Sube.sutunlariBul([['BARCODE', 'MALINCINSI', 'KOD3', 'MIKTAR'], ['9789750701689', 'VANİLYA KOKULU MEKTUPLAR', 'CANYAYINLARI', '5']]);
+  assert.equal(s.barkod, 0);
+  assert.equal(s.adet, 3, 'MIKTAR adet sütunu olmalı (büyük I, Türkçe küçük harfte ı olur)');
+  assert.equal(s.ad, 1, 'MALINCINSI kitap adı sütunu olmalı');
+  const t = Sube.sutunlariBul([['STOK KODU', 'STOK ADI', 'ADET'], ['9789750701689', 'X', '2']]);
+  assert.equal(t.adet, 2);
+  assert.equal(t.ad, 1);
+});

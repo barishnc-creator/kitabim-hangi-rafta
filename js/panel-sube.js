@@ -25,6 +25,7 @@
     durum('basari', '“' + ad + '” okunuyor…');
     dosya.arrayBuffer().then(function (ab) {
       if (/\.csv$/i.test(ad) || /^text\//.test(dosya.type)) return { satirlar: Csv.oku(csvMetni(ab)) };
+      if (Xls.xlsMi(new Uint8Array(ab))) return Xls.oku(ab); // eski Excel (.xls)
       return Xlsx.oku(ab);
     }).then(function (r) {
       var satirlar = (r.satirlar || []).map(function (s) { return s || []; });
