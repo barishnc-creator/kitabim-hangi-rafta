@@ -21,13 +21,15 @@ const OUT = process.argv[2] || require('os').tmpdir();
     'Türkçe Sözlük;TDK;TDK Yayınları;;4.1;450;2',
     '5. Sınıf Fen Bilimleri;Örnek Yazar;Örnek Yayınları;;1.2;180;7',
     'Yanlış satır;;;;9.9;;'].join('\n');
+  // Excel ile ürün girişi: olmayan bölmedeki (9.9) satır uyarıyla rafsız eklenir
+  await p.click('#sek-urun-girisi');
+  await p.setInputFiles('#giris-dosya', { name: 'k.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await p.waitForSelector('#giris-onizleme:not([hidden])');
+  console.log('ürün girişi özeti:', (await p.textContent('#giris-ozet')).replace(/\s+/g, ' '), '|', (await p.textContent('#giris-uyari')).replace(/\s+/g, ' ').trim());
+  await p.click('#giris-kaydet');
+  await p.waitForFunction(() => /kaydedildi/.test(document.getElementById('giris-durum').textContent));
+  console.log('mesaj:', await p.textContent('#giris-durum'));
   await p.click('#sek-kitaplar');
-  await p.setInputFiles('#csv-yukle', { name: 'k.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
-  await p.waitForTimeout(300);
-  console.log('içe aktarma penceresi:', (await p.textContent('.pencere')).replace(/\s+/g, ' ').slice(0, 160));
-  await p.click('.pencere button[type=submit]');
-  await p.waitForTimeout(300);
-  console.log('mesaj:', await p.textContent('#genel-mesaj'));
   // arama kayıtları
   await p.evaluate(() => {
     const k = [];

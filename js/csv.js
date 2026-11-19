@@ -1,9 +1,8 @@
-// Excel ile alışveriş: kitap listesini CSV olarak dışa aktarma ve CSV'den toplu içe aktarma.
-// Türkçe Excel ";" ayırıcı kullanır; ',' ve sekme de tanınır. Depo ve Arama'ya ihtiyaç duyar.
+// Excel ile alışveriş: kitap listesini CSV olarak dışa aktarma ve CSV okuma/yazma (içe aktarma: js/giris.js).
+// Türkçe Excel ";" ayırıcı kullanır; ',' ve sekme de tanınır. Depo'ya ihtiyaç duyar.
 // Tarayıcıda window.Csv, Node'da module.exports.
 (function (kok) {
   var Depo = kok.Depo || (typeof require === 'function' ? require('./depo.js') : null);
-  var Arama = kok.Arama || (typeof require === 'function' ? require('./arama.js') : null);
 
   var BASLIKLAR = ['Kitap adı', 'Yazar', 'Yayınevi', 'Barkod', 'Raf/Bölme', 'Fiyat', 'Stok'];
 
@@ -63,57 +62,7 @@
     }));
   }
 
-  // Başlık adlarını alanlara eşle (sıra serbest, Türkçe harf ve büyük/küçük harf önemsiz).
-  var ESLER = {
-    ad: ['kitap adi', 'kitap', 'ad', 'adi', 'baslik', 'isim', 'urun', 'urun adi'],
-    yazar: ['yazar', 'yazarlar'],
-    yayinevi: ['yayinevi', 'yayin evi', 'yayinci'],
-    barkod: ['barkod', 'isbn', 'barcode'],
-    konum: ['raf bolme', 'raf', 'bolme', 'konum', 'yer', 'raf no'],
-    fiyat: ['fiyat', 'fiyati', 'satis fiyati'],
-    stok: ['stok', 'adet', 'miktar']
-  };
-
-  function sutunlariBul(baslik) {
-    var harita = {};
-    baslik.forEach(function (b, i) {
-      var n = Arama.sadelestir(b);
-      Object.keys(ESLER).forEach(function (alan) {
-        if (harita[alan] == null && ESLER[alan].indexOf(n) >= 0) harita[alan] = i;
-      });
-    });
-    return harita;
-  }
-
-  // CSV satırlarını kontrol edip eklenecek kitapları ve sorunlu satırları ayırır. Veriyi değiştirmez.
-  // Dönüş: { kitaplar: [giris], hatalar: [{ satir, mesaj }], atlanan: sayı }
-  function iceAktarHazirla(d, satirlar) {
-    var sonuc = { kitaplar: [], hatalar: [], atlanan: 0 };
-    if (!satirlar.length) { sonuc.hatalar.push({ satir: 0, mesaj: 'Dosya boş.' }); return sonuc; }
-    var s = sutunlariBul(satirlar[0]);
-    if (s.ad == null) { sonuc.hatalar.push({ satir: 1, mesaj: '“Kitap adı” sütunu bulunamadı. İlk satır başlık olmalı.' }); return sonuc; }
-    if (s.konum == null) { sonuc.hatalar.push({ satir: 1, mesaj: '“Raf/Bölme” sütunu bulunamadı (ör. 2.3).' }); return sonuc; }
-    var kopya = JSON.parse(JSON.stringify(d));
-    for (var i = 1; i < satirlar.length; i++) {
-      var r = satirlar[i];
-      var al = function (alan) { return s[alan] == null ? '' : String(r[s[alan]] || '').trim(); };
-      var yer = Depo.bolmeBul(kopya, al('konum'));
-      if (!al('ad')) { sonuc.hatalar.push({ satir: i + 1, mesaj: 'Kitap adı boş.' }); continue; }
-      if (!yer) { sonuc.hatalar.push({ satir: i + 1, mesaj: '“' + al('konum') + '” diye bir bölme yok.' }); continue; }
-      var giris = { ad: al('ad'), yazar: al('yazar'), yayinevi: al('yayinevi'), barkod: al('barkod'),
-        bolmeId: yer.bolme.id, fiyat: al('fiyat').replace(/[₺\s]|TL/gi, ''), stok: al('stok') };
-      try {
-        Depo.kitapKaydet(kopya, giris); // aynı barkod ve sayı kontrolleri
-        sonuc.kitaplar.push(giris);
-      } catch (e) {
-        if (e.kod === 'AYNI_BARKOD') sonuc.atlanan++;
-        else sonuc.hatalar.push({ satir: i + 1, mesaj: e.message });
-      }
-    }
-    return sonuc;
-  }
-
-  var api = { oku: oku, yaz: yaz, kitaplariSatirla: kitaplariSatirla, iceAktarHazirla: iceAktarHazirla, BASLIKLAR: BASLIKLAR };
+  var api = { oku: oku, yaz: yaz, kitaplariSatirla: kitaplariSatirla, BASLIKLAR: BASLIKLAR };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Csv = api;
 })(this);

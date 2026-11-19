@@ -101,6 +101,7 @@
       <button class="yan-ogesi" role="tab" id="sek-raflar" aria-controls="raflar" aria-selected="false"><span data-ikon="raf"></span>Raflar</button>
       <button class="yan-ogesi" role="tab" id="sek-harita" aria-controls="harita" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="konum20"></span>Mağaza haritası</button>
       <button class="yan-ogesi" role="tab" id="sek-kitaplar" aria-controls="kitaplar" aria-selected="false"><span data-ikon="kitap18"></span>Kitaplar</button>
+      <button class="yan-ogesi" role="tab" id="sek-urun-girisi" aria-controls="urun-girisi" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="yukle"></span>Ürün girişi<span class="sayac" id="rafsiz-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-okul" aria-controls="okul" aria-selected="false"><span data-ikon="okul"></span>Okul listeleri</button>
       <button class="yan-ogesi" role="tab" id="sek-talepler" aria-controls="talepler" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="zil"></span>Talepler<span class="sayac" id="talep-sayac" hidden></span></button>
       <button class="yan-ogesi" role="tab" id="sek-sube" aria-controls="sube" aria-selected="false" data-yetki="duzenleyici calisan"><span data-ikon="sube"></span>Şube eksikleri</button>
@@ -135,7 +136,7 @@
       <section id="genel" role="tabpanel" aria-labelledby="sek-genel" class="bolum">
         <div class="mesaj uyari pano-rafsiz" id="pano-rafsiz" hidden>
           <span><b id="pano-rafsiz-sayi">0</b> kitap Excel ile girildi ama henüz rafa yerleştirilmedi. Müşteri ekranında “rafına yerleştirilmedi” görünür.</span>
-          <button type="button" class="dugme ana" data-sekme-git="giris">Rafa yerleştir</button>
+          <button type="button" class="dugme ana" data-sekme-git="urun-girisi">Rafa yerleştir</button>
         </div>
         <div class="kpiler" id="kpiler"></div>
         <div class="pano-izgara">
@@ -192,8 +193,7 @@
           <label class="gizli-etiket" for="liste-raf">Rafa göre</label>
           <select id="liste-raf"></select>
           <button class="dugme" type="button" id="csv-indir"><span data-ikon="indir"></span>Excel'e aktar</button>
-          <label class="dugme" for="csv-yukle" style="cursor:pointer" data-yetki="duzenleyici calisan"><span data-ikon="yukle"></span>Excel'den yükle</label>
-          <input type="file" id="csv-yukle" accept=".csv,text/csv,text/plain" class="gizli-etiket">
+          <button class="dugme" type="button" data-sekme-git="urun-girisi" data-yetki="duzenleyici calisan"><span data-ikon="yukle"></span>Excel'den ürün girişi</button>
         </div>
         <p class="soluk" id="kitap-sayi"></p>
         <div class="tablo-kutu">
@@ -258,6 +258,54 @@
           <table class="tablo"><thead><tr><th>Kitap</th><th>Müşteri</th><th>Tarih</th><th>Durum</th><th class="islem"><span class="gizli-etiket">İşlemler</span></th></tr></thead><tbody id="talep-satirlar"></tbody></table>
         </div>
         <p class="soluk">Kişisel veri: telefonlar yalnız düzenleyici ve çalışanlara görünür. Kapanan talepleri düzenli olarak silin (önerilen en geç 90 gün).</p>
+      </section>
+
+      <!-- ÜRÜN GİRİŞİ (id "giris" oturum açma ekranınındır) -->
+      <section id="urun-girisi" role="tabpanel" aria-labelledby="sek-urun-girisi" class="bolum" hidden>
+        <div class="kart bolum">
+          <h2 style="font-size:20px">Excel'den ürün girişi</h2>
+          <p class="soluk" style="font-size:15px">Mağaza programından aldığınız ürün listesini yükleyin (.xls, .xlsx ya da .csv). Kayıtlı kitapların adedi stoğa eklenir; yeni kitaplar “Rafa yerleştirilecek” olarak kaydedilir, aşağıdan rafına yerleştirirsiniz.</p>
+          <div class="alan"><label for="giris-dosya">Ürün listesi</label><input id="giris-dosya" type="file" accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" style="padding:10px 14px"></div>
+          <div class="sube-birak" id="giris-birak"><span data-ikon="yukle"></span>Dosyayı buraya sürükleyip bırakabilirsiniz</div>
+          <div id="giris-durum" role="status"></div>
+        </div>
+        <div id="giris-onizleme" class="bolum" hidden>
+          <div class="kart bolum">
+            <div class="sube-ozet" id="giris-ozet"></div>
+            <div id="giris-uyari"></div>
+            <details id="giris-sutunlar">
+              <summary>Sütunlar <span class="soluk" id="giris-sutun-ozet"></span></summary>
+              <div class="izgara-2" style="margin-top:12px" id="giris-sutun-secim"></div>
+            </details>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="dugme ana" type="button" id="giris-kaydet">Girişi kaydet</button>
+              <button class="dugme" type="button" id="giris-vazgec">Vazgeç</button>
+            </div>
+          </div>
+          <div class="tablo-kutu">
+            <table class="tablo"><thead><tr><th>İşlem</th><th>Kitap</th><th>Barkod</th><th class="sayi">Adet</th><th class="sayi">Stok</th></tr></thead><tbody id="giris-satirlar"></tbody></table>
+          </div>
+        </div>
+
+        <div class="kart bolum" id="yerlestir">
+          <h2 style="font-size:20px">Rafa yerleştir</h2>
+          <p class="soluk" style="font-size:15px">Kitapları rafa koyarken bölmeyi seçin, sonra barkodları art arda okutun: her okutulan kitap seçili bölmeye kaydedilir.</p>
+          <div class="izgara-2">
+            <div class="alan"><label for="yer-bolme">Bölme</label><select id="yer-bolme"></select></div>
+            <div class="alan"><label for="yer-barkod">Barkod</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <input id="yer-barkod" inputmode="numeric" autocomplete="off" placeholder="Okutun ya da yazıp Enter'a basın" style="flex:999 1 200px;min-width:0">
+                <button class="dugme cerceve" type="button" id="yer-tara" style="flex:1 1 150px"><span data-ikon="barkod"></span>Kamerayla okut</button>
+              </div>
+            </div>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:15px"><input type="checkbox" id="yer-art-arda" checked> Kamera her kitaptan sonra yeniden açılsın</label>
+          <div id="yer-durum" role="status"></div>
+          <ul class="kitap-liste" id="yer-son"></ul>
+          <h3 style="font-size:16px;margin-top:8px">Rafa yerleştirilecek kitaplar <span class="soluk" id="yer-rafsiz-sayi"></span></h3>
+          <ul class="kitap-liste" id="yer-rafsiz"></ul>
+          <button class="dugme" type="button" id="yer-daha" hidden>Daha fazla göster</button>
+        </div>
       </section>
 
       <!-- ŞUBE EKSİKLERİ -->
@@ -481,6 +529,8 @@
 <script src="js/sube.js"></script>
 <script src="js/panel-talep.js"></script>
 <script src="js/panel-sube.js"></script>
+<script src="js/giris.js"></script>
+<script src="js/panel-giris.js"></script>
 <script src="js/harita.js"></script>
 <script src="js/panel-gorunum.js"></script>
 <script src="js/panel-harita.js"></script>

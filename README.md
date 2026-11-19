@@ -5,13 +5,15 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 ## Öne çıkanlar
 
 - **Müşteri ekranı (kiosk):** karşılama ekranı, dokunmatik Türkçe ekran klavyesi (`?kiosk=1`), kapak görselli sonuçlar, büyük raf/bölme kartı ve raf şeması, stok rozeti (Rafta var / Son N adet / Tükendi), raflara göre gezinme, yeni gelenler, raf etiketindeki QR okutulunca bölme içeriği, "Telefonunuza alın" QR'ı, 90 sn boşta kalınca başa dönme, tam ekran.
-- **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak, Excel (CSV) içe/dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat/stok ayarları.
+- **Yönetim paneli:** Genel bakış panosu (kitap/raf/bölme sayıları, en çok arananlar, aranıp bulunamayanlar, son eklenenler, raf doluluğu), kitap tablosu (arama, raf filtresi), çekmece formunda barkoddan otomatik bilgi ve kapak (bulunamazsa "Kapaktan doldur"), kitap listesini CSV olarak dışa aktarma, QR'lı raf etiketi yazdırma, revizeler, kullanıcılar ve yetkiler, mağaza adı ve fiyat/stok ayarları.
 
 - **Okul listeleri:** okulun listesi yapıştırılır, kitaplarla otomatik (yazım hatasına dayanıklı) eşleştirilir; veli müşteri ekranında okul → sınıf seçip listedeki kitapları raf ve stok durumuyla görür.
 - **Gelince haber ver:** bulunamayan ya da tükenen kitap için müşteri ad ve telefon bırakır (KVKK onaylı); panelde Talepler sekmesinden takip edilir.
 - **Mağaza haritası:** raflar kat planına sürüklenerek yerleştirilir; müşteri ekranı "Buradasınız"dan rafa yolu gösterir.
 - **Görünüm:** mağazanın logosu, ana rengi ve karşılama yazısı.
-- **Şube eksikleri:** şubeden gelen barkodlu eksik listesi (Excel .xlsx ya da .csv) yüklenir; her kitabın raf ve bölmesi bulunur, raf sırasına göre toplama listesi çıkar (stok yetersiz / stokta yok / kayıtlı değil uyarılarıyla). Liste Excel olarak indirilir ya da “Toplandı” kutucuklarıyla yazdırılır. Excel okuma/yazma dış kütüphanesiz (`js/xlsx.js`).
+- **Excel ile ürün girişi (Ürün girişi sekmesi):** mağaza programından alınan liste (.xls, .xlsx ya da .csv) yüklenir. Sütunlar kendiliğinden bulunur (BARCODE/Barkod, MALINCINSI/Kitap adı, KOD3/Yayınevi, MIKTAR/Adet, Fiyat, Raf; gerekirse elle seçilir). Kayıtlı barkodun adedi **stoğa eklenir**; yeni kitaplar BÜYÜK HARFli adları normal yazıma çevrilerek **rafsız** ("Rafa yerleştirilecek") kaydedilir. Barkodsuz satırlar kitap adıyla eşleşir. Kaydetmeden önce özet ve önizleme gösterilir. Mantık `js/giris.js`, ekran `js/panel-giris.js`.
+- **Rafa yerleştir:** bölme bir kez seçilir, kitapların barkodları art arda okutulur (kamera her kitaptan sonra yeniden açılabilir); her kitap seçili bölmeye kaydedilir. Rafsız kitaplar müşteri ekranında "mağazaya yeni geldi, henüz rafına yerleştirilmedi" diye görünür; panelde "Rafsız" rozeti, menüde sayaç ve genel bakışta uyarı çıkar.
+- **Şube eksikleri:** şubeden gelen barkodlu eksik listesi (Excel .xlsx, .xls ya da .csv) yüklenir; her kitabın raf ve bölmesi bulunur, raf sırasına göre toplama listesi çıkar (stok yetersiz / stokta yok / kayıtlı değil uyarılarıyla). Liste Excel olarak indirilir ya da “Toplandı” kutucuklarıyla yazdırılır. Excel okuma/yazma dış kütüphanesiz (`js/xlsx.js`; eski .xls/Excel 97–2003 okuma `js/xls.js`).
 - **İşlem geçmişi:** kim, ne zaman, hangi kitabı ekledi, taşıdı, sildi.
 - **İnternetsiz çalışma:** bağlantı kesilse de müşteri ekranı son listeyle arama yapar (hizmet çalışanı + yerel kopya).
 
@@ -24,6 +26,7 @@ Kırtasiye için raf takip programı. Çalışanlar rafları ve bölmeleri (1.1,
 |---|---|---|---|
 | Raflar | görür, raf/bölme ekler-siler | görür | görür |
 | Kitaplar | ekler, düzenler, siler | görür | ekler, düzenler, siler |
+| Ürün girişi | Excel ile giriş, rafa yerleştirme | yok | Excel ile giriş, rafa yerleştirme |
 | Revizeler | görür, yazar, durum değiştirir | görür, yazar | yok |
 | Kullanıcılar | kişi ekler, yetki/şifre değiştirir | yok | yok |
 | Ayarlar | fiyat/stok aç-kapa, yedek | yok | yok |
@@ -50,7 +53,7 @@ Dosyalar: `kiosk.webmanifest`, `yonetim.webmanifest`, `simge/` (kaynak `simge/*.
 
 ## Kurulum (Supabase)
 
-1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir.
+1. **Veritabanı:** Supabase panelinde SQL Editor'ü aç, `supabase/kurulum.sql` dosyasının içeriğini yapıştır, Run'a bas. Tüm tablolar `kirtasiye_` ile başlar; aynı projedeki başka uygulamalara dokunmaz. Dosya tekrar çalıştırılabilir; program güncellendiğinde (ör. rafsız kitap desteği) mevcut kurulumda yeniden çalıştırmak yeterlidir, veriler silinmez.
 2. **Kullanıcı sunucusu:** Edge Functions bölümünde `kirtasiye-kullanici` adıyla yeni bir fonksiyon oluştur. İçeriği `supabase/functions/kirtasiye-kullanici/index.ts` dosyasından al. **"Verify JWT" kapalı olmalı**; fonksiyon girişi kendisi kontrol ediyor. CLI ile: `supabase functions deploy kirtasiye-kullanici --no-verify-jwt`.
 3. **Adres ve anahtar:** `js/ayar.js` içindeki proje adresini ve `sb_publishable_` anahtarını yaz. Fonksiyon panelde başka bir adla kaydolduysa (Supabase editörü rastgele ad verebilir) o adı `fonksiyon` satırına yaz. Gizli (service role) anahtar buraya **asla** yazılmaz.
 4. **Kitap bilgisi sunucusu (isteğe bağlı, önerilir):** barkod Google Kitaplar'da yoksa Google aramasıyla bulur, bulunamayan kitapta kapak fotoğrafından ad/yazar/yayınevini okur ve fotoğrafı kapak resmi yapar. Kurulmazsa program eskisi gibi tarayıcıdan Google Kitaplar ve Open Library'ye sorar (anahtarsız Google Kitaplar'ın ortak günlük kotası sık sık dolar).

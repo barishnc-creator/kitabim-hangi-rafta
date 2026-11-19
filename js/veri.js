@@ -110,13 +110,6 @@
           return s;
         });
       },
-      topluKitapEkle: function (liste) {
-        return degistir(function (d) {
-          liste.forEach(function (g) { Depo.kitapKaydet(d, g, { ayniBarkodaIzin: true }); });
-          gecmisYaz({ islem: 'yukledi', konu: 'kitap', ayrinti: 'Excel\'den ' + liste.length + ' kitap' });
-          return liste.length;
-        });
-      },
       aramaKaydet: function (sorgu, sonuc) {
         try {
           var l = JSON.parse(kok.localStorage.getItem(ARAMA) || '[]');
@@ -186,6 +179,10 @@
         if (/row-level security|permission denied/i.test(m)) throw new Error('Bu işlem için yetkiniz yok.');
         if (/kirtasiye_kitaplar_bolme_id_fkey|violates foreign key/i.test(m)) throw new Error('Bu bölmede kitap var. Önce kitapları taşıyın.');
         if (/duplicate key/i.test(m)) throw new Error('Aynı numara başka bir cihazdan az önce kullanıldı. Tekrar deneyin.');
+        // Rafsız kitap (Excel ile ürün girişi) için veritabanı güncellenmemiş: bolme_id hâlâ zorunlu
+        if (sonuc.error.code === '23502' || /null value in column "bolme_id"|bolme_id.*not-null/i.test(m)) {
+          throw new Error('Veritabanının güncellenmesi gerekiyor: Supabase SQL Editor\'de supabase/kurulum.sql dosyasını bir kez yeniden çalıştırın, sonra tekrar deneyin.');
+        }
         throw new Error(m || 'Bağlantı hatası.');
       }
       return sonuc.data;
@@ -341,14 +338,6 @@
             }));
           });
         }, ekle).then(function () { return yenile({ eklenen: s.eklenen, guncellenen: s.guncellenen }); });
-      },
-      topluKitapEkle: function (liste) {
-        var satirlar = liste.map(function (g) { return satirYap(Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: true })); });
-        var parcalar = [];
-        for (var i = 0; i < satirlar.length; i += 500) parcalar.push(satirlar.slice(i, i + 500));
-        return parcalar.reduce(function (p, parca) {
-          return p.then(function () { return sb.from('kirtasiye_kitaplar').insert(parca).then(kontrol); });
-        }, Promise.resolve()).then(function () { return yenile(liste.length); });
       },
       aramaKaydet: function (sorgu, sonuc) {
         return sb.from('kirtasiye_aramalar').insert({ sorgu: String(sorgu).trim().slice(0, 100), sonuc: sonuc }).then(function () {}, function () {});

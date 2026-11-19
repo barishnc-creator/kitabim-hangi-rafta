@@ -24,45 +24,6 @@ test('CSV yazma Excel uyumlu ve formül enjeksiyonuna kapalı', () => {
   assert.deepEqual(Csv.oku(metin), [['a;b', 'x"y', "'=1+1", '-5', '12,5']]);
 });
 
-test('Dışa aktarılan liste geri içe aktarılabilir', () => {
-  const d = ornek();
-  const b = Depo.bolmeBul(d, '2.3').bolme.id;
-  Depo.kitapKaydet(d, { ad: 'Kürk Mantolu Madonna', yazar: 'Sabahattin Ali', yayinevi: 'YKY', barkod: '9789753638029', bolmeId: b, fiyat: '125,5', stok: '3' });
-  const satirlar = Csv.oku(Csv.yaz(Csv.kitaplariSatirla(d)));
-  assert.deepEqual(satirlar[1], ['Kürk Mantolu Madonna', 'Sabahattin Ali', 'YKY', '9789753638029', '2.3', '125,5', '3']);
-  const bos = ornek();
-  const h = Csv.iceAktarHazirla(bos, satirlar);
-  assert.equal(h.kitaplar.length, 1);
-  assert.equal(h.kitaplar[0].bolmeId, Depo.bolmeBul(bos, '2.3').bolme.id);
-});
-
-test('İçe aktarma: sütun sırası serbest, hatalı satırlar raporlanır, aynı barkod atlanır', () => {
-  const d = ornek();
-  Depo.kitapKaydet(d, { ad: 'Var olan', barkod: '111', bolmeId: Depo.bolmeBul(d, '1.1').bolme.id });
-  const satirlar = Csv.oku([
-    'Raf;KİTAP ADI;ISBN;Fiyat',
-    '1.2;Atlas;222;99 TL',
-    '9.9;Yanlış raf;;',
-    '1.1;;333;',
-    '2-4;Sözlük;;₺ 45,90',
-    '1.1;Tekrar;111;',
-    '1.3;Bozuk fiyat;;abc'
-  ].join('\n'));
-  const h = Csv.iceAktarHazirla(d, satirlar);
-  assert.deepEqual(h.kitaplar.map((k) => k.ad), ['Atlas', 'Sözlük']);
-  assert.equal(h.kitaplar[1].fiyat, '45,90');
-  assert.equal(h.atlanan, 1);
-  assert.deepEqual(h.hatalar.map((x) => x.satir), [3, 4, 7]);
-  assert.equal(d.kitaplar.length, 1, 'hazırlık veriyi değiştirmemeli');
-});
-
-test('İçe aktarma: başlıksız ya da boş dosya', () => {
-  const d = ornek();
-  assert.match(Csv.iceAktarHazirla(d, []).hatalar[0].mesaj, /boş/);
-  assert.match(Csv.iceAktarHazirla(d, [['x', 'y']]).hatalar[0].mesaj, /Kitap adı/);
-  assert.match(Csv.iceAktarHazirla(d, [['Kitap adı', 'Yazar']]).hatalar[0].mesaj, /Raf/);
-});
-
 test('bölme kodu bulma ve kapak adresi güvenliği', () => {
   const d = ornek();
   assert.equal(Depo.bolmeBul(d, ' 2 . 4 ').kod, '2.4');

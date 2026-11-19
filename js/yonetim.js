@@ -62,7 +62,7 @@
     var y = dugme.getAttribute('data-yetki');
     return !y || yetkili.apply(null, y.split(' '));
   }
-  // Sekmeler arası kısayol düğmeleri: <button data-sekme-git="giris">
+  // Sekmeler arası kısayol düğmeleri: <button data-sekme-git="urun-girisi">
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-sekme-git]');
     if (b) sekmeAc(b.getAttribute('data-sekme-git'));
@@ -598,21 +598,6 @@
   $('csv-indir').addEventListener('click', function () {
     dosyaIndir('kitaplar-' + new Date().toISOString().slice(0, 10) + '.csv', Csv.yaz(Csv.kitaplariSatirla(d)), 'text/csv;charset=utf-8');
   });
-  $('csv-yukle').addEventListener('change', function (e) {
-    var dosya = e.target.files[0];
-    e.target.value = '';
-    if (!dosya) return;
-    dosya.text().then(function (metin) {
-      var h = Csv.iceAktarHazirla(d, Csv.oku(metin));
-      var ozet = h.kitaplar.length + ' kitap eklenecek.' +
-        (h.atlanan ? '\n' + h.atlanan + ' kitap zaten kayıtlı (aynı barkod), atlanacak.' : '') +
-        (h.hatalar.length ? '\n' + h.hatalar.length + ' satırda sorun var:\n' + h.hatalar.slice(0, 5).map(function (x) { return '• ' + x.satir + '. satır: ' + x.mesaj; }).join('\n') + (h.hatalar.length > 5 ? '\n…' : '') : '');
-      if (!h.kitaplar.length) { O.pencere('Eklenecek kitap bulunamadı.\n' + ozet, { evet: 'Tamam' }); return; }
-      return O.pencere(ozet + '\n\nDevam edilsin mi?', { evet: 'Kitapları ekle' }).then(function (tamam) {
-        if (tamam) return yap(function () { return Veri.topluKitapEkle(h.kitaplar); }, function (n) { return n + ' kitap eklendi.'; });
-      });
-    }).catch(function () { genel('hata', 'Dosya okunamadı. CSV olarak kaydettiğinizden emin olun.'); });
-  });
 
   // ---------- Revizeler ----------
   var DURUM = { yeni: 'Yeni', iletildi: 'İletildi', yapildi: 'Yapıldı' };
@@ -782,7 +767,7 @@
   window.Panel = {
     d: function () { return d; },
     ben: function () { return ben; },
-    yap: yap, sus: sus, bildir: bildir, genel: genel, yetkili: yetkili, kapakHucre: kapakHucre,
+    yap: yap, sus: sus, bildir: bildir, genel: genel, yetkili: yetkili, kapakHucre: kapakHucre, yerRozeti: yerRozeti,
     sekmeEkle: function (ad, baslik, ciz) {
       sekmeler.push(ad); BASLIK[ad] = baslik; ekSekmeler[ad] = ciz;
       $('sek-' + ad).addEventListener('click', function () { sekmeAc(ad); });

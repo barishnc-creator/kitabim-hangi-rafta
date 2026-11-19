@@ -17,7 +17,7 @@
   // Sıra önemli: bir başlık ilk uyan alana verilir.
   var ALANLAR = [
     ['barkod', /barkod|barcode|isbn|ean|gtin/],
-    ['adet', /^(adet|miktar|miktari|giris miktari|giris adedi|qty|quantity|sayi|adedi)$|adet|miktar/],
+    ['adet', /^(adet|miktar|miktari|giris miktari|giris adedi|qty|quantity|sayi|adedi|stok)$|adet|miktar/], // Stok: programın kendi dışa aktardığı liste
     ['fiyat', /^(fiyat|satis fiyati|etiket fiyati|liste fiyati|perakende fiyat|price)$|fiyat/],
     ['yazar', /yazar|author/],
     ['yayinevi', /yayinevi|yayin evi|yayinci|publisher|marka|^kod ?3$/], // KOD3: bazı mağaza programlarında yayınevi
@@ -116,7 +116,7 @@
     if (!s) return { adet: 1 };
     var n = Number(s.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
     if (!isFinite(n)) return { hata: '“' + temiz(x) + '” geçerli bir adet değil.' };
-    if (n <= 0) return { hata: 'Adet 0 ya da eksi olamaz (' + temiz(x) + ').' };
+    if (n < 0) return { hata: 'Adet eksi olamaz (' + temiz(x) + ').' }; // 0: tükenmiş kitap (dışa aktarılan listede olabilir)
     if (Math.round(n) !== n) return { hata: 'Adet tam sayı olmalı (' + temiz(x) + ').' };
     return { adet: n };
   }
@@ -131,8 +131,13 @@
   function planla(d, satirlar, sutun) {
     var sonuc = { yeni: [], artis: [], hatalar: [], bos: 0, toplamAdet: 0, rafsiz: 0, adetSutunuYok: sutun.adet < 0 };
     if (sutun.barkod < 0) { sonuc.hatalar.push({ satir: 0, mesaj: 'Barkod sütunu bulunamadı.' }); return sonuc; }
+    // Eşleştirme anahtarı: barkod; barkodu olmayan satırda kitap adı (Türkçe karaktersiz, küçük harf).
+    // Böylece barkodsuz kitaplar da aynı dosya iki kez yüklenince çiftlenmez.
     var kayitli = {};
-    d.kitaplar.forEach(function (k) { if (k.barkod) kayitli[barkodTemiz(k.barkod)] = k; });
+    d.kitaplar.forEach(function (k) {
+      if (k.barkod) kayitli[barkodTemiz(k.barkod)] = k;
+      else if (!kayitli['ad:' + sade(k.ad)]) kayitli['ad:' + sade(k.ad)] = k;
+    });
     var gruplar = {}, sira = [];
     var al = function (satir, alan) { return sutun[alan] >= 0 ? temiz(satir[sutun[alan]]) : ''; };
 
@@ -141,16 +146,17 @@
       var no = r + 1; // Excel'deki satır numarası
       var barkod = barkodTemiz(satir[sutun.barkod]);
       if (!satir.some(function (h) { return temiz(h); })) { sonuc.bos++; continue; }
-      if (!barkod) { sonuc.hatalar.push({ satir: no, mesaj: 'Barkod boş' + (al(satir, 'ad') ? ' (' + al(satir, 'ad') + ')' : '') + '.' }); continue; }
-      if (!/^[0-9A-Za-z]{4,30}$/.test(barkod)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + barkod + '” geçerli bir barkod değil.' }); continue; }
+      if (!barkod && !al(satir, 'ad')) { sonuc.hatalar.push({ satir: no, mesaj: 'Barkod ve kitap adı boş.' }); continue; }
+      if (barkod && !/^[0-9A-Za-z]{4,30}$/.test(barkod)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + barkod + '” geçerli bir barkod değil.' }); continue; }
+      var anahtar = barkod || 'ad:' + sade(al(satir, 'ad'));
       var a = sutun.adet >= 0 ? adetOku(satir[sutun.adet]) : { adet: 1 };
       if (a.hata) { sonuc.hatalar.push({ satir: no, mesaj: a.hata }); continue; }
       var fiyatHam = al(satir, 'fiyat').replace(/[₺\s]|TL/gi, '');
       var fiyat = fiyatHam ? Depo.sayiYap(fiyatHam.replace(/\.(?=\d{3}(\D|$))/g, ''), false) : null;
       if (Number.isNaN(fiyat)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + al(satir, 'fiyat') + '” geçerli bir fiyat değil.' }); continue; }
-      var g = gruplar[barkod];
+      var g = gruplar[anahtar];
       if (!g) {
-        g = gruplar[barkod] = { satir: no, barkod: barkod, adet: 0, ad: al(satir, 'ad'), yazar: al(satir, 'yazar'),
+        g = gruplar[anahtar] = { anahtar: anahtar, satir: no, barkod: barkod, adet: 0, ad: al(satir, 'ad'), yazar: al(satir, 'yazar'),
           yayinevi: al(satir, 'yayinevi'), konum: al(satir, 'konum'), fiyat: fiyat };
         sira.push(g);
       }
@@ -160,7 +166,8 @@
 
     sira.forEach(function (g) {
       sonuc.toplamAdet += g.adet;
-      var k = kayitli[g.barkod];
+      var k = kayitli[g.anahtar];
+      if (k && g.adet === 0 && (g.fiyat == null || g.fiyat === k.fiyat)) return; // değişecek bir şey yok
       if (k) {
         var eski = k.stok == null ? 0 : k.stok;
         var a = { satir: g.satir, kitapId: k.id, ad: k.ad, barkod: g.barkod, eskiStok: k.stok, ek: g.adet, yeniStok: eski + g.adet };

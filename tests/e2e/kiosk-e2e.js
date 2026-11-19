@@ -20,10 +20,12 @@ const OUT = process.argv[2] || require('os').tmpdir();
     'Türkçe Sözlük;TDK;TDK Yayınları;;4.1;450;2',
     '5. Sınıf Fen Bilimleri;Örnek Yazar;Örnek Yayınları;;1.2;180;7',
     '7. Sınıf Matematik Konu Anlatımı;Örnek Yazar;Örnek Yayınları;;2.3;199;3'].join('\n');
-  await p.click('#sek-kitaplar');
-  await p.setInputFiles('#csv-yukle', { name: 'k.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
-  await p.waitForTimeout(200);
-  await p.click('.pencere button[type=submit]');
+  // Excel ile ürün girişi (raf sütunlu, barkodsuz satırlı eski CSV biçimi de kabul edilir)
+  await p.click('#sek-urun-girisi');
+  await p.setInputFiles('#giris-dosya', { name: 'k.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await p.waitForSelector('#giris-onizleme:not([hidden])');
+  await p.click('#giris-kaydet');
+  await p.waitForFunction(() => /kaydedildi/.test(document.getElementById('giris-durum').textContent));
   await p.click('#sek-ayarlar');
   await p.fill('#ayar-magaza', 'Deniz Kırtasiye');
   await p.click('#magaza-form button[type=submit]');

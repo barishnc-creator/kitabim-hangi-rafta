@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 18 Kasım 2026 (proje PDF'i 1.1)_
+_Son güncelleme: 19 Kasım 2026 (Excel ile ürün girişi, rafa yerleştirme, .xls okuma)_
 
 ## Proje
 
@@ -8,7 +8,7 @@ Kırtasiye için "Kitabım Hangi Rafta?": müşteri ekranı (kiosk, `index.html`
 
 Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür), çalışan (kitap ekler/çıkarır). Revizeler programın kendisine dair isteklerdir; Claude'a iletilir.
 
-## Yapılanlar (hepsi bitti, 49 birim testi geçiyor)
+## Yapılanlar (hepsi bitti, 65 birim + 15 fonksiyon testi geçiyor)
 
 - Temel: raf/bölme şeması, barkod (kamera + fotoğraf + USB okuyucu), ISBN'den Google Books / Open Library ile otomatik bilgi ve kapak, CSV, QR raf etiketleri, fiyat/stok aç-kapa, roller, Supabase RLS.
 - Profesyonel sürüm: kenar menülü panel, genel bakış panosu, kiosk karşılama ekranı, Türkçe ekran klavyesi, kapaklar.
@@ -41,14 +41,17 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## Sıradaki işler
 
-**ÖNCE BU (18 Kasım, kullanıcının yeni bilgisi):** Mağaza programı hazır alacak; personel kitap bilgisi TAMAMLAMAZ, ürünleri yalnız **Excel ile, adetli** ekler. Kararlar:
-- Excel'de raf/bölme YOK → yeni kitaplar "Rafa yerleştirilecek" listesine düşsün; personel rafa koyarken barkodu okutup bölme seçer.
-- Kayıtlı barkod Excel'de tekrar gelirse **adet stoğa eklenir** (3 + 5 = 8).
-- Excel sütunları bilinmiyor: **kullanıcı örnek Excel gönderecek**; gelmeden içe aktarmayı yazma.
-- Kitap bilgisi (ad/yazar/yayınevi/kapak) toplu olarak internetten tamamlanmalı (Excel'de ad yoksa zorunlu). Ücretsiz planda: Google Kitaplar (kendi anahtarı, Books API etkin olmalı) + Open Library; Google araması faturalandırma ister (kullanıcı kart istemiyor gibi; "ücret ödemeden" yol sordu). Kapaktan doldur tek tek iş olduğu için bu akışta ikincil.
-- Bugünkü Excel yüklemesi (`js/csv.js` iceAktarHazirla): yalnız CSV, "Kitap adı" ve "Raf/Bölme" zorunlu, aynı barkodu atlıyor → yeni akışa göre değişecek (.xlsx için `js/xlsx.js` hazır).
-- **Supabase kurulumu TAMAM (19 Kasım):** secret GOOGLE_API_KEY, fonksiyon `kitap-bilgi` adıyla (JWT kapalı; curl POST → 401 "Giriş yapın."), `kapaklar` deposu var. Sırada: kullanıcı anahtarın Google Cloud projesinde Books API'yi etkinleştirecek, sonra telefonda 9786259506586 ile deneyecek.
-
+**ÖNCE BU — Excel ile ürün girişi YAZILDI (19 Kasım), kullanıcının SQL adımı bekleniyor.**
+Kullanıcının bilgisi: mağaza programı hazır alacak; personel kitap bilgisi tamamlamaz, ürünleri yalnız **Excel ile, adetli** ekler. Kararlar: Excel'de raf yok → yeni kitap rafsız ("Rafa yerleştirilecek"); kayıtlı barkod tekrar gelirse **adet stoğa eklenir**; BÜYÜK HARF adlar **normal yazıma** çevrilir; gerçek dosyada adet sütunu olacak (örnekte yoktu).
+- Müşterinin örnek dosyası `DENEME.xls` (BIFF8, 88 ürün: BARCODE, MALINCINSI, KOD3=yayınevi; adet yok, 86 ISBN + 2 uzun ürün kodu, çoğu TYT/AYT/LGS test kitabı). **Depoya konmadı** (CLAUDE.md gizlilik); yalnız scratchpad'de denendi: 88 yeni kitap, 55 ms, hata yok.
+- `js/xls.js`: dış kütüphanesiz .xls (Compound File + BIFF8: SST/CONTINUE, LABELSST, LABEL, NUMBER, RK, MULRK, FORMULA/STRING, BOOLERR, mini akış). xlrd ile 1.295 satır birebir. Testler `tests/xls.test.cjs` + sentetik `tests/veri/xlwt-ornek.xls`, `libreoffice-ornek.xls`. Şube eksikleri de .xls okur.
+- `js/giris.js` (saf): `sutunlariBul` (Türkçesiz büyük harf başlıklar: MIKTAR→ı sorunu `sade()` ile çözüldü; aynı hata `js/sube.js`'te de düzeltildi), `adYazimi` (kısaltma listesi, Roma rakamı, ünlüsüz kısa parça, "ve/ile" küçük, kesmeden sonra küçük; metinde hiç İ yoksa I_SOZLUK + ünlü uyumu; %25'ten çok küçük harf varsa dokunmaz), `planla` (barkod ya da barkodsuzsa ad anahtarı; aynı anahtar toplanır; 0 adet geçerli, eksi hata; fiyat varsa günceller; Raf sütunu varsa yerleştirir, yoksa rafsız).
+- Rafsız kitap: `Depo.kitapKaydet(..., {rafsizOlabilir})`, `Depo.rafsizKitaplar`, `Depo.urunGirisiUygula`; `Veri.urunGirisi` (yerel + bulut: insert 500'lük, stok update 10'luk gruplar). `supabase/kurulum.sql`: `bolme_id` nullable (+ `alter ... drop not null`), geçmişte 'rafsız'. Bulutta eski şemada 23502 → "kurulum.sql'i yeniden çalıştırın" mesajı.
+- Panel: **Ürün girişi** sekmesi (`#urun-girisi`; `#giris` oturum açma ekranının id'si, çakışma yaşandı), `js/panel-giris.js`: yükle → sütun seçimi (details) → özet/önizleme → kaydet; **Rafa yerleştir** (bölme seç, barkod/kamera art arda; rafsız liste "Seçili bölmeye koy"; zaten başka bölmedeyse taşıma onayı). Kitaplar sekmesinde eski CSV yükle kaldırıldı (`Csv.iceAktarHazirla`, `Veri.topluKitapEkle` silindi), yerine "Excel'den ürün girişi" düğmesi. "Rafsız" rozeti, raf filtresinde "Rafa yerleştirilecek", menü sayacı, genel bakış uyarısı. Müşteri ekranı: "mağazaya yeni geldi, henüz rafına yerleştirilmedi". Şube eksiklerinde rafsız kitap kayıtsız sayılmaz.
+- Testler: 65 birim, 15 fonksiyon (Deno), e2e `giris-e2e.js` (yerel) ve `giris-bulut-e2e.js` (sahte Supabase + sahte oturum; POST/PATCH gövdeleri doğrulanır; `ESKI_SEMA=1` eski şema mesajı). `kiosk-e2e`, `panel-e2e` yeni ekrana geçirildi. sw khr-v10.
+- **Kullanıcının yapacağı:** Supabase SQL Editor'de `supabase/kurulum.sql`'in tamamını bir kez yeniden çalıştırmak (bolme_id zorunluluğu kalkar). Yapılmadan bulutta ürün girişi yeni kitap ekleyemez (anlaşılır mesaj çıkar).
+- Bilinen sınırlar: bulutta stok güncellemeleri ortasında hata olursa kısmi kalabilir; aynı dosya yeniden yüklenirse stok ikinci kez eklenir (ürün girişi doğası gereği). Türkçe klavyesiz yazılmış adlarda bazı I'lar yanlış kalabilir ("Rısk"). Toplu internetten yazar/kapak tamamlama YAPILMADI (Excel'de ad ve yayınevi zaten var; istenirse "Eksik bilgileri internetten tamamla" düğmesi eklenebilir; ücretsiz planda Google Kitaplar + Open Library, test kitaplarında kapsam zayıf).
+- Önceki durum: Supabase `kitap-bilgi` kurulumu TAMAM (19 Kasım; secret GOOGLE_API_KEY, JWT kapalı, `kapaklar` deposu var). Kullanıcı Books API'yi "Default Gemini Project"te açtı (iki Google hesabı/proje karışıklığı yaşandı: gen-lang-client-0539371734 ve ...0573755216). Telefonda 9789753638029 / 9786259506586 denemesinin sonucu henüz bildirilmedi.
 
 0. **Kitap bilgisi sunucusu yazıldı, kullanıcının kurulumu bekleniyor** (18 Kasım). Kök neden: anahtarsız Google Kitaplar isteği Google'ın ortak projesinden (624717413613) düşüyor, günlük kota doluyor → 429 → "internette bulunamadı". Kullanıcı "Google'da normal aramada çıkıyor" dedi (örnek 9786259506586 Kınalı Serçe, Kronik Kitap) ve onay verdi.
    - `supabase/functions/kitap-bilgi/index.ts`: `isbn` → Google Kitaplar (GOOGLE_API_KEY ile) → Open Library → Gemini + Google Search grounding (JSON metinden ayıklanır); `kapak` → fotoğraf `kapaklar` deposuna (service role) + Gemini görselden ad/yazar/yayınevi (responseSchema). Yetki: düzenleyici, çalışan. Model `GEMINI_MODEL` ya da gemini-2.5-flash → 3.1-flash-lite → 2.5-flash-lite (404'te sıradaki). Testler `npm run test:fonksiyon` (Deno, sahte fetch; CI'da da çalışır). Arama fikri önce OpenRouter `google/gemini-2.5-flash:online` ile doğrulandı (3 ISBN, uydurmadı).
