@@ -38,6 +38,12 @@ section.koyu .kart .no { color: #93C5FD; }
 .kart x-icon { width: 56px; height: 56px; color: #1D4ED8; }
 section.koyu .kart x-icon { color: #93C5FD; }
 
+/* panel menüsü ızgarası */
+.menu-izgara { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.menu-kart { background: #FFFFFF; border: 2px solid #E2E8F0; border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; }
+.menu-kart h3 { font-size: 30px; }
+.menu-kart .menu-yazi { font-size: 24px; line-height: 1.35; color: #475569; }
+
 /* raf rozeti */
 .rozet { display: inline-block; background: #FFEDD5; color: #7C2D12; border: 2px solid #FB923C; border-radius: 14px; padding: 14px 26px; font-family: 'Space Grotesk', Arial, sans-serif; font-size: 40px; font-weight: 700; }
 
