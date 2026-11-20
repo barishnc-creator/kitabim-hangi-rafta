@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 20 Kasım 2026 (talep oluştur, kampanya alanı, şubede adet yok, sunum sürüm 15)_
+_Son güncelleme: 20 Kasım 2026 akşam (SQL'ler canlıda, 90 gün silme)_
 
 ## Proje
 
@@ -49,7 +49,8 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
    - **Güvenlik sınırı uyarlandı** (`supabase/guvenlik-2026-11-19.sql`): telefon varsa numara başına 24 saatte 5 (aynı); telefonsuz talepte toplamda 10 dakikada 30, bildirim yazılmaz. SQL testi 12 kontrol.
    - **Şube eksikleri:** adet tamamen kaldırıldı (kullanıcı önce "kalsın" dedi, sonra "kaldır"; son karar: kaldır). Çıktı: Sıra, Raf, Bölme, Barkod, Kitap adı, Durum. Yazar/yayınevi de çıkarıldı.
    - **Kampanyalar (reklam alanı):** müşteri karşılamasında fotoğraf+başlık+açıklama, 7 sn'de döner, en çok 6; panelde Kampanyalar sekmesi (yalnız düzenleyici), `js/panel-kampanya.js`, `Tema.kampanyaResmiHazirla` (≤1600 px JPEG, ≤380 KB). Veri `kirtasiye_ayarlar.kampanyalar` jsonb; sütun yoksa program yine açılır.
-   - **KULLANICININ YAPACAĞI (sorulacak):** SQL Editor'de önce `supabase/guvenlik-2026-11-19.sql` (çalıştırmadıysa ya da güncel hâli), sonra `supabase/guncelleme-20-kasim.sql`. Çalıştırılmadan bulutta adsız/telefonsuz talep ve kampanya kaydı hata verir (mesaj dosyayı söyler).
+   - **SQL TAMAM (20 Kasım akşam):** `guvenlik-2026-11-19.sql` ve `guncelleme-20-kasim.sql` canlıda (curl ile doğrulandı: `kampanyalar` sütunu 200, `kirtasiye_bildirimler` tablosu var, anonim 401). Ayrıca **90 gün otomatik silme** kuruldu: pg_cron işi `kitabim-90-gun-silme`, her gün 03:15 UTC, `kirtasiye_talepler` (olusturuldu) ve `kirtasiye_bildirimler` (son) 90 günden eskileri siler. Kayıt: `supabase/talep-90-gun-silme.sql` (iş başka oturumdan bildirildi; cron tablosu REST'ten görünmediği için buradan doğrulanmadı).
+   - ~~KULLANICININ YAPACAĞI~~ (yapıldı): SQL Editor'de önce `supabase/guvenlik-2026-11-19.sql` (çalıştırmadıysa ya da güncel hâli), sonra `supabase/guncelleme-20-kasim.sql`. Çalıştırılmadan bulutta adsız/telefonsuz talep ve kampanya kaydı hata verir (mesaj dosyayı söyler).
    - Sunum sürüm 15 (27 slayt): çözüm 1. adım "Ara / Kitabı isminden ara", talep ve talepler slaytları yeni akış, yeni "kampanya" slaytı, şube slaytı adetsiz, güven slaytında KVKK yerine talep sınırı, panel 15 bölüm, paketler **Standart ve Kiosk** (iki paket), üstte magic geçişle kayan ilerleme çubuğu ve kademeli giriş animasyonları. Kaynak kopya scratchpad'deydi; canlı sürüm artifact'te.
    - Proje PDF'i sürüm 1.3 (kampanya sayfası, talep ve şube metinleri).
    - Testler: birim 74, SQL 12, e2e talep, kampanya, talep-bulut, giris-bulut, kiosk, panel, okul vb. temiz.
