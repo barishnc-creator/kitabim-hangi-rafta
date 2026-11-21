@@ -84,6 +84,18 @@ begin
   j := public.kirtasiye_izle();
   reset role;
   assert json_array_length(j -> 'hatalar') = 2 and (j -> 'durum' ->> 'hata_24_saat')::int = 3, 'doğru anahtarla durum ve hatalar okunmalı';
+  -- revizeler ve zaman süzgeci
+  insert into public.kirtasiye_revizeler (yazan, yazan_ad, metin, olusturuldu) values
+    (null, 'Müdür', 'Kiosk yazısı büyüsün', now() - interval '30 minutes'),
+    (null, 'Müdür', 'Eski istek', now() - interval '3 days');
+  set local role anon;
+  j := public.kirtasiye_izle();
+  assert json_array_length(j -> 'revizeler') = 2, 'yeni durumdaki tüm revizeler dönmeli';
+  j := public.kirtasiye_izle(2);
+  assert json_array_length(j -> 'revizeler') = 1 and (j -> 'revizeler' -> 0 ->> 'metin') = 'Kiosk yazısı büyüsün', 'son 2 saatteki revize dönmeli';
+  assert json_array_length(j -> 'hatalar') = 2, 'son 2 saatteki hatalar dönmeli';
+  assert (j -> 'durum' ->> 'revize_yeni')::int = 2;
+  reset role;
   -- yeni anahtar eskisini geçersiz kılar
   perform public.kirtasiye_izleme_anahtari_uret();
   set local role anon;

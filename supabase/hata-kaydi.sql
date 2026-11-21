@@ -5,8 +5,8 @@
 --  1) Programda (müşteri ekranı ya da panel) beklenmeyen bir hata olunca kirtasiye_hatalar tablosuna kayıt düşer.
 --     Aynı hata 24 saat içinde tekrar ederse yeni satır açılmaz, "adet" artar. Saatte en çok 200 yeni satır.
 --  2) Panelde "Sistem durumu" (yalnız düzenleyici): hatalar, kitap sayısı, veritabanı doluluğu.
---  3) Claude'un okuması için salt okunur kapı: x-izleme-token başlığıyla gelen istek, anahtar doğruysa durumu ve
---     son hataları okur; hiçbir şeyi değiştiremez. Anahtar depoda yoktur, veritabanında yalnız özeti (sha256) durur.
+--  3) Claude'un okuması için salt okunur kapı: x-izleme-token başlığıyla gelen istek, anahtar doğruysa durumu,
+--     son hataları ve panelden yazılan revizeleri okur; hiçbir şeyi değiştiremez. Anahtar depoda yoktur, veritabanında yalnız özeti (sha256) durur.
 --
 -- Claude anahtarı (bir kez): bu dosyadan sonra SQL Editor'de şunu çalıştırın:
 --     select public.kirtasiye_izleme_anahtari_uret();
@@ -72,6 +72,7 @@ returns json language sql stable security definer set search_path = public as $$
     'veritabani_sinir_mb', 500,
     'hata_24_saat', (select coalesce(sum(adet), 0) from kirtasiye_hatalar where son > now() - interval '24 hours'),
     'hata_gorulmemis', (select count(*) from kirtasiye_hatalar where not goruldu),
+    'revize_yeni', (select count(*) from kirtasiye_revizeler where durum = 'yeni'),
     'son_hata', (select max(son) from kirtasiye_hatalar),
     'son_kitap_degisikligi', (select max(guncellendi) from kirtasiye_kitaplar)
   )
@@ -107,10 +108,14 @@ end $$;
 revoke all on function public.kirtasiye_izleme_anahtari_uret() from public, anon, authenticated; -- yalnız SQL Editor
 
 -- Anahtar istek başlığından okunur (x-izleme-token): böylece Claude ortamına ağ sırrı olarak kaydedilir, sohbete girmez.
-create or replace function public.kirtasiye_izle()
+-- p_saat verilirse yalnız son p_saat saatte görülen hatalar ve yazılan revizeler döner (zamanlanmış kontrol "yeni ne var" diye sorar).
+-- Revizeler: panelden yazılan, programa dair istekler (durumu 'yeni' olanlar ve son p_saat saattekiler).
+drop function if exists public.kirtasiye_izle();
+create or replace function public.kirtasiye_izle(p_saat integer default null)
 returns json language plpgsql stable security definer set search_path = public as $$
 declare
   v_anahtar text := coalesce(nullif(current_setting('request.headers', true), '')::json ->> 'x-izleme-token', '');
+  v_sinir timestamptz := case when p_saat is null then '-infinity'::timestamptz else now() - make_interval(hours => greatest(p_saat, 1)) end;
 begin
   if v_anahtar = '' or not exists (select 1 from kirtasiye_izleme where anahtar_ozet = encode(sha256(convert_to(v_anahtar, 'UTF8')), 'hex')) then
     raise exception 'İzleme anahtarı geçersiz.' using errcode = '42501';
@@ -119,11 +124,15 @@ begin
     'durum', public.kirtasiye_durum_ic(),
     'hatalar', coalesce((select json_agg(h) from (
       select id, ilk, son, adet, ekran, mesaj, ayrinti, surum, cihaz, kullanici, goruldu
-      from kirtasiye_hatalar order by son desc limit 50) h), '[]'::json)
+      from kirtasiye_hatalar where son > v_sinir order by son desc limit 50) h), '[]'::json),
+    'revizeler', coalesce((select json_agg(r) from (
+      select id, yazan_ad, metin, durum, olusturuldu
+      from kirtasiye_revizeler where olusturuldu > v_sinir or (p_saat is null and durum = 'yeni')
+      order by olusturuldu desc limit 50) r), '[]'::json)
   );
 end $$;
-revoke all on function public.kirtasiye_izle() from public;
-grant execute on function public.kirtasiye_izle() to anon, authenticated;
+revoke all on function public.kirtasiye_izle(integer) from public;
+grant execute on function public.kirtasiye_izle(integer) to anon, authenticated;
 
 -- 4) 90 günden eski hataları da sil (pg_cron işi varsa günceller; pg_cron yoksa bu adım atlanır)
 do $$ begin
