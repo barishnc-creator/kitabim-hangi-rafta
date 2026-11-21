@@ -50,7 +50,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
    - Panel: "Sistem durumu" sekmesi (`js/panel-durum.js`, yalnız düzenleyici, menüde görülmemiş hata sayacı).
    - **KULLANICININ YAPACAKLARI:** (1) SQL Editor'de `supabase/hata-kaydi.sql`; (2) `select public.kirtasiye_izleme_anahtari_uret();` → anahtarı Claude'un `request_credential` formuna gir (host kkcfzrchrdiroiskibhw.supabase.co, header `x-izleme-token`). Sonra Claude okur: `curl -X POST $U/rest/v1/rpc/kirtasiye_izle -H "apikey: <publishable>" -H "Content-Type: application/json" -d '{}'`.
    - `kirtasiye_izle(p_saat)` panelden yazılan **revizeleri** de döndürür (kullanıcı: "revize gönderilince bana gelsin"); p_saat verilirse yalnız son p_saat saattekiler. `durum.revize_yeni` sayısı.
-   - Zamanlanmış kontrol (hata + revize → telefona bildirim): sıklık kullanıcıya soruldu.
+   - **Zamanlanmış görev kuruldu:** her gün 19:47 İstanbul, yeni oturum, telefona bildirim (trig_01FDny2tc8RmeaLkLCAPmcFG; kullanıcı "günde 1 kez" seçti). curl ile `kirtasiye_izle(p_saat 24)` okur; bağlayıcı gerekmez. Anahtar girilmeden "kurulum bitmemiş" der.
 
 0000. **Gerçek ürün listesi (21 Kasım):** kullanıcı mağazanın tüm listesini verdi (`kitap.xls`, BIFF8, 5,2 MB, 39.339 satır, sütunlar `Barkod`, `Stok Adı`; yazar/yayınevi/fiyat yok). **Depoya konmadı** (gizlilik). Sonuç: 39.329 yeni kitap, 5 satır adsız (eklenmez). Barkod kuralı genişletildi (`js/giris.js`: boşluk/virgül/noktalı virgül içermeyen 4–40 karakter); eskiden 557 `BZK_978…` kodu ve ~30 noktalı/Türkçe harfli kod reddediliyordu. sw khr-v17, test 75.
    - Ölçek testi (scratchpad, sahte Supabase): önizleme 1,3 sn, kayıt 79 istek (~20 sn yerelde), panel 40 sayfa ile ~1,3 sn, kiosk açılış ~1,2 sn, arama ~0,1 sn, hata yok.
