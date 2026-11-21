@@ -705,7 +705,33 @@
       ? 'Deneme modu: veriler yalnız bu cihazın tarayıcısında saklanıyor. Düzenli olarak yedek indirin.'
       : 'Veriler bulutta saklanıyor. İsterseniz kayıt için yedek indirebilirsiniz.';
     $('yedek-yukle-etiket').hidden = Veri.mod !== 'yerel';
+    $('toplu-sil-rafsiz').textContent = '(' + Depo.rafsizSayisi(d).toLocaleString('tr-TR') + ')';
+    $('toplu-sil-tum').textContent = '(' + d.kitaplar.length.toLocaleString('tr-TR') + ')';
   }
+  // Toplu silme: "SİL" yazılınca düğme açılır; bulutta 200'lük parçalarla siler, ilerleme gösterir.
+  $('toplu-sil-onay').addEventListener('input', function (e) {
+    $('toplu-sil-dugme').disabled = e.target.value.trim().toLocaleUpperCase('tr-TR') !== 'SİL';
+  });
+  $('toplu-sil-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if ($('toplu-sil-onay').value.trim().toLocaleUpperCase('tr-TR') !== 'SİL') return;
+    var sadeceRafsiz = document.querySelector('input[name=toplu-sil-kapsam]:checked').value === 'rafsiz';
+    var n = sadeceRafsiz ? Depo.rafsizSayisi(d) : d.kitaplar.length;
+    if (!n) { $('toplu-sil-durum').innerHTML = '<div class="mesaj uyari">Silinecek kitap yok.</div>'; return; }
+    if (!confirm(n.toLocaleString('tr-TR') + ' kitap kalıcı olarak silinecek. Emin misiniz?')) return;
+    $('toplu-sil-dugme').disabled = true; $('toplu-sil-onay').disabled = true;
+    var durum = function (t, m) { $('toplu-sil-durum').innerHTML = '<div class="mesaj ' + t + '">' + O.kacis(m) + '</div>'; };
+    durum('bilgi', 'Siliniyor… sayfayı kapatmayın.');
+    yap(function () {
+      return Veri.kitaplariTopluSil(sadeceRafsiz, function (yapilan, toplam) {
+        durum('bilgi', 'Siliniyor… ' + yapilan.toLocaleString('tr-TR') + ' / ' + toplam.toLocaleString('tr-TR') + ' — sayfayı kapatmayın.');
+      });
+    }, function (s) { return s.silinen.toLocaleString('tr-TR') + ' kitap silindi.'; }).then(function (s) {
+      durum('basari', s.silinen.toLocaleString('tr-TR') + ' kitap silindi.');
+    }, function (err) {
+      durum('hata', 'Silme yarıda kaldı: ' + (err && err.message ? err.message : 'bilinmeyen hata') + ' Silinenler silindi; aynı düğmeyle kalanları silebilirsiniz.');
+    }).then(function () { $('toplu-sil-onay').value = ''; $('toplu-sil-onay').disabled = false; });
+  });
   $('ayar-fiyat').addEventListener('change', function (e) {
     var acik = e.target.checked;
     yap(function () { return Veri.ayarKaydet('fiyat', acik); }, 'Fiyat' + (acik ? ' açıldı.' : ' kapatıldı.')).catch(function () { ayarlariCiz(); });

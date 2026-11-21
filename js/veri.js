@@ -116,6 +116,15 @@
           Depo.kitapSil(d, id);
         });
       },
+      kitaplariTopluSil: function (sadeceRafsiz, ilerleme) {
+        return degistir(function (d) {
+          var once = d.kitaplar.length;
+          d.kitaplar = d.kitaplar.filter(function (k) { return sadeceRafsiz && k.bolmeId; });
+          var silinen = once - d.kitaplar.length;
+          if (ilerleme) ilerleme(silinen, silinen);
+          return { silinen: silinen };
+        });
+      },
       ayarKaydet: function (alan, deger) {
         return degistir(function (d) {
           var g = {}; g[alan] = deger;
@@ -413,6 +422,25 @@
       },
       kitapSil: function (id) {
         return sb.from('kirtasiye_kitaplar').delete().eq('id', id).then(kontrol).then(function () { kitapUygula([], [id]); });
+      },
+      // Toplu silme: 200'lük parçalar (adres uzunluğu ve sunucu zaman sınırı için). Yarıda kalırsa silinenler silinmiş olur.
+      kitaplariTopluSil: function (sadeceRafsiz, ilerleme) {
+        var ids = son.kitaplar.filter(function (k) { return !sadeceRafsiz || !k.bolmeId; }).map(function (k) { return k.id; });
+        var toplam = ids.length, yapilan = 0, parcalar = [];
+        for (var i = 0; i < ids.length; i += 200) parcalar.push(ids.slice(i, i + 200));
+        return parcalar.reduce(function (p, parca) {
+          return p.then(function () {
+            return sb.from('kirtasiye_kitaplar').delete().in('id', parca).then(kontrol).then(function () {
+              yapilan += parca.length;
+              if (ilerleme) ilerleme(yapilan, toplam);
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          return yukle().then(function (d) { yay(d); return { silinen: toplam }; });
+        }, function (e) {
+          yukle().then(yay).catch(function () {});
+          throw e;
+        });
       },
       okulListesiKaydet: function (g) {
         var k = Depo.okulListesiKaydet(kopya(son), g);

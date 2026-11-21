@@ -488,6 +488,15 @@
             <label class="dugme" for="yedek-yukle" style="cursor:pointer" id="yedek-yukle-etiket">Yedekten geri yükle</label>
             <input type="file" id="yedek-yukle" accept="application/json,.json" class="gizli-etiket">
           </div>
+          <form class="dar kart bolum" id="toplu-sil-form" data-yetki="duzenleyici">
+            <h2 style="font-size:17px">Kitapları toplu sil</h2>
+            <p class="soluk">Yanlış liste yüklendiyse ya da baştan başlamak için. Raflar, ayarlar, kullanıcılar, talepler ve okul listeleri kalır. <b>Geri alınamaz</b>: önce Kitaplar sekmesinden “Excel'e aktar” ile yedek alın.</p>
+            <label class="anahtar" style="border-bottom:0"><span>Yalnız rafa yerleştirilmemiş kitaplar <span class="soluk" id="toplu-sil-rafsiz"></span></span><input type="radio" name="toplu-sil-kapsam" value="rafsiz" checked></label>
+            <label class="anahtar" style="border-bottom:0"><span>Tüm kitaplar <span class="soluk" id="toplu-sil-tum"></span></span><input type="radio" name="toplu-sil-kapsam" value="tum"></label>
+            <div class="alan"><label for="toplu-sil-onay">Onaylamak için <b>SİL</b> yazın</label><input id="toplu-sil-onay" autocomplete="off" autocapitalize="characters" maxlength="5"></div>
+            <div><button class="dugme tehlike" type="submit" id="toplu-sil-dugme" disabled>Kitapları sil</button></div>
+            <div id="toplu-sil-durum" role="status"></div>
+          </form>
         </div>
       </section>
     </div>
