@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 20 Kasım 2026 akşam (SQL'ler canlıda, 90 gün silme)_
+_Son güncelleme: 21 Kasım 2026 (mağazanın gerçek ürün listesi: 39.339 satır)_
 
 ## Proje
 
@@ -43,6 +43,12 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Deneme sürümü (yerel veri, örnek doldurma): claude.ai/artifact/W2Go9k3SPxdrxF93SZNXDw — kaynağı scratchpad'deydi; yeniden üretmek için `index.html`/`yonetim.html`'den supabase.js ve service worker çıkarılıp `js/ayar.js` boş bırakılır.
 
 ## Sıradaki işler
+
+0000. **Gerçek ürün listesi (21 Kasım):** kullanıcı mağazanın tüm listesini verdi (`kitap.xls`, BIFF8, 5,2 MB, 39.339 satır, sütunlar `Barkod`, `Stok Adı`; yazar/yayınevi/fiyat yok). **Depoya konmadı** (gizlilik). Sonuç: 39.329 yeni kitap, 5 satır adsız (eklenmez). Barkod kuralı genişletildi (`js/giris.js`: boşluk/virgül/noktalı virgül içermeyen 4–40 karakter); eskiden 557 `BZK_978…` kodu ve ~30 noktalı/Türkçe harfli kod reddediliyordu. sw khr-v17, test 75.
+   - Ölçek testi (scratchpad, sahte Supabase): önizleme 1,3 sn, kayıt 79 istek (~20 sn yerelde), panel 40 sayfa ile ~1,3 sn, kiosk açılış ~1,2 sn, arama ~0,1 sn, hata yok.
+   - **SORUN (yüklemeden önce çözülmeli, kullanıcı onayı bekleniyor):** her kitap değişikliğinde (ör. rafa yerleştirme) değişikliği yapan cihaz `yenile()` ile ve açık tüm ekranlar realtime ile **tüm kitapları yeniden indiriyor** (39 bin satır ≈ 8,8 MB JSON, sıkıştırılmış ≈ 0,9 MB). Günde yüzlerce yerleştirme × birkaç cihaz → Supabase ücretsiz 5 GB/ay çıkış kotası birkaç günde biter, tabletler yavaşlar. Çözüm önerisi: tek kitap değişikliğini yerelde uygula (kendi yazımında yanıt satırıyla, başka cihazda realtime payload'u ile), tam yükleme yalnız açılışta ve toplu işlemde.
+   - İkinci sorun: çevrimdışı önbellek localStorage'da; 8,8 MB sığmaz (sessizce atlanır) → internet kesilince müşteri ekranı boş kalır. Çözüm: IndexedDB.
+   - Ad yazımı sınırı: kaynakta İ'siz yazılmış adlarda "Bırı Sızı" gibi yanlış I kalabiliyor; İngilizce adlarda "İn Use".
 
 000. **20 Kasım revizesi YAYINDA (main, sw khr-v16).** Kullanıcının istekleri ve kararları:
    - **Talep oluştur:** "Gelince haber verilsin" kaldırıldı, her yerde "Talep oluştur". Yalnız kitap adı zorunlu; ad ve telefon **isteğe bağlı**; **KVKK onay kutusu ve aydınlatma metni kaldırıldı** (kullanıcı kararı; `Ortak.kvkkMetni` silindi). Okul listesi eksiklerinde kitap başına ayrı talep. Panelde aynı kitap **tek satır + talep sayısı** (`Depo.talepGrupla`: kitapId ya da sadeleştirilmiş ad), en çok istenen üstte; Yeni/Arandı/Geldi durumu kaldırıldı, "Kapat" grubun taleplerini siler. Güvenlik oturumunun bildirim şeridi korundu.

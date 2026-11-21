@@ -154,3 +154,16 @@ test('programın dışa aktardığı liste (CSV) ürün girişiyle geri yükleni
   assert.deepEqual(p.hatalar, []);
   assert.deepEqual(p.yeni.map((y) => [y.ad, Depo.konum(bos, y.bolmeId).kod, y.fiyat]), [['Beyaz Gemi', '1.1', 100], ['Şeker Portakalı', '1.2', null]]);
 });
+
+test('plan: mağaza kodları (BZK_978…, noktalı/Türkçe harfli kod) barkod sayılır; virgüllü/noktalı virgüllü metin sayılmaz', () => {
+  const d = Depo.bos();
+  const satirlar = [['Barkod', 'Stok Adı'],
+    ['BZK_9789752636231', 'KÜÇÜK PRENS'],
+    ["4578'5060.0135", 'DEFTER'],
+    ['TONGUÇ1.SINIF', 'TONGUÇ SORU BANKASI'],
+    ['1. KİTAP; 2. KİTAP', 'NOTLU SATIR'],
+  ];
+  const p = Giris.planla(d, satirlar, Giris.sutunlariBul(satirlar));
+  assert.deepEqual(p.yeni.map((y) => y.barkod), ['BZK_9789752636231', "4578'5060.0135", 'TONGUÇ1.SINIF']);
+  assert.deepEqual(p.hatalar.map((h) => h.satir), [5]);
+});

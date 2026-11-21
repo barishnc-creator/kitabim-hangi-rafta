@@ -138,7 +138,7 @@
       var barkod = barkodTemiz(satir[sutun.barkod]);
       if (!satir.some(function (h) { return temiz(h); })) { sonuc.bos++; continue; }
       if (!barkod && !al(satir, 'ad')) { sonuc.hatalar.push({ satir: no, mesaj: 'Barkod ve kitap adı boş.' }); continue; }
-      if (barkod && !/^[0-9A-Za-z]{4,30}$/.test(barkod)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + barkod + '” geçerli bir barkod değil.' }); continue; }
+      if (barkod && !/^[^\s,;]{4,40}$/.test(barkod)) { sonuc.hatalar.push({ satir: no, mesaj: '“' + barkod + '” geçerli bir barkod değil.' }); continue; }
       var anahtar = barkod || 'ad:' + sade(al(satir, 'ad'));
       if (gorulen[anahtar]) continue; // aynı ürün listede ikinci kez geçiyor
       gorulen[anahtar] = true;
