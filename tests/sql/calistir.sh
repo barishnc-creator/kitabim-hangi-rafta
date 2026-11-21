@@ -15,4 +15,7 @@ p -f "$kok/supabase/guncelleme-20-kasim.sql" >/dev/null
 p -f "$kok/supabase/guvenlik-2026-11-19.sql" >/dev/null  # ikinci kez çalıştırmak zararsız olmalı
 p -f "$kok/supabase/guncelleme-20-kasim.sql" >/dev/null
 p -f "$kok/tests/sql/guvenlik.test.sql"
+p -f "$kok/supabase/hata-kaydi.sql" >/dev/null
+p -f "$kok/supabase/hata-kaydi.sql" >/dev/null  # ikinci kez zararsız
+p -f "$kok/tests/sql/hata.test.sql"
 echo "SQL testleri geçti."

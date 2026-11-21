@@ -273,6 +273,7 @@
         setTimeout(function () { if (perde.isConnected) kapat(); }, 8000);
       }).catch(function (err) {
         gonderiliyor = false;
+        if (window.Hata) Hata.bildir(err, 'Talep gönderimi');
         $p('#t-mesaj').innerHTML = err.sinir ? '<div class="mesaj uyari">' + O.kacis(err.message) + '</div>'
           : '<div class="mesaj hata">Talep gönderilemedi: ' + O.kacis(err.message) + '</div>';
       });
@@ -481,5 +482,6 @@
     hareket();
   }).catch(function (e) {
     sonucGoster('<div class="mesaj hata">Kitap listesi yüklenemedi: ' + O.kacis(e.message) + '</div>');
+    if (window.Hata) Hata.bildir(e, 'Müşteri ekranı açılışı');
   });
 })();

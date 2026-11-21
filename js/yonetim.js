@@ -29,6 +29,7 @@
       return sonuc;
     }, function (e) {
       genel('hata', e.message || 'Bir hata oluştu.');
+      if (window.Hata) Hata.bildir(e, 'Panel işlemi'); // doğrulama mesajları (boş ad vb.) Hata içinde elenir
       return Promise.reject(e);
     });
   }
@@ -800,7 +801,7 @@
         var h = location.hash.slice(1);
         sekmeAc(sekmeler.indexOf(h) >= 0 ? h : 'genel');
         if (yetkili('duzenleyici')) Veri.revizeler().then(revizeSayaci, sus);
-      }).catch(function (e) { genel('hata', e.message); });
+      }).catch(function (e) { genel('hata', e.message); if (window.Hata) Hata.bildir(e, 'Panel açılışı'); });
     });
   }
   Veri.durumDinle(function (dr) {

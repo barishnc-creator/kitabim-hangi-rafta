@@ -193,7 +193,14 @@
         return revizeYaz(l);
       },
       revizeDurum: function (id, durum) { return revizeYaz(revizeOku().map(function (r) { return r.id === id ? Object.assign({}, r, { durum: durum }) : r; })); },
-      revizeSil: function (id) { return revizeYaz(revizeOku().filter(function (r) { return r.id !== id; })); }
+      revizeSil: function (id) { return revizeYaz(revizeOku().filter(function (r) { return r.id !== id; })); },
+
+      // Hata kaydı ve sistem durumu yalnız bulutta (deneme modunda veri cihazda, izlenecek sunucu yok)
+      hataYaz: function () { return Promise.resolve(); },
+      sistemDurumu: function () { return Promise.resolve(null); },
+      hatalar: function () { return Promise.resolve(null); },
+      hatalariGorulduYap: function () { return Promise.resolve(); },
+      hatalariSil: function () { return Promise.resolve(); }
     };
   }
 
@@ -299,7 +306,12 @@
       clearTimeout(onbellekZaman); // art arda değişikliklerde bir kez yaz
       onbellekZaman = setTimeout(function () { Onbellek.yaz(ONBELLEK, { zaman: new Date().toISOString(), veri: d }); }, 3000);
     }
-    kok.addEventListener('online', function () { yukle().then(yay).catch(function () {}); });
+    // Arka planda yenileme başarısız olursa ekranda gösterilecek yer yok: bağlantı dışı hatalar bildirilir.
+    function arkaPlanHatasi(e) {
+      if (/ulaşılamadı|fetch|network/i.test((e && e.message) || '')) return;
+      if (kok.Hata) kok.Hata.bildir(e, 'Arka plan yenileme');
+    }
+    kok.addEventListener('online', function () { yukle().then(yay).catch(arkaPlanHatasi); });
     function yenile(sonuc) { return yukle(false).then(function (d) { yay(d); return sonuc; }); }
     // Tek kitap değişikliği: listeyi yeniden indirmeden yerinde uygula (yeni dizi, sayfalar yeniden çizer).
     function kitapUygula(degisenler, silinenler) {
@@ -342,10 +354,10 @@
       }
       if (!/^kirtasiye_(raflar|bolmeler|ayarlar|okul_listeleri)$/.test(p.table)) return;
       clearTimeout(kucukBekle);
-      kucukBekle = setTimeout(function () { yukle(false).then(yay).catch(function () {}); }, 300);
+      kucukBekle = setTimeout(function () { yukle(false).then(yay).catch(arkaPlanHatasi); }, 300);
     }).subscribe(function (durum) {
       if (durum !== 'SUBSCRIBED') return;
-      if (abone && ilkYuklendi) yukle().then(yay).catch(function () {}); // yeniden bağlandı: kaçanları al
+      if (abone && ilkYuklendi) yukle().then(yay).catch(arkaPlanHatasi); // yeniden bağlandı: kaçanları al
       abone = true;
     });
 
@@ -518,7 +530,29 @@
         });
       },
       revizeDurum: function (id, durum) { return sb.from('kirtasiye_revizeler').update({ durum: durum }).eq('id', id).then(kontrol); },
-      revizeSil: function (id) { return sb.from('kirtasiye_revizeler').delete().eq('id', id).then(kontrol); }
+      revizeSil: function (id) { return sb.from('kirtasiye_revizeler').delete().eq('id', id).then(kontrol); },
+
+      // Hata kaydı (supabase/hata-kaydi.sql). Fonksiyon kurulmamışsa (PGRST202) bildirim sessizce atlanır, sırada bekletilmez.
+      hataYaz: function (k) {
+        return sb.rpc('kirtasiye_hata_yaz', { p_ekran: k.ekran, p_mesaj: k.mesaj, p_ayrinti: k.ayrinti, p_surum: k.surum, p_cihaz: k.cihaz }).then(function (s) {
+          if (s.error && s.error.code !== 'PGRST202') throw new Error(s.error.message || 'gönderilemedi');
+        });
+      },
+      // Panel "Sistem durumu": SQL kurulmamışsa null (panel kurulum notu gösterir).
+      sistemDurumu: function () {
+        return sb.rpc('kirtasiye_sistem_durumu').then(function (s) {
+          if (s.error && (s.error.code === 'PGRST202' || s.error.code === '42883')) return null;
+          return kontrol(s);
+        });
+      },
+      hatalar: function () {
+        return sb.from('kirtasiye_hatalar').select('id,ilk,son,adet,ekran,mesaj,ayrinti,surum,cihaz,kullanici,goruldu').order('son', { ascending: false }).limit(100).then(function (s) {
+          if (s.error && (s.error.code === 'PGRST205' || s.error.code === '42P01')) return null;
+          return kontrol(s);
+        });
+      },
+      hatalariGorulduYap: function () { return sb.from('kirtasiye_hatalar').update({ goruldu: true }).eq('goruldu', false).then(kontrol); },
+      hatalariSil: function () { return sb.from('kirtasiye_hatalar').delete().gt('id', 0).then(kontrol); }
     };
   }
 

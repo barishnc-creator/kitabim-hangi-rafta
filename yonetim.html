@@ -111,6 +111,7 @@
       <button class="yan-ogesi" role="tab" id="sek-kullanicilar" aria-controls="kullanicilar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kullanici"></span>Kullanıcılar</button>
       <button class="yan-ogesi" role="tab" id="sek-kampanyalar" aria-controls="kampanyalar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="kampanya"></span>Kampanyalar</button>
       <button class="yan-ogesi" role="tab" id="sek-ayarlar" aria-controls="ayarlar" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="ayar"></span>Ayarlar</button>
+      <button class="yan-ogesi" role="tab" id="sek-durum" aria-controls="durum" aria-selected="false" data-yetki="duzenleyici"><span data-ikon="nabiz"></span>Sistem durumu<span class="sayac" id="hata-sayac" hidden></span></button>
     </nav>
     <div class="yan-alt">
       <a class="yan-ogesi" href="index.html" target="_blank" rel="noopener"><span data-ikon="ekran"></span>Müşteri ekranı</a>
@@ -424,6 +425,28 @@
         </div>
       </section>
 
+      <section id="durum" role="tabpanel" aria-labelledby="sek-durum" class="bolum" hidden>
+        <p class="soluk" style="font-size:15px">Programda bir sorun olunca (müşteri ekranı ya da panel) burada görünür. Aynı hata tekrar ederse yeni satır açılmaz, sayısı artar. Kullanıcının yanlış girişi (boş ad, aynı barkod gibi) hata sayılmaz.</p>
+        <div id="durum-kurulum" class="mesaj uyari" hidden>Hata kaydı henüz kurulmamış: Supabase SQL Editor’de <b>supabase/hata-kaydi.sql</b> dosyasını çalıştırın.</div>
+        <div class="kpiler" id="durum-kpiler"></div>
+        <div class="kart bolum">
+          <div class="kart-baslik"><h2>Son hatalar</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="dugme" type="button" id="durum-yenile">Yenile</button>
+              <button class="dugme" type="button" id="durum-goruldu">Hepsini görüldü say</button>
+              <button class="dugme tehlike" type="button" id="durum-temizle">Listeyi temizle</button>
+            </div>
+          </div>
+          <div class="tablo-kutu" style="box-shadow:none">
+            <table class="tablo">
+              <thead><tr><th>Son görülme</th><th>Hata</th><th>Ekran / cihaz</th><th class="sayi">Kaç kez</th></tr></thead>
+              <tbody id="durum-hatalar"></tbody>
+            </table>
+          </div>
+          <div id="durum-mesaj" role="status"></div>
+        </div>
+      </section>
+
       <section id="ayarlar" role="tabpanel" aria-labelledby="sek-ayarlar" class="bolum" hidden>
         <div class="iki-sutun">
           <div class="genis bolum">
@@ -519,6 +542,7 @@
 <script src="vendor/barcode-detector.js"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="js/ayar.js"></script>
+<script src="js/hata.js"></script>
 <script src="js/arama.js"></script>
 <script src="js/kitapbilgi.js"></script>
 <script src="js/depo.js"></script>
@@ -543,6 +567,7 @@
 <script src="js/panel-kampanya.js"></script>
 <script src="js/panel-harita.js"></script>
 <script src="js/panel-gecmis.js"></script>
+<script src="js/panel-durum.js"></script>
 <script src="js/kur.js"></script>
 <script>
   // Çevrimdışı çalışma için uygulama dosyalarını önbelleğe alan hizmet çalışanı.

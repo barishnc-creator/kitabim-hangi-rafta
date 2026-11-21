@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 21 Kasım 2026 (39 bin kitap: kota, çevrimdışı ve hız düzeltmesi yayında)_
+_Son güncelleme: 21 Kasım 2026 (hata kaydı + Sistem durumu + Claude izleme kapısı)_
 
 ## Proje
 
@@ -43,6 +43,13 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Deneme sürümü (yerel veri, örnek doldurma): claude.ai/artifact/W2Go9k3SPxdrxF93SZNXDw — kaynağı scratchpad'deydi; yeniden üretmek için `index.html`/`yonetim.html`'den supabase.js ve service worker çıkarılıp `js/ayar.js` boş bırakılır.
 
 ## Sıradaki işler
+
+00000. **Hata kaydı ve Sistem durumu (21 Kasım, sw khr-v19, test 80 + SQL 5 kontrol + e2e durum-bulut):** kullanıcı: "sorun olunca hep benim görebileceğim, Claude'umun da görebileceği bir sistem".
+   - `supabase/hata-kaydi.sql`: `kirtasiye_hatalar` (24 saatte aynı ekran+mesaj+sürüm → adet++; saatte en çok 200 yeni satır; okuma/silme yalnız düzenleyici), `kirtasiye_hata_yaz` (anonim çağırabilir), `kirtasiye_sistem_durumu()` (düzenleyici: kitap, rafsız, veritabanı MB/500, son 24 saat hata, görülmemiş), Claude kapısı `kirtasiye_izle()` (istek başlığı `x-izleme-token`; anahtarın yalnız sha256 özeti `kirtasiye_izleme`'de; `select public.kirtasiye_izleme_anahtari_uret();` yalnız SQL Editor'den, yeniden üretmek eskisini iptal eder). pg_cron 90 gün işi hataları da siler.
+   - `js/hata.js`: window error / unhandledrejection + panel `yap` hataları, panel/müşteri açılışı, talep gönderimi. Doğrulama hataları (Depo `kod`, `kullaniciMesaji`, `sinir`) bildirilmez. Sayfa başına 30, aynı mesaj dakikada 1. Çevrimdışıyken localStorage sırası (20), bağlantı gelince gönderilir. Adresler dosya adına indirilir (arama sorgusu kayda girmez). `Hata.SURUM` sw.js ile aynı olmalı (test denetler).
+   - Panel: "Sistem durumu" sekmesi (`js/panel-durum.js`, yalnız düzenleyici, menüde görülmemiş hata sayacı).
+   - **KULLANICININ YAPACAKLARI:** (1) SQL Editor'de `supabase/hata-kaydi.sql`; (2) `select public.kirtasiye_izleme_anahtari_uret();` → anahtarı Claude'un `request_credential` formuna gir (host kkcfzrchrdiroiskibhw.supabase.co, header `x-izleme-token`). Sonra Claude okur: `curl -X POST $U/rest/v1/rpc/kirtasiye_izle -H "apikey: <publishable>" -H "Content-Type: application/json" -d '{}'`.
+   - Önerildi (kullanıcı kararı bekleniyor): günlük zamanlanmış görev, yeni hata varsa telefona bildirim.
 
 0000. **Gerçek ürün listesi (21 Kasım):** kullanıcı mağazanın tüm listesini verdi (`kitap.xls`, BIFF8, 5,2 MB, 39.339 satır, sütunlar `Barkod`, `Stok Adı`; yazar/yayınevi/fiyat yok). **Depoya konmadı** (gizlilik). Sonuç: 39.329 yeni kitap, 5 satır adsız (eklenmez). Barkod kuralı genişletildi (`js/giris.js`: boşluk/virgül/noktalı virgül içermeyen 4–40 karakter); eskiden 557 `BZK_978…` kodu ve ~30 noktalı/Türkçe harfli kod reddediliyordu. sw khr-v17, test 75.
    - Ölçek testi (scratchpad, sahte Supabase): önizleme 1,3 sn, kayıt 79 istek (~20 sn yerelde), panel 40 sayfa ile ~1,3 sn, kiosk açılış ~1,2 sn, arama ~0,1 sn, hata yok.
