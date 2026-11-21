@@ -11,6 +11,36 @@
 
   function yay(d) { son = d; dinleyiciler.forEach(function (cb) { cb(d); }); }
   function kopya(d) { return JSON.parse(JSON.stringify(d)); }
+
+  // Çevrimdışı kopya IndexedDB'de (localStorage 5 MB ile sınırlı; on binlerce kitap sığmaz). Hata olursa sessizce geçer.
+  var Onbellek = (function () {
+    var acik = null;
+    function ac() {
+      if (acik) return acik;
+      acik = new Promise(function (tamam, hata) {
+        if (!kok.indexedDB) return hata(new Error('IndexedDB yok'));
+        var r = kok.indexedDB.open('kitabim-hangi-rafta', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('veri'); };
+        r.onsuccess = function () { tamam(r.result); };
+        r.onerror = function () { hata(r.error); };
+      });
+      acik.catch(function () { acik = null; });
+      return acik;
+    }
+    function islem(tur, fn) {
+      return ac().then(function (db) {
+        return new Promise(function (tamam, hata) {
+          var t = db.transaction('veri', tur), r = fn(t.objectStore('veri'));
+          t.oncomplete = function () { tamam(r.result); };
+          t.onerror = t.onabort = function () { hata(t.error); };
+        });
+      });
+    }
+    return {
+      yaz: function (anahtar, deger) { return islem('readwrite', function (s) { return s.put(deger, anahtar); }).catch(function () {}); },
+      oku: function (anahtar) { return islem('readonly', function (s) { return s.get(anahtar); }).catch(function () { return null; }); }
+    };
+  })();
   var ROL_ADI = { duzenleyici: 'Düzenleyici', revizeci: 'Revize veren', calisan: 'Çalışan' };
 
   // ======================= YEREL MOD =======================
@@ -176,6 +206,7 @@
       auth: { storage: kok.sessionStorage, storageKey: 'kitabim-hangi-rafta-oturum' }
     });
     var benimRol = null;
+    var ilkYuklendi = false;
 
     function kontrol(sonuc) {
       if (sonuc.error) {
@@ -210,11 +241,19 @@
       return al(0);
     }
 
-    function yukle() {
+    var KITAP_SUTUN = 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,kapak,eklendi';
+    function kitapYap(k) {
+      return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
+        fiyat: k.fiyat == null ? null : Number(k.fiyat), kapak: k.kapak || '', eklendi: k.eklendi };
+    }
+    // kitaplarDahil=false: yalnız raflar, bölmeler, ayarlar, okul listeleri yenilenir; kitaplar eldekinden alınır.
+    // Kitap listesi büyük (on binlerce satır): her küçük değişiklikte yeniden indirmek ücretsiz kotayı bitirir.
+    function yukle(kitaplarDahil) {
+      var kitapIste = kitaplarDahil !== false || !son.kitaplar.length && !ilkYuklendi;
       return Promise.all([
         hepsi('kirtasiye_raflar', 'id,no,etiket', 'no'),
         hepsi('kirtasiye_bolmeler', 'id,raf_id,no', 'no'),
-        hepsi('kirtasiye_kitaplar', 'id,ad,yazar,yayinevi,barkod,bolme_id,fiyat,kapak,eklendi', 'ad'),
+        kitapIste ? hepsi('kirtasiye_kitaplar', KITAP_SUTUN, 'ad') : Promise.resolve(null),
         sb.from('kirtasiye_ayarlar').select('fiyat,magaza_adi,renk,logo,karsilama,plan').eq('id', 1).maybeSingle().then(kontrol),
         hepsi('kirtasiye_okul_listeleri', 'id,okul,sinif,kalemler', 'okul'),
         // Kampanya sütunu sonradan eklendi: yoksa (SQL çalıştırılmamışsa) program yine açılır.
@@ -224,10 +263,8 @@
         d.raflar = s[0].map(function (r) {
           return { id: r.id, no: r.no, etiket: r.etiket, bolmeler: s[1].filter(function (b) { return b.raf_id === r.id; }).map(function (b) { return { id: b.id, no: b.no }; }) };
         });
-        d.kitaplar = s[2].map(function (k) {
-          return { id: k.id, ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolmeId: k.bolme_id,
-            fiyat: k.fiyat == null ? null : Number(k.fiyat), kapak: k.kapak || '', eklendi: k.eklendi };
-        });
+        d.kitaplar = s[2] ? s[2].map(kitapYap) : son.kitaplar;
+        if (s[2]) ilkYuklendi = true;
         if (s[3]) d.ayarlar = Depo.duzelt({ ayarlar: { fiyat: s[3].fiyat, magazaAdi: s[3].magaza_adi || '', renk: s[3].renk, logo: s[3].logo, karsilama: s[3].karsilama, plan: s[3].plan, kampanyalar: s[5] } }).ayarlar;
         d.okulListeleri = s[4].map(function (l) { return { id: l.id, okul: l.okul, sinif: l.sinif, kalemler: l.kalemler || [] }; });
         son = d;
@@ -238,34 +275,79 @@
     var ONBELLEK = 'kitabim-hangi-rafta:onbellek';
     var asilYukle = yukle;
     yukle = function () {
-      return asilYukle().then(function (d) {
-        try { kok.localStorage.setItem(ONBELLEK, JSON.stringify({ zaman: new Date().toISOString(), veri: d })); } catch (e) { /* yer yoksa geç */ }
+      var args = arguments;
+      return asilYukle.apply(null, args).then(function (d) {
+        clearTimeout(onbellekZaman);
+        Onbellek.yaz(ONBELLEK, { zaman: new Date().toISOString(), veri: d }); // tam yükleme: hemen yaz
         durumBildir(null);
         return d;
       }, function (hata) {
-        var k = null;
-        try { k = JSON.parse(kok.localStorage.getItem(ONBELLEK)); } catch (e) { k = null; }
-        if (!k || !/ulaşılamadı|fetch|network/i.test(hata.message || '')) throw hata;
-        var d = Depo.duzelt(k.veri);
-        son = d;
-        durumBildir(k.zaman);
-        return d;
+        if (!/ulaşılamadı|fetch|network/i.test(hata.message || '')) throw hata;
+        return Onbellek.oku(ONBELLEK).then(function (k) {
+          if (!k) throw hata;
+          var d = Depo.duzelt(k.veri);
+          son = d;
+          durumBildir(k.zaman);
+          return d;
+        });
       });
     };
+    // Eski sürüm büyük kopyayı localStorage'a yazıyordu (5 MB sınırı; on binlerce kitap sığmaz): temizle.
+    try { kok.localStorage.removeItem(ONBELLEK); } catch (e) { /* depolama kapalı */ }
+    var onbellekZaman = null;
+    function onbellekYaz(d) {
+      clearTimeout(onbellekZaman); // art arda değişikliklerde bir kez yaz
+      onbellekZaman = setTimeout(function () { Onbellek.yaz(ONBELLEK, { zaman: new Date().toISOString(), veri: d }); }, 3000);
+    }
     kok.addEventListener('online', function () { yukle().then(yay).catch(function () {}); });
-    function yenile(sonuc) { return yukle().then(function (d) { yay(d); return sonuc; }); }
+    function yenile(sonuc) { return yukle(false).then(function (d) { yay(d); return sonuc; }); }
+    // Tek kitap değişikliği: listeyi yeniden indirmeden yerinde uygula (yeni dizi, sayfalar yeniden çizer).
+    function kitapUygula(degisenler, silinenler) {
+      var harita = {};
+      (degisenler || []).forEach(function (k) { harita[k.id] = k; });
+      var sil = {};
+      (silinenler || []).forEach(function (id) { sil[id] = true; });
+      var liste = [];
+      son.kitaplar.forEach(function (k) {
+        if (sil[k.id]) return;
+        if (harita[k.id]) { liste.push(harita[k.id]); delete harita[k.id]; } else liste.push(k);
+      });
+      Object.keys(harita).forEach(function (id) { liste.push(harita[id]); });
+      var d = Object.assign({}, son, { kitaplar: liste });
+      yay(d);
+      onbellekYaz(d);
+      return d;
+    }
     function satirYap(k) {
       return { ad: k.ad, yazar: k.yazar, yayinevi: k.yayinevi, barkod: k.barkod, bolme_id: k.bolmeId, fiyat: k.fiyat,
         kapak: k.kapak || '', guncellendi: new Date().toISOString() };
     }
 
     // Başka cihazdaki değişiklikler: kısa bir beklemeyle tümünü yeniden yükle.
-    var bekle = null;
+    // Kitap değişikliği gelen satırla yerinde uygulanır (toplu girişte binlerce olay 300 ms'de bir toplanır);
+    // raf, bölme, ayar ve okul listesi küçük: onlar için yalnız o tablolar yeniden okunur.
+    // Bağlantı koparsa kaçan olaylar için yeniden bağlanınca bir kez tam yükleme yapılır.
+    var bekle = null, kucukBekle = null, gelen = {}, giden = {}, abone = false;
     sb.channel('kirtasiye').on('postgres_changes', { event: '*', schema: 'public' }, function (p) {
-      if (!/^kirtasiye_(raflar|bolmeler|kitaplar|ayarlar|okul_listeleri)$/.test(p.table)) return;
-      clearTimeout(bekle);
-      bekle = setTimeout(function () { yukle().then(yay).catch(function () {}); }, 300);
-    }).subscribe();
+      if (p.table === 'kirtasiye_kitaplar') {
+        if (p.eventType === 'DELETE') { var id = p.old && p.old.id; if (id) { giden[id] = true; delete gelen[id]; } }
+        else if (p.new && p.new.id) { gelen[p.new.id] = kitapYap(p.new); delete giden[p.new.id]; }
+        clearTimeout(bekle);
+        bekle = setTimeout(function () {
+          var g = Object.keys(gelen).map(function (k) { return gelen[k]; }), s = Object.keys(giden);
+          gelen = {}; giden = {};
+          if (g.length || s.length) kitapUygula(g, s);
+        }, 300);
+        return;
+      }
+      if (!/^kirtasiye_(raflar|bolmeler|ayarlar|okul_listeleri)$/.test(p.table)) return;
+      clearTimeout(kucukBekle);
+      kucukBekle = setTimeout(function () { yukle(false).then(yay).catch(function () {}); }, 300);
+    }).subscribe(function (durum) {
+      if (durum !== 'SUBSCRIBED') return;
+      if (abone && ilkYuklendi) yukle().then(yay).catch(function () {}); // yeniden bağlandı: kaçanları al
+      abone = true;
+    });
 
     function cagir(ad, govde, sunucuAdi) {
       return sb.functions.invoke(ad, { body: govde }).then(function (s) {
@@ -309,15 +391,16 @@
       },
       kitapKaydet: function (g, izin) {
         var yeni = !g.id;
-        var k = Depo.kitapKaydet(kopya(son), g, { ayniBarkodaIzin: izin }); // doğrulama + düzeltme
+        // Doğrulama + düzeltme. Depo yalnız kitap dizisini değiştirir: on binlerce kitabı derin kopyalamamak için dizinin kopyası yeter.
+        var k = Depo.kitapKaydet(Object.assign({}, son, { kitaplar: son.kitaplar.slice() }), g, { ayniBarkodaIzin: izin });
         var satir = satirYap(k);
         var istek = yeni
-          ? sb.from('kirtasiye_kitaplar').insert(satir).select('id').single()
-          : sb.from('kirtasiye_kitaplar').update(satir).eq('id', g.id).select('id').single();
-        return istek.then(kontrol).then(function (y) { k.id = y.id; return yenile(k); });
+          ? sb.from('kirtasiye_kitaplar').insert(satir).select(KITAP_SUTUN).single()
+          : sb.from('kirtasiye_kitaplar').update(satir).eq('id', g.id).select(KITAP_SUTUN).single();
+        return istek.then(kontrol).then(function (y) { k.id = y.id; kitapUygula([kitapYap(y)]); return k; });
       },
       kitapSil: function (id) {
-        return sb.from('kirtasiye_kitaplar').delete().eq('id', id).then(kontrol).then(function () { return yenile(); });
+        return sb.from('kirtasiye_kitaplar').delete().eq('id', id).then(kontrol).then(function () { kitapUygula([], [id]); });
       },
       okulListesiKaydet: function (g) {
         var k = Depo.okulListesiKaydet(kopya(son), g);
@@ -338,7 +421,7 @@
         for (var i = 0; i < yeniler.length; i += 500) parcalar.push(yeniler.slice(i, i + 500));
         return parcalar.reduce(function (p, parca) {
           return p.then(function () { return sb.from('kirtasiye_kitaplar').insert(parca).then(kontrol); });
-        }, Promise.resolve()).then(function () { return yenile({ eklenen: s.eklenen }); });
+        }, Promise.resolve()).then(function () { return yukle().then(function (d) { yay(d); return { eklenen: s.eklenen }; }); });
       },
       aramaKaydet: function (sorgu, sonuc) {
         return sb.from('kirtasiye_aramalar').insert({ sorgu: String(sorgu).trim().slice(0, 100), sonuc: sonuc }).then(function () {}, function () {});

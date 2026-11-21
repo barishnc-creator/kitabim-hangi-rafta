@@ -52,8 +52,8 @@ function b64(o) { return Buffer.from(JSON.stringify(o)).toString('base64url'); }
     if (tablo === 'kirtasiye_kitaplar' && yontem === 'PATCH') {
       const id = (u.searchParams.get('id') || '').replace(/^eq\./, ''), govde = JSON.parse(q.postData());
       istekler.push({ yontem, id, govde });
-      Object.assign(VERI.kirtasiye_kitaplar.find((k) => k.id === id) || {}, govde);
-      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(tek ? { id } : [{ id }]) });
+      const satir = Object.assign(VERI.kirtasiye_kitaplar.find((k) => k.id === id) || { id }, govde);
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(tek ? satir : [satir]) }); // gerçek PostgREST seçilen sütunları döndürür
     }
     return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
   });

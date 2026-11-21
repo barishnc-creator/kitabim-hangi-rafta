@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 21 Kasım 2026 (mağazanın gerçek ürün listesi: 39.339 satır)_
+_Son güncelleme: 21 Kasım 2026 (39 bin kitap: kota, çevrimdışı ve hız düzeltmesi yayında)_
 
 ## Proje
 
@@ -46,8 +46,14 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 0000. **Gerçek ürün listesi (21 Kasım):** kullanıcı mağazanın tüm listesini verdi (`kitap.xls`, BIFF8, 5,2 MB, 39.339 satır, sütunlar `Barkod`, `Stok Adı`; yazar/yayınevi/fiyat yok). **Depoya konmadı** (gizlilik). Sonuç: 39.329 yeni kitap, 5 satır adsız (eklenmez). Barkod kuralı genişletildi (`js/giris.js`: boşluk/virgül/noktalı virgül içermeyen 4–40 karakter); eskiden 557 `BZK_978…` kodu ve ~30 noktalı/Türkçe harfli kod reddediliyordu. sw khr-v17, test 75.
    - Ölçek testi (scratchpad, sahte Supabase): önizleme 1,3 sn, kayıt 79 istek (~20 sn yerelde), panel 40 sayfa ile ~1,3 sn, kiosk açılış ~1,2 sn, arama ~0,1 sn, hata yok.
-   - **SORUN (yüklemeden önce çözülmeli, kullanıcı onayı bekleniyor):** her kitap değişikliğinde (ör. rafa yerleştirme) değişikliği yapan cihaz `yenile()` ile ve açık tüm ekranlar realtime ile **tüm kitapları yeniden indiriyor** (39 bin satır ≈ 8,8 MB JSON, sıkıştırılmış ≈ 0,9 MB). Günde yüzlerce yerleştirme × birkaç cihaz → Supabase ücretsiz 5 GB/ay çıkış kotası birkaç günde biter, tabletler yavaşlar. Çözüm önerisi: tek kitap değişikliğini yerelde uygula (kendi yazımında yanıt satırıyla, başka cihazda realtime payload'u ile), tam yükleme yalnız açılışta ve toplu işlemde.
-   - İkinci sorun: çevrimdışı önbellek localStorage'da; 8,8 MB sığmaz (sessizce atlanır) → internet kesilince müşteri ekranı boş kalır. Çözüm: IndexedDB.
+   - **Arkadaşı listeyi eski sürümle canlıya yükledi** (21 Kasım sabah): canlıda 38.748 kitap (BZK_ kodlu 557 ürün o sürümde reddedildi; isterse aynı dosyayı yeniden yüklesin, kayıtlılar atlanır, yalnız eksikler eklenir). Yerleştirme başlamıştı (4 kitap).
+   - **KOTA/ÇEVRİMDIŞI DÜZELTMESİ YAPILDI (21 Kasım, sw khr-v18, test 77):**
+     - `js/veri.js`: tek kitap değişikliği (kaydet, sil, rafa yerleştir) yanıt satırıyla yerinde uygulanır (`kitapUygula`); realtime'da kitap olayı payload'la uygulanır (300 ms'de toplanır); raf/bölme/ayar/okul değişikliğinde yalnız küçük tablolar okunur (`yukle(false)`); tam indirme yalnız açılışta, toplu ürün girişinde ve realtime yeniden bağlanınca. Bir tam yükleme ≈ 2 MB (sıkıştırılmış, 39 bin kitap) → ayda ~0,6 GB tahmini (5 GB kota).
+     - Çevrimdışı kopya IndexedDB'de (`Onbellek`); eski localStorage kopyası silinir. Tam yüklemede hemen, tekil değişikliklerde 3 sn sonra yazılır.
+     - Hız: `Depo.rafsizKitaplar` sıralamayı tekrar kullanır (yerleştirmede yalnız küçülür), sayaçlar `Depo.rafsizSayisi`; Kitaplar listesi yalnız sekme açıkken ve Intl.Collator ile sıralanır. Ölçek testi: yerleştirme kitap başına ~1,2 sn → ~0,2 sn, yerleştirmede kitap listesi indirme 0.
+     - Testler: `tests/veri-canli.test.cjs` (realtime), `tests/giris.test.cjs` (rafsız liste, mağaza kodları); `giris-bulut-e2e` sahte PATCH artık satırı döndürür.
+   - Ölçek testi betiği scratchpad'de (`olcek.js`; depoya konmadı, gerçek dosyaya bağlı).
+   - Öneri (kullanıcıya soruldu): hata bildirimi (programda oluşan hatalar Supabase'de bir tabloya yazılsın, panelde ve kullanıcıya görünsün) ve kota izleme.
    - Ad yazımı sınırı: kaynakta İ'siz yazılmış adlarda "Bırı Sızı" gibi yanlış I kalabiliyor; İngilizce adlarda "İn Use".
 
 000. **20 Kasım revizesi YAYINDA (main, sw khr-v16).** Kullanıcının istekleri ve kararları:

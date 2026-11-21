@@ -145,9 +145,29 @@
   }
 
   // Rafa yerleştirilmeyi bekleyen kitaplar (Excel ile girilmiş, bölmesi yok), ada göre sıralı.
-  function rafsizKitaplar(d) {
-    return d.kitaplar.filter(function (k) { return !k.bolmeId; }).sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
+  function rafsizSayisi(d) {
+    var n = 0;
+    for (var i = 0; i < d.kitaplar.length; i++) if (!d.kitaplar[i].bolmeId) n++;
+    return n;
   }
+  // Süzme ucuz, sıralama pahalı (on binlerce kitap): süzülen kitaplar (aynı nesneler, aynı sırada) değişmediyse
+  // önceki sıralı sonuç döner. Depo kitabı değiştirirken yeni nesne koyduğu için ad değişikliği de yakalanır.
+  var rafsizSon = { girdi: [], liste: [] };
+  var adSiraci = typeof Intl !== 'undefined' ? new Intl.Collator('tr') : null;
+  function rafsizKitaplar(d) {
+    var girdi = d.kitaplar.filter(function (k) { return !k.bolmeId; });
+    var ayni = girdi.length === rafsizSon.girdi.length && girdi.every(function (k, i) { return k === rafsizSon.girdi[i]; });
+    if (!ayni) {
+      // Rafa yerleştirme sırasında liste yalnız küçülür: eski sıralı listeden çıkanları atmak yeniden sıralamaktan hızlı.
+      var simdi = new Set(girdi), eski = new Set(rafsizSon.girdi);
+      var yalnizAzaldi = typeof Set === 'function' && girdi.length < rafsizSon.girdi.length && girdi.every(function (k) { return eski.has(k); });
+      rafsizSon = { girdi: girdi, liste: yalnizAzaldi
+        ? rafsizSon.liste.filter(function (k) { return simdi.has(k); })
+        : girdi.slice().sort(function (a, b) { return adSiraci ? adSiraci.compare(a.ad, b.ad) : a.ad.localeCompare(b.ad, 'tr'); }) };
+    }
+    return rafsizSon.liste.slice();
+  }
+
 
   // Ürün girişi planını (Giris.planla) uygular: yeni kitapları ekler. Döner: { eklenen: [kitap] }
   function urunGirisiUygula(d, plan) {
@@ -313,7 +333,7 @@
   var api = {
     bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
-    kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap, rafsizKitaplar: rafsizKitaplar, urunGirisiUygula: urunGirisiUygula,
+    kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap, rafsizKitaplar: rafsizKitaplar, rafsizSayisi: rafsizSayisi, urunGirisiUygula: urunGirisiUygula,
     planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula, talepGrupla: talepGrupla,
     kampanyaDuzelt: kampanyaDuzelt, KAMPANYA_EN_COK: KAMPANYA_EN_COK,
     okulListesiKaydet: okulListesiKaydet, okulListesiSil: okulListesiSil, listeDurumu: listeDurumu

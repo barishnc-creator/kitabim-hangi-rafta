@@ -167,3 +167,17 @@ test('plan: mağaza kodları (BZK_978…, noktalı/Türkçe harfli kod) barkod s
   assert.deepEqual(p.yeni.map((y) => y.barkod), ['BZK_9789752636231', "4578'5060.0135", 'TONGUÇ1.SINIF']);
   assert.deepEqual(p.hatalar.map((h) => h.satir), [5]);
 });
+
+test('rafsız liste: yerleştirince küçülür, yeni/değişen kitapta yeniden sıralanır, sayaç tutarlı', () => {
+  const { d, r } = magaza();
+  ['Zeytin', 'Çınar', 'Ağaç', 'Işık'].forEach((ad) => Depo.kitapKaydet(d, { ad }, { rafsizOlabilir: true }));
+  assert.deepEqual(Depo.rafsizKitaplar(d).map((k) => k.ad), ['Ağaç', 'Çınar', 'Işık', 'Zeytin']);
+  const cinar = d.kitaplar.find((k) => k.ad === 'Çınar');
+  Depo.kitapKaydet(d, Object.assign({}, cinar, { bolmeId: r.bolmeler[0].id }));
+  assert.deepEqual(Depo.rafsizKitaplar(d).map((k) => k.ad), ['Ağaç', 'Işık', 'Zeytin']);
+  const isik = d.kitaplar.find((k) => k.ad === 'Işık');
+  Depo.kitapKaydet(d, Object.assign({}, isik, { ad: 'Bulut' }), { rafsizOlabilir: true });
+  Depo.kitapKaydet(d, { ad: 'Defne' }, { rafsizOlabilir: true });
+  assert.deepEqual(Depo.rafsizKitaplar(d).map((k) => k.ad), ['Ağaç', 'Bulut', 'Defne', 'Zeytin']);
+  assert.equal(Depo.rafsizSayisi(d), 4);
+});

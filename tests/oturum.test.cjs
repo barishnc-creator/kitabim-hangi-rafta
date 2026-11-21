@@ -36,8 +36,10 @@ test('bulut: oturum localStorage yerine sekmeye özel sessionStorage içinde, uy
 });
 
 test('bulut: eski sürümün localStorage\'da bıraktığı jeton silinir, başka veriye dokunulmaz', () => {
-  const ls = depo({ 'sb-kkcfzrchrdiroiskibhw-auth-token': '{"access_token":"eski"}', 'kitabim-hangi-rafta:onbellek': '{}' });
+  const ls = depo({ 'sb-kkcfzrchrdiroiskibhw-auth-token': '{"access_token":"eski"}', 'kitabim-hangi-rafta:talepler': '[]', 'kitabim-hangi-rafta:onbellek': '{}' });
   bulutModundaYukle(ls);
   assert.equal(ls.has('sb-kkcfzrchrdiroiskibhw-auth-token'), false);
-  assert.equal(ls.has('kitabim-hangi-rafta:onbellek'), true);
+  assert.equal(ls.has('kitabim-hangi-rafta:talepler'), true);
+  // Büyük çevrimdışı kopya artık IndexedDB'de; eski sürümün localStorage'daki kopyası silinir (5 MB sınırı).
+  assert.equal(ls.has('kitabim-hangi-rafta:onbellek'), false);
 });

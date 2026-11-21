@@ -124,7 +124,7 @@
       var dosya = tablo ? tablo.dosya : '';
       temizle();
       durum('giris-durum', 'basari', '“' + dosya + '” kaydedildi: ' + s.eklenen.length + ' yeni kitap eklendi.' +
-        (Depo.rafsizKitaplar(P.d()).length ? ' Yeni kitapları aşağıdan rafına yerleştirin.' : ''));
+        (Depo.rafsizSayisi(P.d()) ? ' Yeni kitapları aşağıdan rafına yerleştirin.' : ''));
       yerlestirCiz();
       if (s.eklenen.some(function (k) { return !k.bolmeId; })) $('yerlestir').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }).catch(function (e) {
@@ -198,7 +198,7 @@
   }
 
   function sayacGuncelle() {
-    var n = Depo.rafsizKitaplar(P.d()).length;
+    var n = Depo.rafsizSayisi(P.d());
     $('rafsiz-sayac').hidden = !n;
     $('rafsiz-sayac').textContent = n > 99 ? '99+' : String(n);
   }
