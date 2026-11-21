@@ -2,7 +2,7 @@
 // Panelde "Sistem durumu" bölümünde görünür. Kullanıcının yanlış girişi (boş ad, aynı barkod vb.) hata sayılmaz.
 // İnternet yoksa en çok 20 bildirim cihazda bekler, bağlantı gelince gönderilir. Tarayıcıda window.Hata.
 (function (kok) {
-  var SURUM = 'khr-v20'; // sw.js ile aynı olmalı (tests/hata.test.cjs denetler)
+  var SURUM = 'khr-v21'; // sw.js ile aynı olmalı (tests/hata.test.cjs denetler)
   var KUYRUK = 'kitabim-hangi-rafta:hata-kuyrugu';
   var SAYFA_SINIRI = 30; // bir sayfa açılışında en çok bu kadar bildirim (döngüye giren hata sunucuyu doldurmasın)
   var gonderilen = 0, sonGonderim = {};

@@ -14,6 +14,7 @@ body.panel-govde { background: #F1F4F8; }
 .yan {
   width: 248px; flex-shrink: 0; background: var(--yan); color: var(--yan-yazi);
   display: flex; flex-direction: column; gap: 6px; padding: 18px 12px; position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; overscroll-behavior: contain; /* kısa ekranda (yatay tablet, küçük dizüstü) menünün tamamına ulaşılsın */
 }
 .marka { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }
 .marka-ikon { width: 38px; height: 38px; border-radius: 10px; background: var(--mavi); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }

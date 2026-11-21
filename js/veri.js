@@ -59,7 +59,7 @@
         kok.localStorage.setItem(GECMIS, JSON.stringify(l.slice(0, 1000)));
       } catch (e) { /* geçmiş tutulamazsa işlem yine yapılır */ }
     }
-    var AYAR_ADI = { fiyat: 'fiyat alanı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası', kampanyalar: 'kampanyalar' };
+    var AYAR_ADI = { fiyat: 'fiyat alanı', bolme: 'bölme kullanımı', magazaAdi: 'mağaza adı', renk: 'ana renk', logo: 'logo', karsilama: 'karşılama yazısı', plan: 'mağaza haritası', kampanyalar: 'kampanyalar' };
     function talepOku() { try { return JSON.parse(kok.localStorage.getItem(TALEP)) || []; } catch (e) { return []; } }
     function talepYaz(l) { kok.localStorage.setItem(TALEP, JSON.stringify(l)); return Promise.resolve(); }
     function oku() {
@@ -129,9 +129,9 @@
         return degistir(function (d) {
           var g = {}; g[alan] = deger;
           var temiz = Depo.duzelt({ ayarlar: Object.assign({}, d.ayarlar, g) }).ayarlar;
-          if (alan === 'fiyat') temiz[alan] = !!deger;
+          if (alan === 'fiyat' || alan === 'bolme') temiz[alan] = !!deger;
           d.ayarlar[alan] = temiz[alan];
-          gecmisYaz({ islem: 'guncelledi', konu: 'ayar', ayrinti: (AYAR_ADI[alan] || alan) + (alan === 'fiyat' ? (deger ? ' açıldı' : ' kapatıldı') : '') });
+          gecmisYaz({ islem: 'guncelledi', konu: 'ayar', ayrinti: (AYAR_ADI[alan] || alan) + (alan === 'fiyat' || alan === 'bolme' ? (deger ? ' açıldı' : ' kapatıldı') : '') });
         });
       },
       okulListesiKaydet: function (g) {
@@ -472,10 +472,15 @@
       },
       ayarKaydet: function (alan, deger) {
         var g = {}, sutun = { magazaAdi: 'magaza_adi', renk: 'renk', logo: 'logo', karsilama: 'karsilama', plan: 'plan', kampanyalar: 'kampanyalar' };
-        if (sutun[alan]) {
+        if (alan === 'bolme') {
+          // Ayrı sütun yok (SQL değişikliği gerekmesin): harita alanının içinde saklanır.
+          g.plan = Object.assign({}, son.ayarlar.plan);
+          if (deger) delete g.plan.bolme; else g.plan.bolme = false;
+        } else if (sutun[alan]) {
           var o = {}; o[alan] = deger;
           g[sutun[alan]] = Depo.duzelt({ ayarlar: o }).ayarlar[alan];
           if (alan === 'magazaAdi') g.magaza_adi = String(deger || '').trim().slice(0, 60);
+          if (alan === 'plan' && son.ayarlar.bolme === false) g.plan.bolme = false; // haritayı kaydetmek bölme ayarını silmesin
         } else g[alan] = !!deger;
         return sb.from('kirtasiye_ayarlar').update(g).eq('id', 1).then(kontrol).then(function () { return yenile(); });
       },

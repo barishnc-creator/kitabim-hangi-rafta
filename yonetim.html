@@ -158,7 +158,7 @@
             <label for="raf-etiket">Raf etiketi <span class="soluk">(isteğe bağlı)</span></label>
             <input id="raf-etiket" placeholder="Örn. Test kitapları">
           </div>
-          <div class="alan kisa">
+          <div class="alan kisa" id="alan-raf-bolme">
             <label for="raf-bolme">Bölme sayısı</label>
             <input id="raf-bolme" type="number" min="1" max="30" value="4">
           </div>
@@ -479,6 +479,7 @@
             <div class="kart">
               <h2 style="font-size:17px;margin-bottom:6px">Alanlar</h2>
               <label class="anahtar" style="border-bottom:0"><span>Fiyat kullanılsın<br><span class="soluk">Kitap formunda ve müşteri kartında görünür</span></span><input type="checkbox" id="ayar-fiyat"></label>
+              <label class="anahtar" style="border-bottom:0"><span>Bölme kullanılsın<br><span class="soluk">Kapalıyken raflar tek parça: raf eklerken bölme sorulmaz, her yerde yalnız “3. Raf” yazar</span></span><input type="checkbox" id="ayar-bolme"></label>
             </div>
           </div>
           <div class="dar kart bolum">
@@ -535,7 +536,7 @@
       <div class="alan"><label for="f-yazar">Yazar</label><input id="f-yazar" autocomplete="off"></div>
       <div class="alan"><label for="f-yayinevi">Yayınevi</label><input id="f-yayinevi" autocomplete="off"></div>
       <div class="alan"><label for="f-raf">Raf <span class="zorunlu">*</span></label><select id="f-raf"></select></div>
-      <div class="alan"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
+      <div class="alan" id="alan-f-bolme"><label for="f-bolme">Bölme <span class="zorunlu">*</span></label><select id="f-bolme"></select></div>
       <div class="alan" id="alan-fiyat"><label for="f-fiyat">Fiyat (₺)</label><input id="f-fiyat" inputmode="decimal" placeholder="Örn. 250,00"></div>
     </div>
     <div id="form-mesaj" role="status"></div>

@@ -139,8 +139,14 @@
 
   function bolmeSecenekleri() {
     var secili = $('yer-bolme').value;
-    var html = '<option value="">Bölme seçin</option>';
+    var bolmeli = Depo.bolmeli(P.d());
+    var html = '<option value="">' + (bolmeli ? 'Bölme seçin' : 'Raf seçin') + '</option>';
     O.sirali(P.d().raflar).forEach(function (r) {
+      if (!bolmeli) { // bölmesiz: raf başına tek seçenek (rafın ilk bölmesi)
+        var ilk = Depo.ilkBolme(r);
+        if (ilk) html += '<option value="' + ilk.id + '">' + O.kacis(r.no + '. Raf' + (r.etiket ? ' · ' + r.etiket : '')) + '</option>';
+        return;
+      }
       html += '<optgroup label="' + O.kacis(r.no + '. Raf' + (r.etiket ? ' · ' + r.etiket : '')) + '">' +
         O.sirali(r.bolmeler).map(function (b) { return '<option value="' + b.id + '">' + r.no + '.' + b.no + '</option>'; }).join('') + '</optgroup>';
     });
@@ -158,7 +164,7 @@
     var hedef = Depo.konum(P.d(), bolmeId);
     return Veri.kitapKaydet(Object.assign({}, kitap, { bolmeId: bolmeId }), true).then(function (k) {
       sonYerlesen = [{ id: kitap.id, ad: kitap.ad, kod: hedef.kod }].concat(sonYerlesen.filter(function (x) { return x.id !== kitap.id; })).slice(0, 8);
-      durum('yer-durum', 'basari', '“' + kitap.ad + '” → Bölme ' + hedef.kod);
+      durum('yer-durum', 'basari', '“' + kitap.ad + '” → ' + hedef.ad);
       yerlestirCiz();
       return k;
     });
@@ -171,10 +177,10 @@
     if (!bolmeId) { durum('yer-durum', 'hata', 'Önce kitabın konulacağı bölmeyi seçin.'); $('yer-bolme').focus(); return Promise.resolve(false); }
     var kitap = kitapBul(kod);
     if (!kitap) { durum('yer-durum', 'hata', kod + ' barkodlu kitap kayıtlı değil. Önce ürün girişi yapın ya da “Kitap ekle” ile ekleyin.'); return Promise.resolve(false); }
-    if (kitap.bolmeId === bolmeId) { durum('yer-durum', 'basari', '“' + kitap.ad + '” zaten Bölme ' + Depo.konum(P.d(), bolmeId).kod + '\'de.'); return Promise.resolve(true); }
+    if (kitap.bolmeId === bolmeId) { durum('yer-durum', 'basari', '“' + kitap.ad + '” zaten ' + Depo.konum(P.d(), bolmeId).ad + ' içinde.'); return Promise.resolve(true); }
     var onay = Promise.resolve(true);
     var eski = kitap.bolmeId && Depo.konum(P.d(), kitap.bolmeId);
-    if (eski) onay = O.pencere('“' + kitap.ad + '” şu an Bölme ' + eski.kod + '\'de kayıtlı. Bölme ' + Depo.konum(P.d(), bolmeId).kod + '\'ye taşınsın mı?', { evet: 'Taşı' });
+    if (eski) onay = O.pencere('“' + kitap.ad + '” şu an ' + eski.ad + ' içinde kayıtlı. ' + Depo.konum(P.d(), bolmeId).ad + ' içine taşınsın mı?', { evet: 'Taşı' });
     return onay.then(function (evet) {
       if (!evet) return false;
       return yerlestir(kitap, bolmeId).then(function () { return true; });

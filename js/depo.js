@@ -18,7 +18,7 @@
   }
 
   function bos() {
-    return { raflar: [], kitaplar: [], okulListeleri: [], ayarlar: { fiyat: true, magazaAdi: '' } };
+    return { raflar: [], kitaplar: [], okulListeleri: [], ayarlar: { fiyat: true, bolme: true, magazaAdi: '' } };
   }
 
   function enBuyuk(liste) {
@@ -31,23 +31,46 @@
     return r;
   }
 
-  // Bölmenin yerini döndürür: { raf, bolme, kod: "2.3" } ya da null.
+  // Bölme kullanımı Ayarlar'dan açılıp kapanır (d.ayarlar.bolme). Kapalıyken her raf tek parça sayılır:
+  // kitaplar yine rafın (ilk) bölmesine bağlıdır ama her yerde yalnız "3. Raf" yazar.
+  function bolmeli(d) { return !(d && d.ayarlar && d.ayarlar.bolme === false); }
+  // Yer bilgisi: kod (rozet, Excel: "2.3" ya da "2. Raf"), ad (başlık: "Bölme 2.3" ya da "2. Raf"),
+  // yazi (tam: "2. Raf · Bölme 2.3" ya da "2. Raf").
+  function yerYap(d, r, b) {
+    if (bolmeli(d)) {
+      var kod = r.no + '.' + b.no;
+      return { raf: r, bolme: b, kod: kod, ad: 'Bölme ' + kod, yazi: r.no + '. Raf · Bölme ' + kod };
+    }
+    return { raf: r, bolme: b, kod: r.no + '. Raf', ad: r.no + '. Raf', yazi: r.no + '. Raf' };
+  }
+  function ilkBolme(r) {
+    return r.bolmeler.slice().sort(function (a, b) { return a.no - b.no; })[0] || null;
+  }
+
+  // Bölmenin yerini döndürür ya da null.
   function konum(d, bolmeId) {
     for (var i = 0; i < d.raflar.length; i++) {
       var r = d.raflar[i];
       var b = r.bolmeler.find(function (x) { return x.id === bolmeId; });
-      if (b) return { raf: r, bolme: b, kod: r.no + '.' + b.no };
+      if (b) return yerYap(d, r, b);
     }
     return null;
   }
 
-  // "2.3" gibi bir koddan bölmeyi bulur; yoksa null.
+  // "2.3" gibi bir koddan bölmeyi bulur; yalnız raf ("2", "2. Raf", "Raf 2") verilirse rafın ilk bölmesi. Yoksa null.
   function bolmeBul(d, kod) {
-    var m = /^\s*(\d+)\s*[.,\-/ ]\s*(\d+)\s*$/.exec(String(kod == null ? '' : kod));
-    if (!m) return null;
-    var r = d.raflar.find(function (x) { return x.no === Number(m[1]); });
-    var b = r && r.bolmeler.find(function (x) { return x.no === Number(m[2]); });
-    return b ? { raf: r, bolme: b, kod: r.no + '.' + b.no } : null;
+    var metin = String(kod == null ? '' : kod);
+    var m = /^\s*(\d+)\s*[.,\-/ ]\s*(\d+)\s*$/.exec(metin);
+    if (m) {
+      var r = d.raflar.find(function (x) { return x.no === Number(m[1]); });
+      var b = r && r.bolmeler.find(function (x) { return x.no === Number(m[2]); });
+      return b ? yerYap(d, r, b) : null;
+    }
+    var t = /^\s*(?:raf\s*)?(\d+)\s*\.?\s*(?:raf)?\s*$/i.exec(metin);
+    if (!t) return null;
+    var rr = d.raflar.find(function (x) { return x.no === Number(t[1]); });
+    var ib = rr && ilkBolme(rr);
+    return ib ? yerYap(d, rr, ib) : null;
   }
 
   // Kapak adresi: yalnız https (sayfa güvenliği için); Google'ın http adresleri https'e çevrilir.
@@ -246,6 +269,7 @@
       kutu.tur = n.tur;
       p.nesneler.push(kutu);
     });
+    if (ham.bolme === false) p.bolme = false; // bölme ayarı (bkz. duzelt)
     if (ham.kiosk && isFinite(Number(ham.kiosk.x)) && isFinite(Number(ham.kiosk.y))) p.kiosk = { x: sinirla(ham.kiosk.x, 0, 100), y: sinirla(ham.kiosk.y, 0, 100) };
     return p;
   }
@@ -320,6 +344,8 @@
     });
     if (ham.ayarlar) {
       d.ayarlar.fiyat = ham.ayarlar.fiyat !== false;
+      // Bölme açık/kapalı: bulutta ayrı sütun yok, harita alanının (plan) içinde "bolme: false" olarak saklanır.
+      d.ayarlar.bolme = typeof ham.ayarlar.bolme === 'boolean' ? ham.ayarlar.bolme : !(ham.ayarlar.plan && ham.ayarlar.plan.bolme === false);
       d.ayarlar.magazaAdi = String(ham.ayarlar.magazaAdi || '').slice(0, 60);
       d.ayarlar.renk = /^#[0-9a-f]{6}$/i.test(ham.ayarlar.renk || '') ? ham.ayarlar.renk : '';
       d.ayarlar.logo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(ham.ayarlar.logo || '') && ham.ayarlar.logo.length <= 300000 ? ham.ayarlar.logo : '';
@@ -331,7 +357,7 @@
   }
 
   var api = {
-    bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
+    bos: bos, duzelt: duzelt, konum: konum, bolmeBul: bolmeBul, bolmeli: bolmeli, ilkBolme: ilkBolme, kapakAdresi: kapakAdresi, bolmeKitaplari: bolmeKitaplari, rafKitapSayisi: rafKitapSayisi,
     rafEkle: rafEkle, rafGuncelle: rafGuncelle, rafSil: rafSil, bolmeEkle: bolmeEkle, bolmeSil: bolmeSil,
     kitapKaydet: kitapKaydet, kitapSil: kitapSil, sayiYap: sayiYap, rafsizKitaplar: rafsizKitaplar, rafsizSayisi: rafsizSayisi, urunGirisiUygula: urunGirisiUygula,
     planDuzelt: planDuzelt, telefonDuzelt: telefonDuzelt, talepDogrula: talepDogrula, talepGrupla: talepGrupla,

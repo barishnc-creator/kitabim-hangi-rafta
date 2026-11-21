@@ -59,11 +59,11 @@
       raflar.map(function (r) {
         var icinde = r.id === hedefRafId || r.bolmeler.some(function (b) { return b.id === hedefBolmeId; });
         return '<div class="raf' + (icinde ? ' vurgu' : '') + '"><div class="raf-bas"><div class="raf-ad"><strong>' + r.no + '. Raf</strong></div>' +
-          (r.etiket ? '<span class="soluk">' + O.kacis(r.etiket) + '</span>' : '') + '</div><div class="bolmeler">' +
+          (r.etiket ? '<span class="soluk">' + O.kacis(r.etiket) + '</span>' : '') + '</div>' + (!Depo.bolmeli(d) ? '' : '<div class="bolmeler">' +
           O.siraliBolmeler(r).map(function (b) {
             var bu = b.id === hedefBolmeId;
             return '<div class="bolme' + (bu ? ' hedef' : '') + '"' + (bu ? ' aria-label="Aradığınız kitap burada"' : '') + '>' + r.no + '.' + b.no + '</div>';
-          }).join('') + '</div></div>';
+          }).join('') + '</div>') + '</div>';
       }).join('') + '</div></div>';
   }
   function tarif(raf) {
@@ -165,7 +165,7 @@
       (k.yayinevi ? '<p class="bilgi">Yayınevi: <strong>' + O.kacis(k.yayinevi) + '</strong></p>' : '') +
       (k.barkod ? '<p class="soluk" style="margin-top:6px">Barkod: ' + O.kacis(k.barkod) + '</p>' : '') + '</div></div>' +
       (yer
-        ? '<div class="k-yer">' + O.ikon.konum + '<div><p>Bu kitap burada</p><strong>' + yer.raf.no + '. Raf · Bölme ' + yer.kod + '</strong>' +
+        ? '<div class="k-yer">' + O.ikon.konum + '<div><p>Bu kitap burada</p><strong>' + yer.yazi + '</strong>' +
           (tarif(yer.raf) || yer.raf.etiket ? '<p style="font-weight:500;margin-top:4px">' + O.kacis(tarif(yer.raf) || yer.raf.etiket + ' rafı') + '</p>' : '') + '</div></div>'
         : k.bolmeId
           ? '<div class="mesaj hata">Bu kitabın rafı kayıtlı değil. Lütfen görevliye sorun.</div>'
@@ -186,8 +186,10 @@
     if (liste && liste.length > 1) { digerleri = liste.slice(0, 24); baslik = liste.length + ' kitap bulundu'; }
     else {
       // Rafsız kitapta "aynı bölme" yoktur: diğer rafsız kitaplar listelenmez
-      digerleri = k.bolmeId ? Depo.bolmeKitaplari(d, k.bolmeId).filter(function (x) { return x.id !== k.id; }).slice(0, 12) : [];
-      baslik = 'Aynı bölmedeki diğer kitaplar';
+      var yer = k.bolmeId && Depo.konum(d, k.bolmeId);
+      var ids = !yer ? [] : Depo.bolmeli(d) ? [k.bolmeId] : yer.raf.bolmeler.map(function (b) { return b.id; });
+      digerleri = d.kitaplar.filter(function (x) { return x.id !== k.id && ids.indexOf(x.bolmeId) >= 0; }).slice(0, 12);
+      baslik = Depo.bolmeli(d) ? 'Aynı bölmedeki diğer kitaplar' : 'Aynı raftaki diğer kitaplar';
     }
     sonucGoster(detayCiz(k, digerleri, baslik));
     O.ikonlariDoldur(sonuc);
@@ -196,10 +198,11 @@
   function bolmeGoster(kod) {
     var yer = Depo.bolmeBul(d, kod);
     if (!yer) return bulunamadi(kod);
+    if (!Depo.bolmeli(d)) return rafGoster(yer.raf.id); // bölmesiz: rafın tüm kitapları
     var kitaplar = Depo.bolmeKitaplari(d, yer.bolme.id).sort(function (a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
     sonucGoster('<div class="bolum" style="display:flex;flex-direction:column;gap:16px">' +
       '<button type="button" class="dugme k-geri" data-is="ana"><span data-ikon="geri"></span>Başa dön</button>' +
-      '<div class="kart"><h2 style="font-size:28px">Bölme ' + yer.kod + '</h2><p class="soluk" style="font-size:16px">' + yer.raf.no + '. Raf' +
+      '<div class="kart"><h2 style="font-size:28px">' + yer.ad + '</h2><p class="soluk" style="font-size:16px">' + yer.raf.no + '. Raf' +
       (yer.raf.etiket ? ' · ' + O.kacis(yer.raf.etiket) : '') + ' · ' + kitaplar.length + ' kitap</p></div>' +
       (kitaplar.length ? '<div class="k-izgara">' + kitaplar.map(function (k) { return kart(k, false); }).join('') + '</div>' : '<p class="soluk">Bu bölmede kayıtlı kitap yok.</p>') +
       sema(yer.bolme.id) + '</div>');
@@ -351,7 +354,7 @@
     var s = sorgu.value;
     $('temizle').hidden = !s;
     if (!s.trim()) return karsilamaGoster();
-    var raf = /^\s*RAF[:\s]*(\d+[.,]\d+)\s*$/i.exec(s);
+    var raf = /^\s*RAF[:\s]*(\d+(?:[.,]\d+)?)\s*$/i.exec(s); // RAF:2.3 (bölme) ya da RAF:2 (bölmesiz raf etiketi)
     if (raf) return bolmeGoster(raf[1]);
     var bulunan = Arama.ara(d.kitaplar, s);
     if (kayitla) kaydet(s, bulunan.length);

@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 21 Kasım 2026 (hata kaydı + Sistem durumu + Claude izleme kapısı)_
+_Son güncelleme: 21 Kasım 2026 akşam (bölmesiz raf seçeneği, menü kaydırma düzeltmesi)_
 
 ## Proje
 
@@ -43,6 +43,9 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 - Deneme sürümü (yerel veri, örnek doldurma): claude.ai/artifact/W2Go9k3SPxdrxF93SZNXDw — kaynağı scratchpad'deydi; yeniden üretmek için `index.html`/`yonetim.html`'den supabase.js ve service worker çıkarılıp `js/ayar.js` boş bırakılır.
 
 ## Sıradaki işler
+
+000000. **Bölmesiz raflar (21 Kasım, sw khr-v21, test 84 + e2e bolmesiz):** kullanıcı: "Rafların tamamı bölmesiz olsun, raf eklerken de sadece raf gelsin". Ayarlar → **"Bölme kullanılsın"** anahtarı (varsayılan açık; kullanıcı kapatacak). SQL gerekmez: bulutta `kirtasiye_ayarlar.plan` içinde `bolme: false` (planDuzelt korur; harita kaydı silmez). Kapalıyken: veri modeli aynı (her raf tek görünmez bölme; canlıda zaten her rafın 1 bölmesi var), `Depo.konum` → kod/ad/yazi "N. Raf" (`Depo.bolmeli`, `Depo.ilkBolme`), `bolmeBul` "N", "N. Raf", "Raf N" kabul eder; raf ekleme formunda bölme sayısı gizli (1 bölme), şemada raf tek düğme, raf paneli rafın tüm kitapları, kitap formunda bölme seçimi gizli, etiketler raf başına (QR `RAF:N`), müşteri ekranı "N. Raf" / "Aynı raftaki", rafa yerleştirmede raf listesi, pano KPI raf bazlı, şube Excel çıktısında Bölme sütunu yok.
+   - Ayrıca: yan menü kısa ekranda kaydırılamıyordu (720 px'te Ayarlar/Sistem durumu erişilemez) → `.yan { overflow-y: auto }`.
 
 00000. **Hata kaydı ve Sistem durumu (21 Kasım, sw khr-v19, test 80 + SQL 5 kontrol + e2e durum-bulut):** kullanıcı: "sorun olunca hep benim görebileceğim, Claude'umun da görebileceği bir sistem".
    - `supabase/hata-kaydi.sql`: `kirtasiye_hatalar` (24 saatte aynı ekran+mesaj+sürüm → adet++; saatte en çok 200 yeni satır; okuma/silme yalnız düzenleyici), `kirtasiye_hata_yaz` (anonim çağırabilir), `kirtasiye_sistem_durumu()` (düzenleyici: kitap, rafsız, veritabanı MB/500, son 24 saat hata, görülmemiş), Claude kapısı `kirtasiye_izle()` (istek başlığı `x-izleme-token`; anahtarın yalnız sha256 özeti `kirtasiye_izleme`'de; `select public.kirtasiye_izleme_anahtari_uret();` yalnız SQL Editor'den, yeniden üretmek eskisini iptal eder). pg_cron 90 gün işi hataları da siler.

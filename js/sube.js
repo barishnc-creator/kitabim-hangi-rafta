@@ -105,7 +105,7 @@
       kalemler.push(kalem);
     });
     kalemler.sort(toplamaSirasi);
-    return { kalemler: kalemler, atlanan: atlanan, ozet: ozet(kalemler) };
+    return { kalemler: kalemler, atlanan: atlanan, ozet: ozet(kalemler), bolmeli: Depo.bolmeli(d) };
   }
 
   // Raf → bölme → kitap adı; ardından mağazada olup rafa yerleştirilmemişler, en sonda kaydı olmayanlar.
@@ -127,13 +127,12 @@
 
   // Excel'e yazılacak satırlar (ilk satır başlık). Barkod metin kalır.
   function ciktiSatirlari(sonuc) {
-    var bas = ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum'];
+    var bolmeli = sonuc.bolmeli !== false; // bölme kapalıysa Bölme sütunu yazılmaz
+    var bas = bolmeli ? ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum'] : ['Sıra', 'Raf', 'Barkod', 'Kitap adı', 'Durum'];
     return [bas].concat(sonuc.kalemler.map(function (k, i) {
-      var s = [i + 1,
-        k.yer ? k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : '') : '',
-        k.yer ? k.yer.kod : '',
-        k.barkod, k.kitap ? k.kitap.ad : k.listeAdi, DURUM[k.durum]];
-      return s;
+      var s = [i + 1, k.yer ? k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : '') : ''];
+      if (bolmeli) s.push(k.yer ? k.yer.kod : '');
+      return s.concat([k.barkod, k.kitap ? k.kitap.ad : k.listeAdi, DURUM[k.durum]]);
     }));
   }
 
