@@ -46,7 +46,7 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 
 ## ŞU AN BEKLEYENLER (21 Kasım akşam, yeni oturum buradan başlasın)
 
-1. **Bölmeyi kapatmak:** kullanıcı (ya da arkadaşı) Panel → Ayarlar → "Bölme kullanılsın" anahtarını kapatacak (Claude'un canlı panel şifresi yok). Kapatıldı mı kontrolü: `curl "$U/rest/v1/kirtasiye_ayarlar?select=plan" -H "apikey: <publishable>"` → plan.bolme=false.
+1. **Bölme KAPATILDI (22 Kasım):** kullanıcı panelden kapattı, curl ile plan.bolme=false doğrulandı.
 2. **Hata takibi KURULDU (22 Kasım):** `hata-kaydi.sql` çalıştırıldı, anahtar üretildi ve `request_credential` ile ortam ağ sırrına girildi (header x-izleme-token). `kirtasiye_izle` curl ile çalışıyor: 0 kitap, 30 raf, 22,6/500 MB, 0 hata.
 3. **Günlük kontrol görevi:** her gün 19:47 İstanbul (trig_01FDny2tc8RmeaLkLCAPmcFG), telefona bildirim; anahtar girildi, artık gerçek rapor verir.
 4. **Toplu silme YAPILDI (22 Kasım):** kullanıcı "hepsini" dedi, SQL Editor'de `supabase/kitaplari-sil.sql` çalıştırdı: 39.604 kitap silindi, canlıda 0 kitap (curl ile doğrulandı). Raflar, ayarlar, talepler, okul listeleri duruyor.
