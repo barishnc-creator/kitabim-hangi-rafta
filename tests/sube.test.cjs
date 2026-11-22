@@ -65,15 +65,31 @@ test('Eşleştirme: raf ve bölme bulunur, toplama sırasına dizilir, durumlar 
   assert.deepEqual(sonuc.ozet, { kalem: 5, var: 4, kayitsiz: 1 });
 });
 
-test('Excel çıktısı: başlık + satırlar, barkod metin olarak kalır', async () => {
+test('Excel çıktısı: yüklenen liste aynen kalır, en sona yalnız raf numarası eklenir', async () => {
   const d = magaza();
-  const satirlar = [['Barkod', 'Adet'], ['9789750719387', '2'], ['9786059999999', '1']];
-  const cikti = Sube.ciktiSatirlari(Sube.eslestir(d, satirlar, Sube.sutunlariBul(satirlar)));
-  assert.deepEqual(cikti[0], ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum']);
-  assert.deepEqual(cikti[1], [1, '2. Raf · Roman', '2.1', '9789750719387', 'Kürk Mantolu Madonna', 'Mağazada var']);
-  assert.equal(cikti[2][5], 'Kayıtlı değil');
-  const geri = await Xlsx.oku(Xlsx.yaz(cikti, { kalinBaslik: true }));
-  assert.equal(geri.satirlar[1][3], '9789750719387');
+  d.ayarlar.bolme = false;
+  const satirlar = [['Şube: Kadıköy'], [], ['Sıra', 'Barkod', 'Kitap adı'],
+    ['1', '9789750719387', 'Kürk Mantolu Madonna'], ['2', '9786059999999', 'Olmayan Kitap'],
+    ['3', '9789750719387', 'Kürk (tekrar)'], ['4', '', 'barkodsuz satır']];
+  const r = Sube.rafEkle(d, satirlar, Sube.sutunlariBul(satirlar));
+  assert.deepEqual(r.satirlar, [['Şube: Kadıköy'], [], ['Sıra', 'Barkod', 'Kitap adı', 'Raf'],
+    [1, '9789750719387', 'Kürk Mantolu Madonna', 2], [2, '9786059999999', 'Olmayan Kitap'],
+    [3, '9789750719387', 'Kürk (tekrar)', 2], [4, '', 'barkodsuz satır']]);
+  assert.ok(!JSON.stringify(r.satirlar).includes('Mağazada'), 'durum yazılmaz');
+  assert.equal(satirlar[2].length, 3, 'yüklenen liste değiştirilmez');
+  // sütunlar içeriğe göre geniş: barkod ve kitap adı kesilmez
+  assert.ok(r.genislikler[1] >= 15, 'barkod sütunu 13 haneyi tam gösterir');
+  assert.ok(r.genislikler[2] >= 'Kürk Mantolu Madonna'.length, 'kitap adı tam görünür');
+  const geri = await Xlsx.oku(Xlsx.yaz(r.satirlar, { genislikler: r.genislikler }));
+  assert.equal(geri.satirlar[3][1], '9789750719387', 'barkod metin kalır (9,78E+12 olmaz)');
+  assert.equal(geri.satirlar[3][3], '2');
+});
+
+test('Excel çıktısı: bölmeli mağazada raf sütununa bölme kodu yazılır, rafsız/kayıtsız boş', () => {
+  const d = magaza();
+  const satirlar = [['Barkod'], ['9789750719387'], ['9780140449136'], ['1234567890128']];
+  const r = Sube.rafEkle(d, satirlar, Sube.sutunlariBul(satirlar));
+  assert.deepEqual(r.satirlar, [['Barkod', 'Raf'], ['9789750719387', '2.1'], ['9780140449136', '2.2'], ['1234567890128']]);
 });
 
 test('Xlsx: openpyxl ve LibreOffice ile yapılmış dosyalar okunur', async () => {

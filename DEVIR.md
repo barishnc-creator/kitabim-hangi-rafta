@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 22 Kasım 2026 (tüm kitaplar silindi)_
+_Son güncelleme: 22 Kasım 2026 (şube Excel çıktısı, tanıtım videosu)_
 
 ## Proje
 
@@ -45,6 +45,9 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 ## Sıradaki işler
 
 ## ŞU AN BEKLEYENLER (21 Kasım akşam, yeni oturum buradan başlasın)
+
+0. **Şube eksikleri Excel çıktısı değişti (22 Kasım, sw khr-v22, test 85):** kullanıcı: "Excel'de hiçbir değişiklik yapma, barkodları tara, en sona sadece raf numarasını yaz; Mağazada var kısmını sil; barkod ve kitap adı tam görünsün". Eski çıktıda bölme kapalıyken genişlikler 6 sütuna göre kaldığı için barkod 8 karakterde kesiliyordu. Yeni: `Sube.rafEkle` (js/sube.js) yüklenen satırları aynen döndürür, başlık satırına "Raf", her satırın sonuna raf no (bölmeliyse kod), genişlik içeriğe göre; `ciktiSatirlari` ve Durum sütunu kaldırıldı (ekranda da). Dosya adı `<yüklenen-ad>-raf.xlsx`, sayfa adı korunur. Biçim (renk, yazı tipi) korunmaz; yalnız değerler.
+00. **Tanıtım videosu (22 Kasım):** `pazarlama/video/` (README orada). Dikey+yatay, 50 sn, Gemini TTS Türkçe anlatım (Kore sesi, kullanıcı beğendi), son sunuma (pptx, 27 slayt) uyarlandı, iletişim tidextechnology@gmail.com. MP4'ler depoda değil, yeniden üretilebilir.
 
 1. **Bölme KAPATILDI (22 Kasım):** kullanıcı panelden kapattı, curl ile plan.bolme=false doğrulandı.
 2. **Hata takibi KURULDU (22 Kasım):** `hata-kaydi.sql` çalıştırıldı, anahtar üretildi ve `request_credential` ile ortam ağ sırrına girildi (header x-izleme-token). `kirtasiye_izle` curl ile çalışıyor: 0 kitap, 30 raf, 22,6/500 MB, 0 hata.

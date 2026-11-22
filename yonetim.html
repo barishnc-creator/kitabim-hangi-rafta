@@ -318,7 +318,7 @@
           <div class="sube-birak" id="sube-birak"><span data-ikon="yukle"></span>Dosyayı buraya sürükleyip bırakabilirsiniz</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button class="dugme" type="button" id="sube-ornek"><span data-ikon="indir"></span>Örnek liste indir</button>
-            <span class="soluk">Listede bir “Barkod” sütunu olması yeter; program her kitabın rafını ve bölmesini ekler.</span>
+            <span class="soluk">Listede bir “Barkod” sütunu olması yeter. İndirilen Excel listenizin aynısıdır; yalnız en sona “Raf” sütunu eklenir.</span>
           </div>
           <div id="sube-durum" role="status"></div>
         </div>
@@ -329,7 +329,7 @@
           </div>
           <div class="arac-cubugu yazdirma-gizle">
             <label class="gizli-etiket" for="sube-filtre">Göster</label>
-            <select id="sube-filtre"><option value="">Tüm kalemler</option><option value="bulunan">Mağazada olanlar</option><option value="sorun">Sorunlu olanlar</option></select>
+            <select id="sube-filtre"><option value="">Tüm kalemler</option><option value="bulunan">Rafı bulunanlar</option><option value="sorun">Sorunlu olanlar</option></select>
             <span style="flex-grow:1"></span>
             <button class="dugme ana" type="button" id="sube-indir"><span data-ikon="indir"></span>Excel olarak indir</button>
             <button class="dugme" type="button" id="sube-yazdir"><span data-ikon="yazdir"></span>Toplama listesini yazdır</button>
@@ -337,7 +337,7 @@
           </div>
           <div class="sadece-yazdir" id="sube-yazdir-baslik"></div>
           <div class="tablo-kutu">
-            <table class="tablo sube-tablo"><thead><tr><th>Bölme</th><th>Kitap</th><th>Barkod</th><th>Durum</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
+            <table class="tablo sube-tablo"><thead><tr><th>Raf</th><th>Kitap</th><th>Barkod</th><th class="islem"><span class="yazdirma-gizle"><span class="gizli-etiket">İşlemler</span></span><span class="sadece-yazdir">Toplandı</span></th></tr></thead><tbody id="sube-satirlar"></tbody></table>
           </div>
         </div>
       </section>

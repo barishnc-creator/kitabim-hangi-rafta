@@ -38,11 +38,9 @@ test('ayar kaydı: bulutta plan içinde "bolme:false" saklanır, plan düzeltmes
   assert.equal('bolme' in Depo.planDuzelt({ raflar: {} }), false);
 });
 
-test('şube çıktısı: bölmesizde Bölme sütunu yok', () => {
+test('şube çıktısı: bölmesizde en sona yalnız raf numarası', () => {
   const { d } = magaza(false);
   Depo.kitapKaydet(d, { ad: 'Simyacı', barkod: '9789750726439', bolmeId: d.raflar[0].bolmeler[0].id });
-  const sonuc = Sube.eslestir(d, [['Barkod'], ['9789750726439']], { baslikSatiri: 0, barkod: 0, ad: -1, adet: -1 });
-  const c = Sube.ciktiSatirlari(sonuc);
-  assert.equal(c[0].join(','), 'Sıra,Raf,Barkod,Kitap adı,Durum');
-  assert.equal(c[1][1], '1. Raf · Roman');
+  const r = Sube.rafEkle(d, [['Barkod'], ['9789750726439']], { baslikSatiri: 0, barkod: 0, ad: -1, adet: -1 });
+  assert.deepEqual(r.satirlar, [['Barkod', 'Raf'], ['9789750726439', 1]]);
 });

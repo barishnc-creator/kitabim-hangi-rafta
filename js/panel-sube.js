@@ -5,8 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var liste = null;   // { dosya, satirlar, sutun }
   var sonuc = null;   // Sube.eslestir çıktısı
-  var RENK = { var: 'r-var', kayitsiz: 'r-kayitsiz' };
-
+  
   function durum(tur, metin) { P.bildir($('sube-durum'), tur, metin); }
   function harf(k) { var s = ''; k++; while (k > 0) { var m = (k - 1) % 26; s = String.fromCharCode(65 + m) + s; k = Math.floor((k - 1) / 26); } return s; }
 
@@ -31,7 +30,7 @@
       if (!satirlar.some(function (s) { return s.length; })) throw new Error('Dosyada veri bulunamadı.');
       var sutun = Sube.sutunlariBul(satirlar);
       if (sutun.barkod < 0) throw new Error('Listede barkod sütunu bulunamadı. Barkodların olduğu sütunun başlığına “Barkod” yazıp tekrar deneyin.');
-      liste = { dosya: ad, satirlar: satirlar, sutun: sutun };
+      liste = { dosya: ad, sayfa: r.sayfa || '', satirlar: satirlar, sutun: sutun };
       if (!$('sube-ad').value.trim()) $('sube-ad').value = tahminiSube(satirlar, ad);
       sutunSecenekleri();
       hesapla();
@@ -72,7 +71,7 @@
 
   function ozetCiz() {
     var o = sonuc.ozet, parca = [
-      ['Kalem', o.kalem], ['Mağazada var', o.var]
+      ['Kalem', o.kalem], ['Bulunan', o.var]
     ];
     parca.push(['Kayıtlı değil', o.kayitsiz]);
     $('sube-ozet').innerHTML = parca.map(function (p) { return '<span><b>' + p[1] + '</b>' + p[0] + '</span>'; }).join('') +
@@ -87,7 +86,7 @@
       return !f || (f === 'bulunan' ? !!k.yer : k.durum !== 'var');
     });
     var ekleyebilir = P.yetkili('duzenleyici', 'calisan'), sonRaf = null, html = '';
-    var sutunSayisi = 5;
+    var sutunSayisi = 4;
     kalemler.forEach(function (k) {
       var rafId = k.yer ? k.yer.raf.id : k.kitap ? 'rafsiz' : '-';
       if (rafId !== sonRaf) {
@@ -102,7 +101,6 @@
         '<td>' + (k.yer ? '<span class="kod-rozet">' + k.yer.kod + '</span>' : k.kitap ? '<span class="kod-rozet rafsiz">Rafsız</span>' : '—') + '</td>' +
         '<td><b>' + O.kacis(kitap ? kitap.ad : (k.listeAdi || 'Bilinmeyen kitap')) + '</b>' + (alt ? '<div class="soluk">' + O.kacis(alt) + '</div>' : '') + '</td>' +
         '<td style="font-variant-numeric:tabular-nums;white-space:nowrap">' + O.kacis(k.barkod) + '</td>' +
-        '<td><span class="rozet ' + RENK[k.durum] + '">' + Sube.DURUM[k.durum] + '</span></td>' +
         '<td class="islem"><span class="yazdirma-gizle">' +
           (!kitap && ekleyebilir ? '<button class="dugme" type="button" data-sube-ekle="' + O.kacis(k.barkod) + '" style="min-height:36px">Kitabı ekle</button>' : '') +
         '</span><span class="sadece-yazdir"><i class="kutucuk"></i></span></td></tr>';
@@ -140,10 +138,11 @@
   $('sube-indir').addEventListener('click', function () {
     if (!sonuc) return;
     var sube = $('sube-ad').value.trim();
-    var satirlar = Sube.ciktiSatirlari(sonuc);
-    var genislik = [6, 24, 8, 16, 44, 15];
-    indir(Xlsx.yaz(satirlar, { sayfa: sube || 'Eksik listesi', genislikler: genislik, kalinBaslik: true }),
-      dosyaAdi('eksik-listesi-' + (sube ? sube + '-' : '') + new Date().toISOString().slice(0, 10)) + '.xlsx');
+    // Yüklenen liste aynen kalır, en sona yalnız raf numarası eklenir (Sube.rafEkle).
+    var r = Sube.rafEkle(P.d(), liste.satirlar, liste.sutun);
+    var taban = String(liste.dosya).replace(/\.(xlsx|xls|csv)$/i, '');
+    indir(Xlsx.yaz(r.satirlar, { sayfa: liste.sayfa || sube || 'Eksik listesi', genislikler: r.genislikler }),
+      (dosyaAdi(taban) || 'eksik-listesi') + '-raf.xlsx');
   });
   $('sube-yazdir').addEventListener('click', function () { ciz(); window.print(); });
   $('sube-temizle').addEventListener('click', function () {

@@ -125,18 +125,39 @@
     return o;
   }
 
-  // Excel'e yazılacak satırlar (ilk satır başlık). Barkod metin kalır.
-  function ciktiSatirlari(sonuc) {
-    var bolmeli = sonuc.bolmeli !== false; // bölme kapalıysa Bölme sütunu yazılmaz
-    var bas = bolmeli ? ['Sıra', 'Raf', 'Bölme', 'Barkod', 'Kitap adı', 'Durum'] : ['Sıra', 'Raf', 'Barkod', 'Kitap adı', 'Durum'];
-    return [bas].concat(sonuc.kalemler.map(function (k, i) {
-      var s = [i + 1, k.yer ? k.yer.raf.no + '. Raf' + (k.yer.raf.etiket ? ' · ' + k.yer.raf.etiket : '') : ''];
-      if (bolmeli) s.push(k.yer ? k.yer.kod : '');
-      return s.concat([k.barkod, k.kitap ? k.kitap.ad : k.listeAdi, DURUM[k.durum]]);
-    }));
+  // Excel çıktısı: yüklenen liste olduğu gibi kalır (satır sırası, başlıklar, diğer sütunlar);
+  // yalnız en sona "Raf" sütunu eklenir. Bölmesizde raf numarası (sayı), bölmeliyse bölme kodu (ör. 2.1);
+  // rafsız ya da mağazada kayıtlı olmayan kitapta boş. Durum yazılmaz. Barkod metin kalır (9,78E+12 olmaz);
+  // diğer sütunlardaki küçük tam sayılar (Sıra gibi) sayı olarak yazılır. Sütun genişliği içeriğe göredir.
+  function rafEkle(d, satirlar, sutun) {
+    var dizin = {}, bolmeli = Depo.bolmeli(d);
+    d.kitaplar.forEach(function (k) { var a = barkodAnahtar(k.barkod); if (a && !dizin[a]) dizin[a] = k; });
+    var son = 0;
+    satirlar.forEach(function (r) { if (r) son = Math.max(son, r.length); });
+    var cikti = satirlar.map(function (satir, r) {
+      var yeni = (satir || []).map(function (h, k) {
+        if (k !== sutun.barkod && typeof h === 'string' && /^(0|[1-9]\d{0,8})$/.test(h.trim())) return Number(h.trim());
+        return h == null ? '' : h;
+      });
+      var deger = '';
+      if (r === sutun.baslikSatiri) deger = 'Raf';
+      else if (r > sutun.baslikSatiri && satir) {
+        var kitap = dizin[barkodAnahtar(satir[sutun.barkod])];
+        var yer = kitap ? Depo.konum(d, kitap.bolmeId) : null;
+        if (yer) deger = bolmeli ? yer.kod : yer.raf.no;
+      }
+      if (deger !== '') { while (yeni.length < son) yeni.push(''); yeni.push(deger); }
+      return yeni;
+    });
+    var genislikler = [];
+    cikti.forEach(function (satir) {
+      satir.forEach(function (h, k) { genislikler[k] = Math.max(genislikler[k] || 8, Math.min(60, String(h).length + 3)); });
+    });
+    for (var k = 0; k < genislikler.length; k++) if (!genislikler[k]) genislikler[k] = 8;
+    return { satirlar: cikti, genislikler: genislikler };
   }
 
-  var api = { barkodAnahtar: barkodAnahtar, sutunlariBul: sutunlariBul, eslestir: eslestir, ciktiSatirlari: ciktiSatirlari, DURUM: DURUM };
+  var api = { barkodAnahtar: barkodAnahtar, sutunlariBul: sutunlariBul, eslestir: eslestir, rafEkle: rafEkle, DURUM: DURUM };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else kok.Sube = api;
 })(this);
