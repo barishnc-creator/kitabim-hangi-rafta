@@ -1,6 +1,6 @@
 # Devir notu
 
-_Son güncelleme: 21 Kasım 2026 akşam (bölmesiz raf seçeneği, menü kaydırma düzeltmesi)_
+_Son güncelleme: 22 Kasım 2026 (tüm kitaplar silindi)_
 
 ## Proje
 
@@ -49,8 +49,8 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 1. **Bölmeyi kapatmak:** kullanıcı (ya da arkadaşı) Panel → Ayarlar → "Bölme kullanılsın" anahtarını kapatacak (Claude'un canlı panel şifresi yok). Kapatıldı mı kontrolü: `curl "$U/rest/v1/kirtasiye_ayarlar?select=plan" -H "apikey: <publishable>"` → plan.bolme=false.
 2. **Hata takibi kurulumu:** kullanıcı SQL Editor'de `supabase/hata-kaydi.sql` + `select public.kirtasiye_izleme_anahtari_uret();` çalıştıracak, "tamam" diyecek. Sonra: `rpc/kirtasiye_izle` kurulu mu curl ile bak (PGRST202 değilse kurulu), `request_credential` (host kkcfzrchrdiroiskibhw.supabase.co, header_name x-izleme-token, prefix yok), ardından curl ile `kirtasiye_izle` dene. 21 Kasım 17:00'de hâlâ kurulmamıştı.
 3. **Günlük kontrol görevi:** her gün 19:47 İstanbul (trig_01FDny2tc8RmeaLkLCAPmcFG), telefona bildirim; anahtar girilene kadar "kurulum bitmemiş" der.
-4. **Toplu silme:** arkadaşı kitapları silmek istemişti; Panel → Ayarlar → "Kitapları toplu sil" hazır (ya da `supabase/kitaplari-sil.sql`). "Hepsi mi, yalnız rafsız mı" kullanıcı kararı; 17:00'de canlıda 39.575 kitap, 4'ü raftaydı (silinmemişti).
-5. Kullanıcıya önerilen ama cevapsız: neden silinmek istendiği (yanlış dosya mı) — doğru dosya gelirse önce kontrol et.
+4. **Toplu silme YAPILDI (22 Kasım):** kullanıcı "hepsini" dedi, SQL Editor'de `supabase/kitaplari-sil.sql` çalıştırdı: 39.604 kitap silindi, canlıda 0 kitap (curl ile doğrulandı). Raflar, ayarlar, talepler, okul listeleri duruyor.
+5. Doğru ürün listesi gelirse Ürün girişi ile yüklenecek; yüklemeden önce dosyayı kontrol et. Silme nedeni hâlâ bilinmiyor.
 
 
 000000. **Bölmesiz raflar (21 Kasım, sw khr-v21, test 84 + e2e bolmesiz):** kullanıcı: "Rafların tamamı bölmesiz olsun, raf eklerken de sadece raf gelsin". Ayarlar → **"Bölme kullanılsın"** anahtarı (varsayılan açık; kullanıcı kapatacak). SQL gerekmez: bulutta `kirtasiye_ayarlar.plan` içinde `bolme: false` (planDuzelt korur; harita kaydı silmez). Kapalıyken: veri modeli aynı (her raf tek görünmez bölme; canlıda zaten her rafın 1 bölmesi var), `Depo.konum` → kod/ad/yazi "N. Raf" (`Depo.bolmeli`, `Depo.ilkBolme`), `bolmeBul` "N", "N. Raf", "Raf N" kabul eder; raf ekleme formunda bölme sayısı gizli (1 bölme), şemada raf tek düğme, raf paneli rafın tüm kitapları, kitap formunda bölme seçimi gizli, etiketler raf başına (QR `RAF:N`), müşteri ekranı "N. Raf" / "Aynı raftaki", rafa yerleştirmede raf listesi, pano KPI raf bazlı, şube Excel çıktısında Bölme sütunu yok.
