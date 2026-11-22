@@ -1,3 +1,3 @@
-"Bu kitap hangi rafta?" sorusu artık çalışana değil ekrana soruluyor. Müşteri kitabın adını yazar ya da barkodunu okutur, raf ve bölmeyi haritasıyla görür; okul listeleri, talepler ve Excel'den ürün girişi aynı programda. Ücretsiz deneme için: [İLETİŞİM BİLGİSİ]
+"Bu kitap hangi rafta?" sorusu artık çalışana değil ekrana soruluyor. Müşteri kitabın adını yazar ya da barkodunu okutur, raf ve bölmeyi haritasıyla görür; okul listeleri, talepler ve Excel'den ürün girişi aynı programda. Ücretsiz deneme için: tidextechnology@gmail.com
 
 Müzik: Sascha Ende, ende.app (CC BY 4.0)

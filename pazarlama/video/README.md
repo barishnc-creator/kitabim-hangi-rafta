@@ -14,14 +14,15 @@ Yöntem: /brag (brag-slim) iş akışı; video bir HTML sayfasında kare kare ç
 | 21–26,5 | Okul listesi (telefon) |
 | 26,5–32,5 | Talep: bulunamayan kitap → panelde en çok istenen üstte |
 | 32,5–37,9 | Excel ile ürün girişi → barkodla rafa yerleştir |
-| 37,9–43,9 | "Müşteri beklemez. Çalışan aramaz." → kapanış, ücretsiz deneme, **[İLETİŞİM BİLGİSİ]** yer tutucusu |
+| 37,9–43,9 | "Müşteri beklemez. Çalışan aramaz." → kapanış, ücretsiz deneme, tidextechnology@gmail.com |
 
 ## Yeniden üretmek
 
 ```bash
 python3 -m http.server 8765                      # depo kökünde, ayrı terminal
 node pazarlama/video/yakala.js pazarlama/video/kareler   # ekran görüntüleri (sahte örnek veri)
-node pazarlama/video/yap.js v                    # dikey  → pazarlama/video/cikti/
+node pazarlama/video/anlatim.js [Kore]           # sesli anlatım (Gemini TTS ücretsiz kota, tek istek) → cikti/ses/
+node pazarlama/video/yap.js v                    # dikey  → pazarlama/video/cikti/ (anlatım varsa eklenir, müzik altında kısılır)
 node pazarlama/video/yap.js h                    # yatay
 node pazarlama/video/yap.js v kare 15,30         # yalnız kontrol kareleri
 ```
