@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<title>Kitabım Hangi Rafta? · tanıtım videosu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root { --mavi:#1D4ED8; --lacivert:#0F172A; --zemin:#F4F6F9; --turuncu:#EA580C; --yazi:#111827; --ikincil:#4B5563; }
+* { box-sizing:border-box; margin:0; }
+html,body { overflow:hidden; background:var(--lacivert); font-family:Inter,sans-serif; }
+#sahne { position:relative; overflow:hidden; }
+body.v #sahne { width:1080px; height:1920px; } body.h #sahne { width:1920px; height:1080px; }
+.s { position:absolute; inset:0; display:none; }
+.zemin { background:var(--zemin); } .koyu { background:var(--lacivert); color:#fff; } .mavi { background:var(--mavi); color:#fff; }
+.bg { font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:-.02em; line-height:1.05; }
+/* altyazı bloğu */
+.alt { position:absolute; will-change:transform,opacity; }
+body.v .alt { left:70px; right:70px; top:270px; }
+body.h .alt { left:110px; width:680px; top:50%; transform:translateY(-50%); }
+.adim { display:inline-flex; align-items:center; gap:14px; font:600 30px Inter; color:var(--mavi); margin-bottom:18px; }
+.adim i { font-style:normal; width:52px; height:52px; border-radius:50%; background:var(--mavi); color:#fff; display:grid; place-items:center; font:700 28px 'Space Grotesk'; }
+.alt h2 { font-size:70px; color:var(--yazi); text-wrap:balance; }
+body.h .alt h2 { font-size:72px; }
+.alt h2 em { font-style:normal; color:var(--turuncu); }
+.alt-kat { position:relative; } body.h .alt-kat { height:330px; } .alt-kat > div { position:absolute; left:0; right:0; top:0; }
+/* cihazlar */
+.cihaz { position:absolute; background:#0B1220; box-shadow:0 40px 90px rgba(15,23,42,.35), 0 0 0 2px #1E293B inset; will-change:transform,opacity; }
+.ekran { position:absolute; overflow:hidden; background:#fff; }
+.ekran img { position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform,opacity; }
+.tablet { border-radius:54px; } .tablet .ekran { inset:26px; border-radius:30px; }
+.telefon { border-radius:70px; } .telefon .ekran { inset:18px; border-radius:54px; }
+.pencere { border-radius:22px; background:#fff; box-shadow:0 40px 90px rgba(15,23,42,.30), 0 0 0 1px #E2E8F0; }
+.pencere .ust { position:absolute; left:0; right:0; top:0; height:44px; background:#E2E8F0; border-radius:22px 22px 0 0; }
+.pencere .ust b { position:absolute; top:16px; width:13px; height:13px; border-radius:50%; background:#F87171; } .pencere .ust b:nth-child(2){left:44px;background:#FBBF24} .pencere .ust b:nth-child(3){left:66px;background:#34D399}
+.pencere .ust b:first-child { left:22px; }
+.pencere .ekran { left:0; right:0; bottom:0; top:44px; border-radius:0 0 22px 22px; }
+body.v .tablet { width:812px; height:1146px; left:134px; top:650px; }
+body.h .tablet { width:660px; height:930px; left:1080px; top:75px; }
+body.v .telefon { width:520px; height:1088px; left:280px; top:620px; }
+body.h .telefon { width:420px; height:880px; left:1200px; top:100px; }
+body.v .pencere { width:1000px; height:880px; left:40px; top:700px; }
+body.h .pencere { width:1040px; height:700px; left:820px; top:190px; }
+/* vurgu halkası */
+.halka { position:absolute; border:6px solid var(--turuncu); border-radius:22px; box-shadow:0 0 0 9999px rgba(15,23,42,0); pointer-events:none; }
+/* sahne 1 */
+.balon { position:absolute; background:#fff; color:var(--yazi); border-radius:48px; padding:56px 64px; }
+.balon:after { content:''; position:absolute; left:110px; bottom:-48px; border:28px solid transparent; border-top:44px solid #fff; border-left:44px solid #fff; border-right-width:0; }
+body.v .balon { left:90px; right:90px; top:560px; font-size:118px; }
+body.h .balon { left:260px; right:260px; top:210px; font-size:120px; text-align:center; }
+.alt-yazi { position:absolute; font:500 46px Inter; color:#CBD5E1; }
+body.v .alt-yazi { left:90px; right:90px; top:1180px; } body.h .alt-yazi { left:0; right:0; top:690px; text-align:center; }
+.soru { position:absolute; font:700 120px 'Space Grotesk'; color:#334155; }
+/* sahne 2: raf çizimi */
+.raflar { position:absolute; }
+body.v .raflar { left:90px; right:90px; top:820px; } body.h .raflar { left:960px; width:840px; top:170px; }
+.raf { height:250px; border-bottom:22px solid #8B5E3C; display:flex; align-items:flex-end; gap:8px; padding:0 18px; margin-bottom:46px; }
+.raf i { display:block; border-radius:6px 6px 0 0; box-shadow:inset -8px 0 0 rgba(0,0,0,.12); }
+.buyutec { position:absolute; width:190px; height:190px; border-radius:50%; border:16px solid var(--lacivert); background:rgba(255,255,255,.35); }
+.buyutec:after { content:''; position:absolute; width:22px; height:110px; background:var(--lacivert); border-radius:11px; left:150px; top:140px; transform:rotate(-45deg); }
+.ciz { position:relative; display:inline-block; color:var(--ikincil); }
+.ciz s { position:absolute; left:-6px; top:52%; height:7px; background:var(--turuncu); border-radius:4px; text-decoration:none; }
+/* sahne 3 ve 8 */
+.merkez { position:absolute; left:0; right:0; text-align:center; }
+.simge { width:260px; height:260px; border-radius:60px; box-shadow:0 30px 60px rgba(0,0,0,.25); }
+.cta { display:inline-block; background:var(--turuncu); color:#fff; font:700 46px 'Space Grotesk'; padding:28px 48px; border-radius:999px; }
+.kredi { position:absolute; left:0; right:0; bottom:36px; text-align:center; font:500 20px Inter; color:#64748B; }
+</style></head>
+<body>
+<div id="sahne">
+  <!-- 1 kanca -->
+  <section class="s koyu" id="s1">
+    <div class="soru" id="q1">?</div><div class="soru" id="q2">?</div><div class="soru" id="q3">?</div>
+    <div class="balon bg" id="balon">Bu kitap hangi&nbsp;rafta?</div>
+    <div class="alt-yazi" id="s1alt">Her gün, her müşteri, aynı soru.</div>
+  </section>
+  <!-- 2 sorun -->
+  <section class="s zemin" id="s2">
+    <div class="alt"><h2 class="bg" id="s2a">Çalışan raf raf arar.</h2><h2 class="bg" id="s2b" style="color:var(--turuncu)">Müşteri bekler.</h2>
+      <div id="s2c" style="margin-top:30px;font:600 44px Inter;display:flex;gap:34px;flex-wrap:wrap"><span class="ciz">Defter<s></s></span><span class="ciz">Excel<s></s></span><span class="ciz">Akılda tutmak<s></s></span></div></div>
+    <div class="raflar" id="raflar"></div>
+    <div class="buyutec" id="buyutec"></div>
+  </section>
+  <!-- 3 tanıtım -->
+  <section class="s mavi" id="s3">
+    <div class="merkez" id="s3m"><img class="simge" id="s3img" src="../../simge/kiosk-512.png"><h1 class="bg" id="s3h" style="font-size:96px;margin-top:56px">Kitabım Hangi Rafta?</h1>
+      <p id="s3p" style="font:500 46px Inter;margin-top:28px;color:#DBEAFE">Müşteri kitabını ekranda<br>kendi bulur.</p></div>
+  </section>
+  <!-- 4 arama -->
+  <section class="s zemin" id="s4">
+    <div class="alt"><div class="alt-kat">
+      <div id="s4a"><div class="adim"><i>1</i>Müşteri ekranı</div><h2 class="bg">Adını yaz ya da barkodu <em>okut.</em></h2></div>
+      <div id="s4b"><div class="adim"><i>2</i>Sonuç</div><h2 class="bg">Rafı ve yolu <em>hemen gör.</em></h2></div>
+    </div></div>
+    <div class="cihaz tablet" id="tab4"><div class="ekran" id="ek4">
+      <img data-k="k-karsilama"><img data-k="k-yaz-1"><img data-k="k-yaz-2"><img data-k="k-yaz-3"><img data-k="k-yaz-4"><img data-k="k-sonuc-tam">
+    </div></div>
+  </section>
+  <!-- 5 okul listesi -->
+  <section class="s zemin" id="s5">
+    <div class="alt" id="s5a"><div class="adim"><i>3</i>Okul listeleri</div><h2 class="bg">Veli sınıfı seçer, tüm kitaplar <em>raflarıyla</em> gelir.</h2></div>
+    <div class="cihaz telefon" id="tel5"><div class="ekran" id="ek5"><img data-k="t-liste"></div></div>
+  </section>
+  <!-- 6 talep -->
+  <section class="s zemin" id="s6">
+    <div class="alt"><div class="alt-kat">
+      <div id="s6a"><div class="adim"><i>4</i>Talep</div><h2 class="bg">Bulamadığını <em>talep etsin.</em></h2></div>
+      <div id="s6b"><div class="adim"><i>4</i>Yönetim paneli</div><h2 class="bg">En çok istenen üstte: ne getirteceğini <em>bil.</em></h2></div>
+    </div></div>
+    <div class="cihaz tablet" id="tab6"><div class="ekran" id="ek6"><img data-k="k-bulunamadi"><img data-k="k-talep"></div></div>
+    <div class="cihaz pencere" id="pen6"><div class="ust"><b></b><b></b><b></b></div><div class="ekran" id="ek6p"><img data-k="p-talepler"></div></div>
+  </section>
+  <!-- 7 panel -->
+  <section class="s zemin" id="s7">
+    <div class="alt"><div class="alt-kat">
+      <div id="s7a"><div class="adim"><i>5</i>Ürün girişi</div><h2 class="bg">Excel listesini yükle, yeni kitaplar <em>eklensin.</em></h2></div>
+      <div id="s7b"><div class="adim"><i>6</i>Rafa yerleştir</div><h2 class="bg">Barkodu okut, kitap <em>rafına kaydolsun.</em></h2></div>
+    </div></div>
+    <div class="cihaz pencere" id="pen7"><div class="ust"><b></b><b></b><b></b></div><div class="ekran" id="ek7"><img data-k="p-urun"><img data-k="p-yerlestir"></div></div>
+  </section>
+  <!-- 8 kapanış -->
+  <section class="s koyu" id="s8">
+    <div class="merkez" id="s8a"><h2 class="bg" style="font-size:92px">Müşteri <span style="color:#FDBA74">beklemez.</span><br>Çalışan <span style="color:#93C5FD">aramaz.</span></h2></div>
+    <div class="merkez" id="s8b"><img class="simge" src="../../simge/kiosk-512.png" style="width:200px;height:200px;border-radius:46px">
+      <h1 class="bg" style="font-size:84px;margin-top:40px">Kitabım Hangi Rafta?</h1>
+      <p style="font:500 38px Inter;color:#CBD5E1;margin-top:22px">Kırtasiye ve kitapçılar için raf takip programı<br>Tablet · telefon · bilgisayar</p>
+      <div style="margin-top:56px"><span class="cta" id="cta">Ücretsiz deneyin</span></div>
+      <p id="iletisim" style="font:600 40px Inter;margin-top:34px;color:#fff">[İLETİŞİM BİLGİSİ]</p></div>
+    <div class="kredi">Müzik: Sascha Ende, ende.app (CC BY 4.0)</div>
+  </section>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const F = Q.get('f') === 'h' ? 'h' : 'v'; document.body.className = F;
+const KARE = Q.get('k') || 'kareler';
+const W = F === 'v' ? 1080 : 1920, H = F === 'v' ? 1920 : 1080;
+const BEAT = 60 / 110, B = (n) => +(0.27 + n * BEAT).toFixed(3);
+const SURE = B(80);
+const ZP = F === 'v' ? 1.7 : 1.3; // panel görüntülerinde yakınlaştırma
+const $ = (id) => document.getElementById(id);
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const pr = (t, a, b) => cl((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 3), eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const geri = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+// giriş/çıkış: y kaydırma + saydamlık
+function gir(el, t, a, b = 1e9, dy = 40) {
+  const i = eo(pr(t, a, a + .45)), o = pr(t, b - .3, b);
+  el.style.opacity = i * (1 - o);
+  el.style.transform = (el.dataset.tf || '') + ` translateY(${(1 - i) * dy - o * 20}px)`;
+}
+// ekran içi kamera: görüntünün (fx,fy) noktası merkeze, z yakınlaştırma (1 = ekran genişliği)
+function kamera(img, ekran, z, fx, fy) {
+  const ew = ekran.clientWidth, eh = ekran.clientHeight, s = ew * z / img.naturalWidth;
+  const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+  let x = ew / 2 - fx * iw, y = eh / 2 - fy * ih;
+  x = cl(x, ew - iw, 0); y = ih > eh ? cl(y, eh - ih, 0) : 0;
+  img.style.transform = `translate(${x}px,${y}px) scale(${s})`;
+}
+const sahneler = [['s1', 0, B(8)], ['s2', B(8), B(16)], ['s3', B(16), B(22)], ['s4', B(22), B(38)], ['s5', B(38), B(48)], ['s6', B(48), B(59)], ['s7', B(59), B(69)], ['s8', B(69), SURE + 1]];
+// sahne 2 raf çizimi
+(function () {
+  const renk = ['#FCA5A5', '#93C5FD', '#FDE68A', '#86EFAC', '#C4B5FD', '#FDBA74', '#F9A8D4', '#A5F3FC', '#1D4ED8', '#EA580C'];
+  let h = '', n = 0;
+  for (let r = 0; r < 3; r++) { h += '<div class="raf">'; for (let k = 0; k < (F === 'v' ? 15 : 14); k++, n++) h += `<i style="width:${38 + (n * 7) % 22}px;height:${150 + (n * 37) % 90}px;background:${renk[(n * 3 + r) % renk.length]}"></i>`; h += '</div>'; }
+  $('raflar').innerHTML = h;
+})();
+function render(t) {
+  for (const [id, a, b] of sahneler) $(id).style.display = t >= a && t < b ? 'block' : 'none';
+  // sahne geçişi: arka plana karışma
+  // 1
+  if (t < B(8)) {
+    const p = geri(pr(t, B(1) - .15, B(1) + .35));
+    $('balon').style.transform = `scale(${.6 + .4 * p})`; $('balon').style.opacity = cl(p * 2);
+    gir($('s1alt'), t, B(4), B(8));
+    [['q1', 80, 1420, 0], ['q2', 860, 300, 1.3], ['q3', 900, 1500, 2.1]].forEach(([id, x, y, d]) => {
+      const e = $(id), xx = F === 'v' ? x : x * 1.9, yy = F === 'v' ? y : (y / 1920) * 1080;
+      e.style.left = xx + 'px'; e.style.top = (yy + Math.sin(t * 2 + d) * 18) + 'px'; e.style.opacity = .7 * pr(t, .2 + d * .3, .8 + d * .3) * (1 - pr(t, B(8) - .3, B(8)));
+      e.style.transform = `rotate(${Math.sin(t + d) * 12}deg)`;
+    });
+    $('balon').style.opacity *= 1 - pr(t, B(8) - .3, B(8));
+  }
+  // 2
+  if (t >= B(8) && t < B(16)) {
+    gir($('s2a'), t, B(8), B(16)); gir($('s2b'), t, B(10), B(16)); gir($('s2c'), t, B(12), B(16));
+    [...$('s2c').querySelectorAll('s')].forEach((s, i) => { s.style.width = `calc(${eo(pr(t, B(13) + i * BEAT * .5, B(13) + i * BEAT * .5 + .3)) * 100}% + 12px)`; });
+    const r = $('raflar').getBoundingClientRect(), sr = $('sahne').getBoundingClientRect();
+    const u = (t - B(8)) * 1.1, bx = r.left - sr.left + (r.width - 190) * (.5 + .45 * Math.sin(u * 1.7)), by = r.top - sr.top + 60 + (r.height - 300) * (.5 + .5 * Math.sin(u * 1.1 + 1));
+    const bu = $('buyutec'); bu.style.left = bx + 'px'; bu.style.top = by + 'px'; bu.style.opacity = pr(t, B(8) + .2, B(8) + .6) * (1 - pr(t, B(16) - .3, B(16)));
+    $('raflar').style.opacity = pr(t, B(8), B(8) + .4) * (1 - pr(t, B(16) - .3, B(16)));
+  }
+  // 3
+  if (t >= B(16) && t < B(22)) {
+    const p = geri(pr(t, B(16), B(16) + .5));
+    $('s3img').style.transform = `scale(${.4 + .6 * p}) rotate(${(1 - p) * -12}deg)`; $('s3img').style.opacity = cl(p * 2);
+    gir($('s3h'), t, B(17), B(22)); gir($('s3p'), t, B(18), B(22));
+    $('s3m').style.top = (H / 2 - (F === 'v' ? 330 : 300)) + 'px'; $('s3img').style.opacity *= 1 - pr(t, B(22) - .3, B(22));
+  }
+  // 4
+  if (t >= B(22) && t < B(38)) {
+    gir($('s4a'), t, B(22) + .1, B(30)); gir($('s4b'), t, B(30) + .1, B(38));
+    const tb = $('tab4'); tb.dataset.tf = ''; gir(tb, t, B(22), B(38), 120);
+    const ek = $('ek4'), im = [...ek.querySelectorAll('img')];
+    const yaz = [B(24), B(24.5), B(25), B(25.5)];
+    let aktif = 0; yaz.forEach((y, i) => { if (t >= y) aktif = i + 1; }); if (t >= B(27)) aktif = 5;
+    im.forEach((m, i) => { m.style.opacity = i === aktif ? 1 : 0; });
+    for (let i = 0; i < 5; i++) kamera(im[i], ek, 1, .5, 0);
+    // sonuç: kartı yakınlaştır, sonra haritaya in
+    const z = 1 + .12 * eio(pr(t, B(27), B(28))) - .12 * eio(pr(t, B(30), B(32)));
+    const fy = .24 + (.74 - .24) * eio(pr(t, B(30), B(32.5)));
+    kamera(im[5], ek, z, .5, fy);
+    im[5].style.filter = `brightness(${1 + .06 * Math.sin(pr(t, B(27), B(29)) * Math.PI)})`;
+  }
+  // 5
+  if (t >= B(38) && t < B(48)) {
+    gir($('s5a'), t, B(38) + .15, B(48)); const tl = $('tel5'); tl.dataset.tf = `rotate(${(1 - eo(pr(t, B(38), B(39)))) * 6}deg)`; gir(tl, t, B(38), B(48), 140);
+    const ek = $('ek5'), m = ek.querySelector('img'); kamera(m, ek, 1, .5, .5 * eio(pr(t, B(40), B(46))));
+  }
+  // 6
+  if (t >= B(48) && t < B(59)) {
+    gir($('s6a'), t, B(48) + .1, B(53)); gir($('s6b'), t, B(53) + .1, B(59));
+    const tb = $('tab6'); tb.dataset.tf = ''; gir(tb, t, B(48), B(53), 120);
+    const ek = $('ek6'), im = [...ek.querySelectorAll('img')]; const ikinci = t >= B(50.5);
+    im[0].style.opacity = ikinci ? 0 : 1; im[1].style.opacity = ikinci ? 1 : 0; im.forEach((m) => kamera(m, ek, 1, .5, 0));
+    const pn = $('pen6'); pn.dataset.tf = ''; gir(pn, t, B(53), B(59), 120);
+    const ep = $('ek6p'), mp = ep.querySelector('img'); kamera(mp, ep, ZP + .06 * pr(t, B(53), B(59)), F === 'v' ? .45 : .59, .15);
+  }
+  // 7
+  if (t >= B(59) && t < B(69)) {
+    gir($('s7a'), t, B(59) + .1, B(64)); gir($('s7b'), t, B(64) + .1, B(69));
+    const pn = $('pen7'); pn.dataset.tf = ''; gir(pn, t, B(59), B(69), 120);
+    const ek = $('ek7'), im = [...ek.querySelectorAll('img')]; const ikinci = t >= B(64);
+    im[0].style.opacity = ikinci ? 0 : 1; im[1].style.opacity = ikinci ? 1 : 0;
+    kamera(im[0], ek, ZP + .06 * pr(t, B(59), B(64)), F === 'v' ? .45 : .59, .5);
+    kamera(im[1], ek, ZP + .06 * pr(t, B(64), B(69)), F === 'v' ? .5 : .59, .8);
+  }
+  // 8
+  if (t >= B(69)) {
+    gir($('s8a'), t, B(69) + .05, B(74)); $('s8a').style.top = (H / 2 - 110) + 'px';
+    gir($('s8b'), t, B(74), 1e9, 60); $('s8b').style.top = (H / 2 - (F === 'v' ? 470 : 440)) + 'px';
+    $('cta').style.transform = `scale(${1 + .04 * Math.max(0, Math.sin((t - B(76)) * Math.PI / BEAT / 2)) * (t > B(76) ? 1 : 0)})`;
+  }
+}
+window.hazir = (async () => {
+  document.querySelectorAll('img[data-k]').forEach((m) => { m.src = KARE + '/' + m.dataset.k + '.png'; });
+  if (F === 'h') document.querySelectorAll('.alt').forEach((e) => { e.dataset.tf = 'translateY(-50%)'; });
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((m) => m.complete ? 0 : new Promise((r) => { m.onload = m.onerror = r; })));
+  render(0); return { SURE, F };
+})();
+window.render = render;
+</script>
+</body></html>
