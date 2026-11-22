@@ -1,20 +1,23 @@
 # Tanıtım videosu
 
-Kırtasiye/kitapçı müdürlerine gösterilecek ~44 sn'lik tanıtım. Dikey 1080×1920 (Reels/WhatsApp) ve yatay 1920×1080.
+Kırtasiye/kitapçı müdürlerine gösterilecek ~50 sn'lik tanıtım. Dikey 1080×1920 (Reels/WhatsApp) ve yatay 1920×1080.
 Yöntem: /brag (brag-slim) iş akışı; video bir HTML sayfasında kare kare çizilir, Playwright + ffmpeg ile yerelde MP4'e döker. Ücretli servis yok.
 
 ## Akış (110 BPM, kesmeler vuruşta)
 
 | Süre | Sahne |
 |---|---|
-| 0–4,6 sn | Kanca: "Bu kitap hangi rafta?" |
-| 4,6–9 | Sorun: çalışan raf raf arar, müşteri bekler; defter/Excel/akılda tutmak üstü çizilir |
-| 9–12,3 | Ürün: Kitabım Hangi Rafta? |
-| 12,3–21 | Müşteri ekranı: "kürk" yazılır → 3. Raf · Bölme 3.1 → mağaza haritasında yol |
-| 21–26,5 | Okul listesi (telefon) |
-| 26,5–32,5 | Talep: bulunamayan kitap → panelde en çok istenen üstte |
-| 32,5–37,9 | Excel ile ürün girişi → barkodla rafa yerleştir |
-| 37,9–43,9 | "Müşteri beklemez. Çalışan aramaz." → kapanış, ücretsiz deneme, tidextechnology@gmail.com |
+| 0–4,6 sn | Kanca: "Bu kitap nerede?" |
+| 4,6–9 | Bugün mağazada: personel raf raf arar, müşteri bekler, sonra gider |
+| 9–12,3 | Ürün: Kitabım Hangi Rafta? · kırtasiye ve kitapçılar için |
+| 12,3–21 | Müşteri ekranı: kitabı adından ara → 3. Raf · Bölme 3.1 → haritada yol |
+| 21–26,5 | Okul kitap listeleri (telefon) |
+| 26,5–32,5 | Satış kaçmasın: talep → panelde hangi kitap kaç kez istendi |
+| 32,5–36,9 | Reklam alanı: kampanyalar müşteri ekranında |
+| 36,9–42,3 | Mal girişi Excel'le → barkodla rafa yerleştir |
+| 42,3–50,4 | "Müşteri beklemez. Çalışan aramaz." → "Kitabınızı arayın, rafını ekran göstersin." · Tidex Technology · canlı deneme · tidextechnology@gmail.com |
+
+Metin ve görünüm kullanıcının son sunumuna (Kitabım Hangi Rafta Sunum.pptx, 27 slayt) uyarlandı.
 
 ## Yeniden üretmek
 

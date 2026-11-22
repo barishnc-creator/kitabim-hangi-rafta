@@ -34,7 +34,7 @@ const SFX = process.env.SFX || path.join(process.env.HOME, '.cache/acik-kaynak/b
   const B = (n) => 0.27 + n * 60 / 110;
   const efekt = [['impact/impactSoft_medium_001.ogg', B(1) - .05, .5], ['impact/impactSoft_medium_002.ogg', B(16), .45],
     ...[24, 24.5, 25, 25.5].map((n) => ['interface/click_003.ogg', B(n), .35]), ['interface/bong_001.ogg', B(27), .35],
-    ['interface/click_002.ogg', B(50.5), .35], ['interface/click_002.ogg', B(64), .35], ['impact/impactSoft_medium_004.ogg', B(74), .45]];
+    ['interface/click_002.ogg', B(50.5), .35], ['interface/click_002.ogg', B(72), .35], ['impact/impactSoft_medium_004.ogg', B(82), .45]];
   // Sesli anlatım (anlatim.js ile üretilir): parçalar sahne başlarına, müzik konuşmada kısılır
   const PARCALAR = require('./anlatim.js'), SESDIR = path.join(CIKTI, 'ses');
   const anlatimVar = fs.existsSync(path.join(SESDIR, '00.wav'));

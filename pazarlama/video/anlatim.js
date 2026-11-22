@@ -7,16 +7,18 @@ const OUT = path.join(__dirname, 'cikti/ses'); fs.mkdirSync(OUT, { recursive: tr
 const B = (n) => 0.27 + n * 60 / 110;
 // [başlangıç, sahne sonu, metin]
 const PARCALAR = [
-  [B(0.6), B(8), 'Bu kitap hangi rafta? Her gün duyulan soru.'],
-  [B(8.6), B(16), 'Çalışan raf raf arar, müşteri bekler.'],
-  [B(16.5), B(22), 'Kitabım Hangi Rafta ile müşteri kendi bulur.'],
-  [B(22.6), B(30), 'Kitabın adını yazar ya da barkodunu okutur.'],
+  [B(0.6), B(8), 'Bu kitap nerede? Her gün aynı soru.'],
+  [B(8.6), B(16), 'Personel raf raf arar, müşteri bekler; bulamayınca gider.'],
+  [B(16.5), B(22), 'Kitabım Hangi Rafta ile müşteri kendisi bulur.'],
+  [B(22.6), B(30), 'Kitabı adından arar; yanlış yazsa da bulur.'],
   [B(30.3), B(38), 'Ekran rafı ve bölmeyi gösterir, yolunu da çizer.'],
   [B(38.5), B(48), 'Veli okulu ve sınıfı seçer, listedeki kitapları raflarıyla görür.'],
   [B(48.5), B(53), 'Bulamadığı kitap için talep bırakır.'],
-  [B(53.3), B(59), 'Panelde en çok istenen kitap en üstte görünür.'],
-  [B(59.5), B(69), 'Excel listesini yükleyin; barkodu okutun, kitap rafına kaydolsun.'],
-  [B(69.4), B(80), 'Müşteri beklemez, çalışan aramaz. Ücretsiz denemek için hemen yazın.'],
+  [B(53.3), B(59), 'Panelde hangi kitabın kaç kez istendiği görünür.'],
+  [B(59.5), B(67), 'Karşılama ekranı kampanyalarınızı da gösterir.'],
+  [B(67.5), B(77), 'Yeni ürünler Excel ile gelir; barkodu okutun, kitap rafına yerleşsin.'],
+  [B(77.4), B(82), 'Müşteri beklemez, çalışan aramaz.'],
+  [B(82.4), B(92), 'Kitabınızı arayın, rafını ekran göstersin. Canlı deneme için bize yazın.'],
 ];
 module.exports = PARCALAR;
 if (require.main === module) {

@@ -1,3 +1,3 @@
-"Bu kitap hangi rafta?" sorusu artık çalışana değil ekrana soruluyor. Müşteri kitabın adını yazar ya da barkodunu okutur, raf ve bölmeyi haritasıyla görür; okul listeleri, talepler ve Excel'den ürün girişi aynı programda. Ücretsiz deneme için: tidextechnology@gmail.com
+"Bu kitap nerede?" sorusunu artık ekran cevaplıyor. Müşteri kitabı adından arar, raf ve bölmeyi haritasıyla görür; okul listeleri, talepler, kampanya alanı ve Excel'le mal girişi aynı programda. Kitabınızı arayın, rafını ekran göstersin. Canlı deneme için: tidextechnology@gmail.com
 
 Müzik: Sascha Ende, ende.app (CC BY 4.0)
