@@ -47,8 +47,8 @@ Yetkiler: düzenleyici (her şey), revize veren / müdür (revize yazar, görür
 ## ŞU AN BEKLEYENLER (21 Kasım akşam, yeni oturum buradan başlasın)
 
 1. **Bölmeyi kapatmak:** kullanıcı (ya da arkadaşı) Panel → Ayarlar → "Bölme kullanılsın" anahtarını kapatacak (Claude'un canlı panel şifresi yok). Kapatıldı mı kontrolü: `curl "$U/rest/v1/kirtasiye_ayarlar?select=plan" -H "apikey: <publishable>"` → plan.bolme=false.
-2. **Hata takibi kurulumu:** kullanıcı SQL Editor'de `supabase/hata-kaydi.sql` + `select public.kirtasiye_izleme_anahtari_uret();` çalıştıracak, "tamam" diyecek. Sonra: `rpc/kirtasiye_izle` kurulu mu curl ile bak (PGRST202 değilse kurulu), `request_credential` (host kkcfzrchrdiroiskibhw.supabase.co, header_name x-izleme-token, prefix yok), ardından curl ile `kirtasiye_izle` dene. 21 Kasım 17:00'de hâlâ kurulmamıştı.
-3. **Günlük kontrol görevi:** her gün 19:47 İstanbul (trig_01FDny2tc8RmeaLkLCAPmcFG), telefona bildirim; anahtar girilene kadar "kurulum bitmemiş" der.
+2. **Hata takibi KURULDU (22 Kasım):** `hata-kaydi.sql` çalıştırıldı, anahtar üretildi ve `request_credential` ile ortam ağ sırrına girildi (header x-izleme-token). `kirtasiye_izle` curl ile çalışıyor: 0 kitap, 30 raf, 22,6/500 MB, 0 hata.
+3. **Günlük kontrol görevi:** her gün 19:47 İstanbul (trig_01FDny2tc8RmeaLkLCAPmcFG), telefona bildirim; anahtar girildi, artık gerçek rapor verir.
 4. **Toplu silme YAPILDI (22 Kasım):** kullanıcı "hepsini" dedi, SQL Editor'de `supabase/kitaplari-sil.sql` çalıştırdı: 39.604 kitap silindi, canlıda 0 kitap (curl ile doğrulandı). Raflar, ayarlar, talepler, okul listeleri duruyor.
 5. Doğru ürün listesi gelirse Ürün girişi ile yüklenecek; yüklemeden önce dosyayı kontrol et. Silme nedeni hâlâ bilinmiyor.
 
