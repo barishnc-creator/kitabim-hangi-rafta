@@ -1,6 +1,6 @@
 // Videoyu kare kare çizip MP4'e döker.
 // Kullanım (depo kökünde sunucu açıkken): node pazarlama/video/yap.js v|h [kare <saniye,...>]
-// "kare" verilirse yalnız o anların PNG'leri çıkar (kontrol için).
+// "ses" verilirse görüntü yeniden çizilmez, yalnız ses miksi yapılır. "kare" verilirse yalnız o anların PNG'leri çıkar (kontrol için).
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
 const fs = require('fs'), path = require('path');
@@ -19,6 +19,7 @@ const SFX = process.env.SFX || path.join(process.env.HOME, '.cache/acik-kaynak/b
     await b.close(); return;
   }
   const N = Math.round(SURE * FPS), sessiz = path.join(CIKTI, `sessiz-${F}.mp4`);
+  if (process.argv[3] !== 'ses') { // 'ses': görüntü hazır, yalnız ses yeniden miksle
   const ff = spawn('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', sessiz], { stdio: ['pipe', 'inherit', 'inherit'] });
   for (let i = 0; i < N; i++) {
     await p.evaluate((t) => render(t), i / FPS);
@@ -26,7 +27,9 @@ const SFX = process.env.SFX || path.join(process.env.HOME, '.cache/acik-kaynak/b
     if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once('drain', r));
     if (i % 150 === 0) console.log(F, i, '/', N);
   }
-  ff.stdin.end(); await new Promise((r) => ff.on('close', r)); await b.close();
+  ff.stdin.end(); await new Promise((r) => ff.on('close', r));
+  }
+  await b.close();
   // Ses: müzik + birkaç yumuşak efekt, vuruşlara oturtulmuş
   const B = (n) => 0.27 + n * 60 / 110;
   const efekt = [['impact/impactSoft_medium_001.ogg', B(1) - .05, .5], ['impact/impactSoft_medium_002.ogg', B(16), .45],
@@ -40,11 +43,11 @@ const SFX = process.env.SFX || path.join(process.env.HOME, '.cache/acik-kaynak/b
   if (anlatimVar) {
     const k = efekt.length + 2, ses = [];
     PARCALAR.forEach(([t], i) => { gir.push('-i', path.join(SESDIR, String(i).padStart(2, '0') + '.wav')); const ms = Math.round(t * 1000); fc += `;[${k + i}:a]aresample=48000,aformat=channel_layouts=stereo,adelay=${ms}|${ms}[s${i}]`; ses.push(`[s${i}]`); });
-    fc += `;${ses.join('')}amix=inputs=${ses.length}:normalize=0,volume=1.6,asplit=2[v][vk]`;
+    fc += `;${ses.join('')}amix=inputs=${ses.length}:normalize=0,volume=1.6,asplit=2[v][vk0];[vk0]apad[vk]`;
     fc += `;[m0][vk]sidechaincompress=threshold=0.02:ratio=6:attack=30:release=400[m]`;
     etiket.unshift('[m]', '[v]');
   } else { fc = fc.replace('[m0]', '[m]'); etiket.unshift('[m]'); }
-  fc += `;${etiket.join('')}amix=inputs=${etiket.length}:normalize=0,alimiter=limit=0.9[a]`;
+  fc += `;${etiket.join('')}amix=inputs=${etiket.length}:normalize=0,alimiter=limit=0.89[a]`;
   const son = path.join(CIKTI, `kitabim-hangi-rafta-tanitim-${F === 'v' ? 'dikey' : 'yatay'}.mp4`);
   await new Promise((r, j) => spawn('ffmpeg', ['-loglevel', 'error', '-y', ...gir, '-filter_complex', fc, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', son], { stdio: 'inherit' }).on('close', (c) => c ? j(c) : r()));
   console.log('bitti', son, N, 'kare');
