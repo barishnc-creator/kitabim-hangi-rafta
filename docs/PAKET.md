@@ -43,3 +43,14 @@ Depoda `.claude/skills` yok. Hesap skill'leri: `anthropic-skills:pptx` / `sunum-
 
 ## Eski oturumlar (hepsi arşivli; bilgi DEVIR.md'de)
 Kütüphane yönetim sistemi (ilk kurulum, 16 Kas) · Kitabım devam zinciri 18–22 Kas (TyhaJ, BE3, 9ZFv, 7m2b, A2Sb, 87YN, AZk2) · tanıtım videosu (7XUG, 22 Kas) · "Merhaba" (sunum artifact'ı, 16 Kas). Aktif tek oturum: session_01Ry9EY8UXw8qHGwyA8fZ2Kx.
+
+## Keşiften gelenler (25 Kas)
+
+- Strix (yapay zekâ sızma testi) — https://www.instagram.com/reel/DbnZLJFMcSY/?avpt=YXhwMGl1aXF4M201 — yayın öncesi Supabase Advisor'dan sonra ikinci güvenlik kontrolü; yalnız kendi uygulamamızda (Docker + LLM anahtarı)
+- replica-skill seti (rakip uygulama analizi) — https://www.instagram.com/reel/Df7ftYAgHiI/?fqnt=cnR0cW4za2E5aGpp — rakip kiosk/uygulama analizinde recon ve design skill'lerini dene
+- Claude-Red (saldırı odaklı güvenlik skill'leri) — https://www.instagram.com/reel/Dfz1_H3HPCL/?hvrq=OG1hcnV1N2N1MThh — yayın öncesi IDOR/JWT yetki denetiminde guvenlik-denetimi ile birlikte kullan (Cardiva için de geçerli)
+- Supabase Security/Performance Advisor — https://supabase.com/docs/guides/observability/advisors — yayın öncesi get_advisors ile güvenlik kontrolü (Cardiva için de)
+- Supabase resmî Agent Skills — https://github.com/supabase/agent-skills — Claude Code eklentisi olarak kur
+- Supabase kapsamlı erişim anahtarı (scoped PAT) — https://supabase.com/changelog/scoped-personal-access-tokens-ga — Claude/MCP erişimini daralt
+- @supabase/server adaptörleri 1 Aralık'ta kalkıyor — https://supabase.com/changelog/supabase-server-adapters-deprecated — Edge Functions'ta kullanılıp kullanılmadığını kontrol et (Cardiva için de)
+- Supabase geçici DB erişimi (önizleme) — https://supabase.com/docs/guides/platform/temporary-access — oturuma şifresiz süreli erişim olarak değerlendir
